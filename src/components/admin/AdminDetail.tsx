@@ -226,7 +226,7 @@ export default function AdminDetail() {
   );
 }
 
-const statLabel: import("react").CSSProperties = {
+const statLabel: CSSProperties = {
   fontSize: 12,
   color: colors.muted,
   fontWeight: 600,
@@ -234,7 +234,7 @@ const statLabel: import("react").CSSProperties = {
   letterSpacing: 0.4,
 };
 
-const statValue: import("react").CSSProperties = {
+const statValue: CSSProperties = {
   ...calSans,
   fontSize: 26,
   color: colors.ink,
