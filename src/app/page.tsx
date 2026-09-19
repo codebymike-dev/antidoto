@@ -1,5 +1,7 @@
-import AppRoot from "@/components/AppRoot";
+import { getLegalTexts } from "@/lib/queries";
+import LandingScreen from "@/components/LandingScreen";
 
-export default function Home() {
-  return <AppRoot />;
+export default async function Home() {
+  const legal = await getLegalTexts();
+  return <LandingScreen policyText={legal.privacidad} termsText={legal.terminos} />;
 }
