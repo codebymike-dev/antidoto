@@ -1,5 +1,8 @@
 import "server-only";
-import { createClient, type Client, type InValue } from "@libsql/client";
+// Subpath "web": cliente HTTP en JS puro. El import por defecto arrastra ~19 MB de
+// binarios nativos que solo sirven para bases embebidas y no hacen falta contra Turso.
+// En local se usa `turso dev`, que habla el mismo protocolo HTTP.
+import { createClient, type Client, type InValue } from "@libsql/client/web";
 
 let client: Client | undefined;
 

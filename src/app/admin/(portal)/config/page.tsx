@@ -6,6 +6,7 @@ import { colors, calSans } from "@/lib/theme";
 import { filledButton, card } from "@/lib/styles";
 import { ESTADO_STYLES } from "@/lib/data";
 import type { ConfigTab } from "@/lib/types";
+import type { AdminUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,6 @@ export default async function ConfigPage({
     : "codes";
 
   const missions = await listMissions(user);
-  const allMissions = isSuper ? missions : missions;
 
   return (
     <div>
@@ -62,7 +62,7 @@ export default async function ConfigPage({
         ))}
       </div>
 
-      {active === "codes" && <CodesTab user={user} missions={allMissions} preselected={mission} />}
+      {active === "codes" && <CodesTab user={user} missions={missions} preselected={mission} />}
       {active === "companies" && isSuper && <CompaniesTab />}
       {active === "legal" && isSuper && <LegalTab />}
       {active === "auditoria" && isSuper && <AuditTab user={user} />}
@@ -75,11 +75,11 @@ async function CodesTab({
   missions,
   preselected,
 }: {
-  user: { role: string; company_name: string | null };
+  user: AdminUser;
   missions: { id: string; title: string }[];
   preselected?: string;
 }) {
-  const codes = await listAllCodes(user as never);
+  const codes = await listAllCodes(user);
   const isEmpresa = user.role === "empresa";
 
   return (
@@ -270,8 +270,8 @@ async function LegalTab() {
   );
 }
 
-async function AuditTab({ user }: { user: { role: string; company_id: number | null } }) {
-  const entries = await listAuditLog(user as never);
+async function AuditTab({ user }: { user: AdminUser }) {
+  const entries = await listAuditLog(user);
 
   return (
     <div style={{ background: "#fff", borderRadius: 18, padding: "6px 0", boxShadow: colors.cardShadowSmall, maxWidth: 680 }}>

@@ -42,3 +42,7 @@ next-env.d.ts
 
 # permitir la plantilla de entorno
 !.env.example
+
+# base local de pruebas
+*.db
+*.db-journal
