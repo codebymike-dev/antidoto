@@ -122,7 +122,7 @@ export default function LandingScreen() {
   );
 }
 
-const fieldLabel: React.CSSProperties = {
+const fieldLabel: CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
   color: colors.accentDark,
@@ -130,7 +130,7 @@ const fieldLabel: React.CSSProperties = {
   letterSpacing: 0.6,
 };
 
-export const fieldInput: React.CSSProperties = {
+export const fieldInput: CSSProperties = {
   height: 48,
   borderRadius: 12,
   border: `1.5px solid ${colors.border}`,
@@ -141,7 +141,7 @@ export const fieldInput: React.CSSProperties = {
   width: "100%",
 };
 
-export const primaryButton: React.CSSProperties = {
+export const primaryButton: CSSProperties = {
   height: 52,
   borderRadius: 12,
   border: "none",
