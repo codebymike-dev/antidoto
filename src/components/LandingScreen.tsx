@@ -121,35 +121,3 @@ export default function LandingScreen() {
     </div>
   );
 }
-
-const fieldLabel: CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
-  color: colors.accentDark,
-  textTransform: "uppercase",
-  letterSpacing: 0.6,
-};
-
-export const fieldInput: CSSProperties = {
-  height: 48,
-  borderRadius: 12,
-  border: `1.5px solid ${colors.border}`,
-  padding: "0 14px",
-  fontSize: 15,
-  outline: "none",
-  color: colors.ink,
-  width: "100%",
-};
-
-export const primaryButton: CSSProperties = {
-  height: 52,
-  borderRadius: 12,
-  border: "none",
-  background: colors.buttonGradient,
-  color: "#ffffff",
-  fontWeight: 600,
-  fontSize: 15.5,
-  cursor: "pointer",
-  marginTop: 6,
-  boxShadow: colors.buttonShadow,
-};
