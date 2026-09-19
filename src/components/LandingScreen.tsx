@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useApp } from "@/state/AppProvider";
 import { colors, LOGO_SRC, calSans } from "@/lib/theme";
 import Blobs from "./Blobs";
