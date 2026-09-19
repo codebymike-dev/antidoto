@@ -4,11 +4,10 @@ import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { all, one, run } from "./db";
+import { one, run } from "./db";
 import { currentUser, destroySession, login, type AdminUser } from "./auth";
 import { findByCode } from "./queries";
-
-const PARTICIPATION_COOKIE = "antidoto_participacion";
+import { PARTICIPATION_COOKIE } from "./participation";
 
 async function requireUser(): Promise<AdminUser> {
   const user = await currentUser();
@@ -40,7 +39,9 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
   const match = await findByCode(code);
   if (!match) return { error: "Código no encontrado o inválido. Verifica con tu administrador." };
   if (match.estado === "vencido") {
-    const fecha = match.expira ? new Date(match.expira).toLocaleDateString("es-CO") : "";
+    const fecha = match.expira
+      ? new Date(match.expira).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })
+      : "";
     return { error: `Este código venció el ${fecha}. Contacta a tu administrador.` };
   }
 
@@ -61,42 +62,6 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
   });
 
   redirect("/mision");
-}
-
-export async function currentParticipation() {
-  const jar = await cookies();
-  const id = jar.get(PARTICIPATION_COOKIE)?.value;
-  if (!id) return null;
-
-  return one<{
-    id: string;
-    participant_name: string;
-    avance: number;
-    completed_at: string | null;
-    codigo: string;
-    estado: string;
-    expira: string | null;
-    empresa: string;
-    mission_tag: string;
-    mission_title: string;
-    mission_description: string;
-    participantes: number;
-    company_avance: number;
-  }>(
-    `SELECT p.id, p.participant_name, p.avance, p.completed_at,
-            ac.code AS codigo, ac.estado, ac.expires_at AS expira,
-            c.name AS empresa, m.tag AS mission_tag, m.title AS mission_title,
-            m.description AS mission_description,
-            (SELECT COUNT(*) FROM participations WHERE activity_code_id = ac.id) AS participantes,
-            (SELECT CAST(COALESCE(AVG(avance), 0) AS INTEGER) FROM participations
-              WHERE activity_code_id = ac.id) AS company_avance
-     FROM participations p
-     JOIN activity_codes ac ON ac.id = p.activity_code_id
-     JOIN companies c ON c.id = ac.company_id
-     JOIN missions m ON m.id = ac.mission_id
-     WHERE p.id = ?`,
-    [id]
-  );
 }
 
 export async function completeMission() {
@@ -130,9 +95,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) return { error: "Ingresa tu usuario y contraseña." };
-
-  const user = await login(email, password);
-  if (!user) return { error: "Usuario o contraseña incorrectos." };
+  if (!(await login(email, password))) return { error: "Usuario o contraseña incorrectos." };
 
   redirect("/admin");
 }
@@ -150,7 +113,7 @@ export async function generateCode(formData: FormData) {
   const estado = String(formData.get("estado") ?? "activo") === "pausado" ? "pausado" : "activo";
   const expira = String(formData.get("expira") ?? "").trim();
 
-  // Un admin de empresa solo puede generar códigos para la suya.
+  // Un admin de empresa solo puede generar códigos para la suya: el campo del form se ignora.
   const companyName =
     user.role === "empresa" ? user.company_name! : String(formData.get("empresa") ?? "").trim();
   if (!companyName || !missionId) return;
@@ -167,14 +130,11 @@ export async function generateCode(formData: FormData) {
   const prefix = mission.title.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase();
   const slug = companyName.split(/\s+/)[0].toUpperCase().slice(0, 6);
   let code = "";
-  // El código es único en la tabla: si choca, se reintenta con otro sufijo.
-  for (let attempt = 0; attempt < 10; attempt++) {
+  // code es UNIQUE: si el sufijo aleatorio choca, se reintenta.
+  for (let attempt = 0; attempt < 10 && !code; attempt++) {
     const candidate = `${prefix}-${slug}${Math.floor(10 + Math.random() * 89)}`;
     const taken = await one("SELECT 1 FROM activity_codes WHERE code = ?", [candidate]);
-    if (!taken) {
-      code = candidate;
-      break;
-    }
+    if (!taken) code = candidate;
   }
   if (!code) return;
 
@@ -187,7 +147,6 @@ export async function generateCode(formData: FormData) {
 
   revalidatePath("/admin/config");
   revalidatePath("/admin");
-  return code;
 }
 
 export async function addCompany(formData: FormData) {
@@ -196,9 +155,7 @@ export async function addCompany(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
-
-  const existing = await one("SELECT 1 FROM companies WHERE name = ?", [name]);
-  if (existing) return;
+  if (await one("SELECT 1 FROM companies WHERE name = ?", [name])) return;
 
   await run("INSERT INTO companies (name) VALUES (?)", [name]);
   await audit(`Empresa "${name}" añadida.`, user);
@@ -247,9 +204,8 @@ export async function duplicateMission(formData: FormData) {
   );
   if (!mission) return;
 
-  const newId = "m" + randomBytes(6).toString("hex");
   await run("INSERT INTO missions (id, tag, title, description) VALUES (?, ?, ?, ?)", [
-    newId,
+    "m" + randomBytes(6).toString("hex"),
     mission.tag,
     `${mission.title} (copia)`,
     mission.description,
@@ -267,31 +223,20 @@ export async function markNotificationsRead() {
 export async function saveLiveSession(formData: FormData) {
   const user = await requireUser();
   const missionId = String(formData.get("missionId") ?? "");
-  const connected = Number(formData.get("connected") ?? 0);
-  const rounds = Number(formData.get("rounds") ?? 0);
-  const scores = String(formData.get("scores") ?? "{}");
 
   await run(
     `INSERT INTO live_sessions (mission_id, host_user_id, connected, rounds_completed, scores_json, finished_at)
      VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-    [missionId, user.id, connected, rounds, scores]
+    [
+      missionId,
+      user.id,
+      Number(formData.get("connected") ?? 0),
+      Number(formData.get("rounds") ?? 0),
+      String(formData.get("scores") ?? "{}"),
+    ]
   );
 
   const mission = await one<{ title: string }>("SELECT title FROM missions WHERE id = ?", [missionId]);
   await audit(`Sesión en vivo de "${mission?.title ?? missionId}" finalizada.`, user);
   revalidatePath("/admin");
 }
-
-/** Filas para el CSV, respetando los filtros activos de la tabla. */
-export async function exportRows(missionId: string, search: string, estado: string) {
-  const user = await requireUser();
-  const { listGroups } = await import("./queries");
-  const groups = await listGroups(missionId, user);
-  return groups.filter(
-    (g) =>
-      (estado === "todos" || g.estado === estado) &&
-      (!search.trim() || g.empresa.toLowerCase().includes(search.trim().toLowerCase()))
-  );
-}
-
-export { all };
