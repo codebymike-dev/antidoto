@@ -1,6 +1,6 @@
 import { useApp } from "@/state/AppProvider";
 import { colors, calSans } from "@/lib/theme";
-import { filledButton, card } from "@/lib/styles";
+import { filledButton, cardAccent } from "@/lib/styles";
 import { computeStats } from "@/lib/utils";
 
 export default function AdminMenu() {
@@ -36,7 +36,7 @@ export default function AdminMenu() {
       />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
         {missionsForMenu.map((m) => (
-          <div key={m.id} style={card}>
+          <div key={m.id} style={cardAccent}>
             <div onClick={() => actions.openMission(m.id)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 14 }}>
               <span style={{ fontSize: 11.5, fontWeight: 700, color: colors.accent, letterSpacing: 1 }}>{m.tag}</span>
               <h3 style={{ ...calSans, fontSize: 19, margin: 0, color: colors.ink }}>{m.title}</h3>
