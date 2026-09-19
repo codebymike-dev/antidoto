@@ -1,10 +1,16 @@
-import { useApp } from "@/state/AppProvider";
+"use client";
+
+import { useActionState, useState } from "react";
+import Link from "next/link";
+import { joinActivity, type JoinState } from "@/lib/actions";
 import { colors, LOGO_SRC, calSans } from "@/lib/theme";
 import { fieldLabel, fieldInput, primaryButton } from "@/lib/styles";
 import Blobs from "./Blobs";
+import PolicyModal from "./PolicyModal";
 
-export default function LandingScreen() {
-  const { state, actions } = useApp();
+export default function LandingScreen({ policyText, termsText }: { policyText: string; termsText: string }) {
+  const [state, formAction, pending] = useActionState<JoinState, FormData>(joinActivity, null);
+  const [policyTab, setPolicyTab] = useState<"privacidad" | "terminos" | null>(null);
 
   return (
     <div
@@ -33,6 +39,7 @@ export default function LandingScreen() {
           maxWidth: 420,
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={LOGO_SRC} alt="Antídoto" style={{ height: 192 }} />
         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 10 }}>
           <h1 style={{ ...calSans, fontSize: 34, lineHeight: 1.15, margin: 0, color: colors.ink }}>
@@ -42,7 +49,9 @@ export default function LandingScreen() {
             Ingresa tu nombre y el código de tu actividad para unirte a la misión de tu equipo.
           </p>
         </div>
-        <div
+
+        <form
+          action={formAction}
           style={{
             width: "100%",
             background: "#ffffff",
@@ -56,59 +65,50 @@ export default function LandingScreen() {
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={fieldLabel}>Tu nombre</label>
-            <input
-              value={state.name}
-              onChange={(e) => actions.setName(e.target.value)}
-              placeholder="Ej. Camila Ríos"
-              style={fieldInput}
-            />
+            <label htmlFor="name" style={fieldLabel}>
+              Tu nombre
+            </label>
+            <input id="name" name="name" placeholder="Ej. Camila Ríos" style={fieldInput} required />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={fieldLabel}>Código de actividad</label>
+            <label htmlFor="code" style={fieldLabel}>
+              Código de actividad
+            </label>
             <input
-              value={state.code}
-              onChange={(e) => actions.setCode(e.target.value)}
+              id="code"
+              name="code"
               placeholder="Ej. RP-ACME24"
               style={{ ...fieldInput, textTransform: "uppercase" }}
+              required
             />
           </div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-            <input
-              type="checkbox"
-              checked={state.acceptedPolicy}
-              onChange={(e) => actions.setAcceptedPolicy(e.target.checked)}
-              style={{ marginTop: 3 }}
-            />
-            <span style={{ fontSize: 12.5, color: colors.muted, lineHeight: 1.4 }}>
+            <input id="acceptedPolicy" name="acceptedPolicy" type="checkbox" style={{ marginTop: 3 }} />
+            <label htmlFor="acceptedPolicy" style={{ fontSize: 12.5, color: colors.muted, lineHeight: 1.4 }}>
               Acepto la{" "}
-              <span
-                onClick={() => actions.openPolicyModal("privacidad")}
-                style={{ cursor: "pointer", color: colors.accent, fontWeight: 600 }}
-              >
+              <button type="button" onClick={() => setPolicyTab("privacidad")} style={linkButton}>
                 política de tratamiento de datos
-              </span>{" "}
+              </button>{" "}
               y los{" "}
-              <span
-                onClick={() => actions.openPolicyModal("terminos")}
-                style={{ cursor: "pointer", color: colors.accent, fontWeight: 600 }}
-              >
+              <button type="button" onClick={() => setPolicyTab("terminos")} style={linkButton}>
                 términos y condiciones
-              </span>
+              </button>
               .
-            </span>
+            </label>
           </div>
-          <button onClick={actions.startMission} style={primaryButton}>
-            Comenzar mi pausa
+          <button type="submit" disabled={pending} style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
+            {pending ? "Validando..." : "Comenzar mi pausa"}
           </button>
-          {state.codeError && (
-            <span style={{ fontSize: 12.5, color: colors.danger, fontWeight: 600 }}>{state.codeError}</span>
+          {state?.error && (
+            <span role="alert" style={{ fontSize: 12.5, color: colors.danger, fontWeight: 600 }}>
+              {state.error}
+            </span>
           )}
-        </div>
-        <span onClick={actions.goToAdminLogin} style={{ cursor: "pointer", fontSize: 13, color: colors.muted }}>
-          ¿Eres administrador?{" "}
-          <span style={{ color: colors.accent, fontWeight: 600 }}>Entrar al portal</span>
-        </span>
+        </form>
+
+        <Link href="/admin/login" style={{ fontSize: 13, color: colors.muted }}>
+          ¿Eres administrador? <span style={{ color: colors.accent, fontWeight: 600 }}>Entrar al portal</span>
+        </Link>
         <a
           href="https://antidotocolombia.com/"
           target="_blank"
@@ -118,6 +118,26 @@ export default function LandingScreen() {
           Visitar antidotocolombia.com ↗
         </a>
       </div>
+
+      {policyTab && (
+        <PolicyModal
+          tab={policyTab}
+          onTab={setPolicyTab}
+          onClose={() => setPolicyTab(null)}
+          policyText={policyText}
+          termsText={termsText}
+        />
+      )}
     </div>
   );
 }
+
+const linkButton = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  font: "inherit",
+  cursor: "pointer",
+  color: colors.accent,
+  fontWeight: 600,
+} as const;
