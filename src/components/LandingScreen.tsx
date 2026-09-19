@@ -1,6 +1,6 @@
-import type { CSSProperties } from "react";
 import { useApp } from "@/state/AppProvider";
 import { colors, LOGO_SRC, calSans } from "@/lib/theme";
+import { fieldLabel, fieldInput, primaryButton } from "@/lib/styles";
 import Blobs from "./Blobs";
 
 export default function LandingScreen() {
