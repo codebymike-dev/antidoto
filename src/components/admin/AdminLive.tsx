@@ -175,7 +175,7 @@ export default function AdminLive({ missionId, missionTitle, groups, initialConn
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={next} style={{ ...filledButton, height: 46 }}>
+              <button type="button" onClick={next} className="btn-filled" style={{ ...filledButton, height: 46 }}>
                 {round >= totalRounds ? "Ver resultados finales" : "Siguiente ronda"}
               </button>
             </div>
