@@ -190,6 +190,7 @@ export default function AdminLive({ missionId, missionTitle, groups, initialConn
               <button
                 type="button"
                 onClick={() => router.push(`/admin/actividades/${missionId}`)}
+                className="btn-filled"
                 style={{ ...filledButton, padding: "0 20px" }}
               >
                 Volver al detalle
