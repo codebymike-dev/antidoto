@@ -27,6 +27,9 @@ export default async function DetallePage({
   if (!mission) notFound();
 
   const allGroups = await listGroups(id, user);
+  // Un admin de empresa sin códigos en esta misión no debe ver ni su metadata.
+  if (user.role === "empresa" && allGroups.length === 0) notFound();
+
   const trend = await getTrend(id, user);
 
   const groups = allGroups.filter(
