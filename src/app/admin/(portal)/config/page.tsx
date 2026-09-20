@@ -186,7 +186,7 @@ async function CompaniesTab() {
           style={{ ...select, flex: 1 }}
           required
         />
-        <button type="submit" style={{ ...filledButton, padding: "0 18px", fontSize: 13.5 }}>
+        <button type="submit" className="btn-filled" style={{ ...filledButton, padding: "0 18px", fontSize: 13.5 }}>
           ＋ Añadir
         </button>
       </form>
@@ -215,6 +215,7 @@ async function CompaniesTab() {
               <input type="hidden" name="id" value={c.id} />
               <button
                 type="submit"
+                className="btn-danger"
                 style={{ cursor: "pointer", fontSize: 12.5, color: "#C0503F", fontWeight: 600, background: "none", border: "none" }}
               >
                 Eliminar
