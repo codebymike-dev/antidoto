@@ -65,6 +65,34 @@ button {
     background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
+/* Brillo sutil que recorre el botón por zonas (no un cambio de color uniforme).
+   Usa el mismo tono azul del gradiente base, solo mueve un realce por la superficie. */
+@keyframes buttonSheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.btn-primary:not(:disabled),
+.btn-filled:not(:disabled) {
+  background: linear-gradient(
+    100deg,
+    #1c99ca 0%,
+    #1c99ca 35%,
+    #3bc8f3 50%,
+    #1c99ca 65%,
+    #1c99ca 100%
+  ) !important;
+  background-size: 250% 250% !important;
+  animation: buttonSheen 5s ease-in-out infinite;
+}
+
 .btn-primary:hover:not(:disabled),
 .btn-filled:hover:not(:disabled) {
   transform: translateY(-1px);
