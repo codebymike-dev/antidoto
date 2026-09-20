@@ -36,7 +36,7 @@ export const primaryButton: CSSProperties = {
 export const secondaryButton: CSSProperties = {
   height: 44,
   padding: "0 16px",
-  borderRadius: 11,
+  borderRadius: 12,
   border: `1.5px solid ${colors.accentLight}`,
   background: "#fff",
   color: colors.accent,
@@ -49,7 +49,7 @@ export const secondaryButton: CSSProperties = {
 export const filledButton: CSSProperties = {
   height: 44,
   padding: "0 20px",
-  borderRadius: 11,
+  borderRadius: 12,
   border: "none",
   background: colors.buttonGradient,
   color: "#fff",
@@ -57,6 +57,26 @@ export const filledButton: CSSProperties = {
   fontSize: 14,
   cursor: "pointer",
   whiteSpace: "nowrap",
+};
+
+/* Fuente única para los tabs de navegación (antes definidos por separado en
+   3 archivos con padding/radius levemente distintos). */
+export const tabButton: CSSProperties = {
+  padding: "9px 14px",
+  borderRadius: 9,
+  border: "none",
+  background: "transparent",
+  color: colors.inkSoft,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+
+export const tabButtonActive: CSSProperties = {
+  ...tabButton,
+  background: colors.accentTint,
+  color: colors.accentDark,
 };
 
 export const card: CSSProperties = {

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { colors } from "@/lib/theme";
+import { tabButton, tabButtonActive } from "@/lib/styles";
 
 interface Props {
   tab: "privacidad" | "terminos";
@@ -22,14 +23,10 @@ export default function PolicyModal({ tab, onTab, onClose, policyText, termsText
 
   function tabStyle(active: boolean) {
     return {
+      ...(active ? tabButtonActive : tabButton),
       cursor: "pointer" as const,
-      padding: "9px 14px",
-      borderRadius: 9,
       fontSize: 12.5,
-      fontWeight: 600 as const,
-      border: "none",
       color: active ? colors.accentDark : colors.muted,
-      background: active ? colors.accentTint : "transparent",
     };
   }
 

@@ -9,6 +9,7 @@ export const colors = {
   accentTint: "#E3F6FC",
   border: "#CFEFFB",
   danger: "#C0392B",
+  dangerDark: "#9A2E22",
   pageGradient: "linear-gradient(160deg,#EAFBFF 0%,#FFFFFF 60%)",
   buttonGradient: "linear-gradient(135deg,#3BC8F3,#1C99CA)",
   cardShadow: "0 20px 45px rgba(12,92,125,0.14)",

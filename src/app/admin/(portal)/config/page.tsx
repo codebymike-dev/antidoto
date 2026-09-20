@@ -3,8 +3,9 @@ import { currentUser } from "@/lib/auth";
 import { listMissions, listCompanies, listAllCodes, getLegalTexts, listAuditLog } from "@/lib/queries";
 import { generateCode, addCompany, deleteCompany, updateLegalText } from "@/lib/actions";
 import { colors, calSans } from "@/lib/theme";
-import { filledButton, card } from "@/lib/styles";
+import { filledButton, card, tabButton, tabButtonActive } from "@/lib/styles";
 import { ESTADO_STYLES } from "@/lib/data";
+import ConfirmDeleteButton from "@/components/admin/ConfirmDeleteButton";
 import type { ConfigTab } from "@/lib/types";
 import type { AdminUser } from "@/lib/auth";
 
@@ -50,12 +51,10 @@ export default async function ConfigPage({
             href={`/admin/config?tab=${t.key}`}
             className={active === t.key ? "btn-tab-active" : "btn-tab"}
             style={{
+              ...(active === t.key ? tabButtonActive : tabButton),
               padding: "10px 18px",
-              borderRadius: 10,
               fontSize: 13.5,
-              fontWeight: 600,
               color: active === t.key ? colors.accentDark : colors.muted,
-              background: active === t.key ? colors.accentTint : "transparent",
             }}
           >
             {t.label}
@@ -213,13 +212,7 @@ async function CompaniesTab() {
             </div>
             <form action={deleteCompany}>
               <input type="hidden" name="id" value={c.id} />
-              <button
-                type="submit"
-                className="btn-danger"
-                style={{ cursor: "pointer", fontSize: 12.5, color: "#C0503F", fontWeight: 600, background: "none", border: "none" }}
-              >
-                Eliminar
-              </button>
+              <ConfirmDeleteButton>Eliminar</ConfirmDeleteButton>
             </form>
           </div>
         ))}

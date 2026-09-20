@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { getMission, listGroups, getTrend, listParticipants } from "@/lib/queries";
 import { colors, calSans } from "@/lib/theme";
-import { filledButton, secondaryButton, card } from "@/lib/styles";
+import { filledButton, secondaryButton, card, tabButton, tabButtonActive } from "@/lib/styles";
 import { trendToPoints } from "@/lib/utils";
 import GroupsTable from "@/components/admin/GroupsTable";
 import type { Estado } from "@/lib/types";
@@ -151,13 +151,9 @@ export default async function DetallePage({
             href={`/admin/actividades/${id}?${new URLSearchParams({ q, estado: value })}`}
             className={estado === value ? "btn-tab-active" : "btn-tab"}
             style={{
-              padding: "9px 14px",
-              borderRadius: 9,
+              ...(estado === value ? tabButtonActive : tabButton),
               fontSize: 12.5,
-              fontWeight: 600,
               color: estado === value ? colors.accentDark : colors.muted,
-              background: estado === value ? colors.accentTint : "transparent",
-              whiteSpace: "nowrap",
             }}
           >
             {value === "todos" ? "Todos" : value.charAt(0).toUpperCase() + value.slice(1)}
