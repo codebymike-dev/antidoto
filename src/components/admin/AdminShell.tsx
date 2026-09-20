@@ -29,13 +29,13 @@ export default function AdminShell({ roleTitle, roleSubtitle, notifications, chi
       borderRadius: 10,
       fontSize: 14,
       fontWeight: 600 as const,
-      color: active ? "#ffffff" : "#9FB8C2",
-      background: active ? "rgba(59,200,243,0.18)" : "transparent",
+      color: active ? colors.ink : "#9FB8C2",
+      background: active ? colors.accentLight : "transparent",
     };
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F4FBFD" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#F7FAFB" }}>
       <nav
         style={{
           width: 250,
