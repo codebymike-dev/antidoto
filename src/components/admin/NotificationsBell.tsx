@@ -41,6 +41,7 @@ export default function NotificationsBell({ notifications }: { notifications: No
         onClick={toggle}
         aria-label="Notificaciones"
         aria-expanded={open}
+        className="btn-icon"
         style={{
           cursor: "pointer",
           width: 38,

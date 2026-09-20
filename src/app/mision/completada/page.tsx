@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { currentParticipation } from "@/lib/participation";
 import { leaveActivity } from "@/lib/actions";
@@ -6,6 +7,11 @@ import { primaryButton } from "@/lib/styles";
 import Blobs from "@/components/Blobs";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Misión completada",
+  robots: { index: false, follow: false },
+};
 
 export default async function MisionCompletadaPage() {
   const p = await currentParticipation();
