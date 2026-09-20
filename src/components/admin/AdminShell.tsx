@@ -146,6 +146,7 @@ export default function AdminShell({ roleTitle, roleSubtitle, notifications, chi
           <form action={logoutAction}>
             <button
               type="submit"
+              className="btn-navlink"
               style={{
                 display: "flex",
                 alignItems: "center",
