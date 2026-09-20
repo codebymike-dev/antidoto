@@ -42,14 +42,9 @@ export default function AdminLoginScreen() {
         }
         .login-form {
           width: 100%;
-          background: #ffffff;
-          border-radius: 20px;
-          padding: 28px 24px;
           display: flex;
           flex-direction: column;
           gap: 16px;
-          box-shadow: ${colors.cardShadow};
-          border-top: 4px solid ${colors.accentLight};
         }
         @media (min-width: 860px) {
           .login-card {

@@ -86,14 +86,9 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
             action={formAction}
             style={{
               width: "100%",
-              background: "#ffffff",
-              borderRadius: 20,
-              padding: "28px 24px",
               display: "flex",
               flexDirection: "column",
               gap: 16,
-              boxShadow: colors.cardShadow,
-              borderTop: `4px solid ${colors.accentLight}`,
             }}
           >
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
