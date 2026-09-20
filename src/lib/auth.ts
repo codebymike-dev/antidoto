@@ -3,6 +3,7 @@ import { randomBytes, scrypt as scryptCb, createHash, timingSafeEqual } from "no
 import { promisify } from "node:util";
 import { cookies } from "next/headers";
 import { all, one, run } from "./db";
+import { companyFilter, type CompanyScope } from "./scope";
 
 const scrypt = promisify(scryptCb) as (
   password: string,
@@ -111,10 +112,8 @@ export async function purgeExpiredSessions(): Promise<void> {
 }
 
 /** Los admins de empresa solo ven lo suyo: este helper evita repetir el filtro. */
-export function companyScope(user: AdminUser): { clause: string; args: number[] } {
-  return user.role === "empresa"
-    ? { clause: "AND ac.company_id = ?", args: [user.company_id!] }
-    : { clause: "", args: [] };
+export function companyScope(user: AdminUser): CompanyScope {
+  return companyFilter(user.role, user.company_id);
 }
 
 export { all, one, run };

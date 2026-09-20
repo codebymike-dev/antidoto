@@ -2,6 +2,7 @@ import "server-only";
 import { all, one } from "./db";
 import type { AdminUser } from "./auth";
 import type { Estado } from "./types";
+import { companyFilter } from "./scope";
 
 export interface GroupRow {
   id: number;
