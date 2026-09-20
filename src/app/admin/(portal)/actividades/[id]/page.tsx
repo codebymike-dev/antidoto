@@ -72,18 +72,21 @@ export default async function DetallePage({
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <Link
             href={`/admin/actividades/${id}/vivo`}
+            className="btn-filled"
             style={{ ...filledButton, display: "inline-flex", alignItems: "center" }}
           >
             ▸ Iniciar sesión en vivo
           </Link>
           <a
             href={`/admin/actividades/${id}/export?${exportQuery}`}
+            className="btn-secondary"
             style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
           >
             Exportar CSV
           </a>
           <Link
             href={`/admin/config?mission=${id}`}
+            className="btn-filled"
             style={{ ...filledButton, padding: "0 18px", fontSize: 13.5, display: "inline-flex", alignItems: "center" }}
           >
             ＋ Nuevo código
@@ -146,6 +149,7 @@ export default async function DetallePage({
           <Link
             key={value}
             href={`/admin/actividades/${id}?${new URLSearchParams({ q, estado: value })}`}
+            className={estado === value ? "btn-tab-active" : "btn-tab"}
             style={{
               padding: "9px 14px",
               borderRadius: 9,
