@@ -73,7 +73,7 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
         <div className="login-brand">
           <LogoMark height={38} />
           <h1 style={{ ...calSans, fontSize: 34, lineHeight: 1.15, margin: 0, color: colors.ink }}>
-            Tu pausa con propósito empieza aquí
+            Tu misión interactiva empieza aquí
           </h1>
           <p style={{ fontSize: 15, lineHeight: 1.5, color: colors.inkSoft, margin: 0 }}>
             Ingresa tu nombre y el código de tu actividad para unirte a la misión de tu equipo.
@@ -123,7 +123,7 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
               </label>
             </div>
             <button type="submit" disabled={pending} className="btn-primary" style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
-              {pending ? "Validando..." : "Comenzar mi pausa"}
+              {pending ? "Validando..." : "Comenzar mi misión"}
             </button>
             {state?.error && (
               <span role="alert" style={{ fontSize: 12.5, color: colors.danger, fontWeight: 600 }}>

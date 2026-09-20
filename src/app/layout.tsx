@@ -11,9 +11,9 @@ const poppins = Poppins({
 });
 
 const SITE_URL = "https://antidotocolombia.vercel.app";
-const SITE_TITLE = "Antídoto · Pausas activas";
+const SITE_TITLE = "Antídoto · Misiones interactivas";
 const SITE_DESCRIPTION =
-  "Únete a la misión interactiva de pausas activas de tu equipo con el código de tu actividad.";
+  "Únete a la misión interactiva de tu equipo con el código de tu actividad.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

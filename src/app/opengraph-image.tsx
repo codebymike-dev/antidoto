@@ -39,7 +39,7 @@ export default function Image() {
         </div>
         <div style={{ display: "flex" }}>Antídoto</div>
         <div style={{ display: "flex", fontSize: 32, fontWeight: 500, color: colors.inkSoft, marginTop: 12 }}>
-          Pausas activas para tu equipo
+          Misiones interactivas para tu equipo
         </div>
       </div>
     ),

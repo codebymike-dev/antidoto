@@ -3,9 +3,9 @@ import { colors } from "@/lib/theme";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Antídoto · Pausas activas",
+    name: "Antídoto · Misiones interactivas",
     short_name: "Antídoto",
-    description: "Misiones interactivas de pausas activas para equipos.",
+    description: "Misiones interactivas para equipos.",
     start_url: "/",
     display: "standalone",
     background_color: "#FFFFFF",
