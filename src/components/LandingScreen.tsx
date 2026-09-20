@@ -71,8 +71,7 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
       <Blobs />
       <div className="login-card" style={{ position: "relative", zIndex: 1 }}>
         <div className="login-brand">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO_SRC} alt="Antídoto" className="login-logo" />
+          <LogoMark height={38} />
           <h1 style={{ ...calSans, fontSize: 34, lineHeight: 1.15, margin: 0, color: colors.ink }}>
             Tu pausa con propósito empieza aquí
           </h1>
