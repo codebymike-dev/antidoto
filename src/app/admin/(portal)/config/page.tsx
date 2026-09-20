@@ -260,7 +260,7 @@ async function LegalTab() {
               resize: "vertical",
             }}
           />
-          <button type="submit" style={{ ...filledButton, height: 42, alignSelf: "flex-start", padding: "0 18px", fontSize: 13.5 }}>
+          <button type="submit" className="btn-filled" style={{ ...filledButton, height: 42, alignSelf: "flex-start", padding: "0 18px", fontSize: 13.5 }}>
             Guardar
           </button>
         </form>
