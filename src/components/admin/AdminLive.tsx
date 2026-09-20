@@ -152,7 +152,7 @@ export default function AdminLive({ missionId, missionTitle, groups, initialConn
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={reveal} style={{ ...filledButton, height: 46 }}>
+              <button type="button" onClick={reveal} className="btn-filled" style={{ ...filledButton, height: 46 }}>
                 Revelar respuestas
               </button>
             </div>
