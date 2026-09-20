@@ -195,6 +195,7 @@ export default function GroupsTable({ groups }: { groups: Group[] }) {
                     setCompareOpen(false);
                     setSelection([]);
                   }}
+                  className="btn-text"
                   style={{
                     cursor: "pointer",
                     fontSize: 12.5,
@@ -244,6 +245,7 @@ export default function GroupsTable({ groups }: { groups: Group[] }) {
             <button
               type="button"
               onClick={() => setCompareOpen(true)}
+              className="btn-secondary"
               style={{ ...secondaryButton, height: 42, padding: "0 18px" }}
             >
               Comparar seleccionados ({selection.length})
