@@ -121,11 +121,19 @@ export default function AdminShell({ roleTitle, roleSubtitle, notifications, chi
           >
             Menú
           </span>
-          <Link href="/admin" style={navStyle(navActivitiesOn)}>
+          <Link
+            href="/admin"
+            className={navActivitiesOn ? "btn-navlink-active" : "btn-navlink"}
+            style={navStyle(navActivitiesOn)}
+          >
             <GridIcon />
             Actividades
           </Link>
-          <Link href="/admin/config" style={navStyle(navConfigOn)}>
+          <Link
+            href="/admin/config"
+            className={navConfigOn ? "btn-navlink-active" : "btn-navlink"}
+            style={navStyle(navConfigOn)}
+          >
             <GearIcon />
             Configuración
           </Link>
