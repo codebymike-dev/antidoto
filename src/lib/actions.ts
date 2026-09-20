@@ -8,6 +8,7 @@ import { one, run } from "./db";
 import { currentUser, destroySession, login, type AdminUser } from "./auth";
 import { findByCode } from "./queries";
 import { PARTICIPATION_COOKIE } from "./participation";
+import { clientIp, rateLimit } from "./rate-limit";
 
 async function requireUser(): Promise<AdminUser> {
   const user = await currentUser();
@@ -35,6 +36,12 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
   if (!name) return { error: "Ingresa tu nombre." };
   if (!code) return { error: "Ingresa el código de tu actividad." };
   if (!accepted) return { error: "Debes aceptar la política de tratamiento de datos." };
+
+  // Los códigos son cortos: sin límite, serían adivinables por fuerza bruta.
+  const ip = await clientIp();
+  if (!(await rateLimit(`join:${ip}`, 15, 60))) {
+    return { error: "Demasiados intentos. Espera un minuto y vuelve a intentarlo." };
+  }
 
   const match = await findByCode(code);
   if (!match) return { error: "Código no encontrado o inválido. Verifica con tu administrador." };
@@ -95,6 +102,14 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   const password = String(formData.get("password") ?? "");
 
   if (!username || !password) return { error: "Ingresa tu usuario y contraseña." };
+
+  const ip = await clientIp();
+  const ipOk = await rateLimit(`login:ip:${ip}`, 10, 300);
+  const userOk = await rateLimit(`login:user:${username.trim().toLowerCase()}`, 5, 900);
+  if (!ipOk || !userOk) {
+    return { error: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo." };
+  }
+
   if (!(await login(username, password))) return { error: "Usuario o contraseña incorrectos." };
 
   redirect("/admin");

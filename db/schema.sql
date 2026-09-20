@@ -99,3 +99,12 @@ CREATE TABLE IF NOT EXISTS live_sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_live_sessions_mission ON live_sessions(mission_id);
+
+-- Contador de intentos para limitar fuerza bruta en login y códigos de actividad.
+CREATE TABLE IF NOT EXISTS rate_limit_hits (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  key        TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_limit_hits_key ON rate_limit_hits(key, created_at);
