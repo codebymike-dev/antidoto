@@ -6,15 +6,15 @@ const scrypt = promisify(scryptCb);
 
 const url = process.env.TURSO_DATABASE_URL;
 const authToken = process.env.TURSO_AUTH_TOKEN;
-const adminEmail = process.env.SEED_ADMIN_EMAIL;
+const adminUsername = process.env.SEED_ADMIN_USERNAME;
 const adminPassword = process.env.SEED_ADMIN_PASSWORD;
 
 if (!url) {
   console.error("Falta TURSO_DATABASE_URL.");
   process.exit(1);
 }
-if (!adminEmail || !adminPassword) {
-  console.error("Falta SEED_ADMIN_EMAIL o SEED_ADMIN_PASSWORD (defínelos en .env.local).");
+if (!adminUsername || !adminPassword) {
+  console.error("Falta SEED_ADMIN_USERNAME o SEED_ADMIN_PASSWORD (defínelos en tu archivo .env).");
   process.exit(1);
 }
 if (adminPassword.length < 12) {
@@ -88,18 +88,18 @@ for (const [key, body] of [
 }
 
 const existing = await client.execute({
-  sql: "SELECT id FROM admin_users WHERE email = ?",
-  args: [adminEmail.toLowerCase()],
+  sql: "SELECT id FROM admin_users WHERE username = ?",
+  args: [adminUsername.toLowerCase()],
 });
 
 if (existing.rows.length) {
-  console.log(`El superadmin ${adminEmail} ya existe, no se toca.`);
+  console.log(`El superadmin ${adminUsername} ya existe, no se toca.`);
 } else {
   await client.execute({
-    sql: "INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, 'super')",
-    args: [adminEmail.toLowerCase(), await hashPassword(adminPassword)],
+    sql: "INSERT INTO admin_users (username, password_hash, role) VALUES (?, ?, 'super')",
+    args: [adminUsername.toLowerCase(), await hashPassword(adminPassword)],
   });
-  console.log(`Superadmin creado: ${adminEmail}`);
+  console.log(`Superadmin creado: ${adminUsername}`);
 }
 
 console.log("Seed completado: misiones y textos legales listos.");

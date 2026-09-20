@@ -16,7 +16,7 @@ const KEY_LENGTH = 64;
 
 export interface AdminUser {
   id: number;
-  email: string;
+  username: string;
   role: "super" | "empresa";
   company_id: number | null;
   company_name: string | null;
@@ -78,13 +78,13 @@ export async function currentUser(): Promise<AdminUser | null> {
 
   const row = await one<{
     id: number;
-    email: string;
+    username: string;
     role: "super" | "empresa";
     company_id: number | null;
     company_name: string | null;
     notifications_read_at: string | null;
   }>(
-    `SELECT u.id, u.email, u.role, u.company_id, c.name AS company_name, u.notifications_read_at
+    `SELECT u.id, u.username, u.role, u.company_id, c.name AS company_name, u.notifications_read_at
      FROM sessions s
      JOIN admin_users u ON u.id = s.admin_user_id
      LEFT JOIN companies c ON c.id = u.company_id
@@ -95,10 +95,10 @@ export async function currentUser(): Promise<AdminUser | null> {
   return row;
 }
 
-export async function login(email: string, password: string): Promise<AdminUser | null> {
+export async function login(username: string, password: string): Promise<AdminUser | null> {
   const user = await one<{ id: number; password_hash: string }>(
-    "SELECT id, password_hash FROM admin_users WHERE email = ?",
-    [email.trim().toLowerCase()]
+    "SELECT id, password_hash FROM admin_users WHERE username = ?",
+    [username.trim().toLowerCase()]
   );
   if (!user || !(await verifyPassword(password, user.password_hash))) return null;
 

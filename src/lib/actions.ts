@@ -91,11 +91,11 @@ export async function leaveActivity() {
 export type LoginState = { error: string } | null;
 
 export async function loginAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
-  const email = String(formData.get("email") ?? "");
+  const username = String(formData.get("username") ?? "");
   const password = String(formData.get("password") ?? "");
 
-  if (!email || !password) return { error: "Ingresa tu usuario y contraseña." };
-  if (!(await login(email, password))) return { error: "Usuario o contraseña incorrectos." };
+  if (!username || !password) return { error: "Ingresa tu usuario y contraseña." };
+  if (!(await login(username, password))) return { error: "Usuario o contraseña incorrectos." };
 
   redirect("/admin");
 }

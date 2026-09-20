@@ -50,7 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_participations_started ON participations(started_
 
 CREATE TABLE IF NOT EXISTS admin_users (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-  email               TEXT NOT NULL UNIQUE,
+  username            TEXT NOT NULL UNIQUE,
   password_hash       TEXT NOT NULL,
   role                TEXT NOT NULL CHECK (role IN ('super', 'empresa')),
   -- Obligatorio para role='empresa', nulo para 'super'.

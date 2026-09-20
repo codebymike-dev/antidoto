@@ -63,15 +63,17 @@ export default function AdminLoginScreen() {
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label htmlFor="email" style={fieldLabel}>
+            <label htmlFor="username" style={fieldLabel}>
               Usuario
             </label>
             <input
-              id="email"
-              name="email"
-              type="email"
+              id="username"
+              name="username"
+              type="text"
               autoComplete="username"
-              placeholder="admin@antidoto.co"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="admin"
               style={fieldInput}
               required
             />
