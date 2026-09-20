@@ -87,10 +87,20 @@ export default function PolicyModal({ tab, onTab, onClose, policyText, termsText
           ×
         </button>
         <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" onClick={() => onTab("privacidad")} style={tabStyle(tab === "privacidad")}>
+          <button
+            type="button"
+            onClick={() => onTab("privacidad")}
+            className={tab === "privacidad" ? "btn-tab-active" : "btn-tab"}
+            style={tabStyle(tab === "privacidad")}
+          >
             Política de datos
           </button>
-          <button type="button" onClick={() => onTab("terminos")} style={tabStyle(tab === "terminos")}>
+          <button
+            type="button"
+            onClick={() => onTab("terminos")}
+            className={tab === "terminos" ? "btn-tab-active" : "btn-tab"}
+            style={tabStyle(tab === "terminos")}
+          >
             Términos y condiciones
           </button>
         </div>
