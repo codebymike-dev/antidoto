@@ -78,6 +78,7 @@ export default function AdminLive({ missionId, missionTitle, groups, initialConn
         <button
           type="button"
           onClick={() => router.push(`/admin/actividades/${missionId}`)}
+          className="btn-secondary"
           style={{ ...secondaryButton, border: `1.5px solid ${colors.border}`, color: colors.muted }}
         >
           Salir de la sesión
