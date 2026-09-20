@@ -26,22 +26,53 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
         padding: "32px 20px",
       }}
     >
+      <style>{`
+        .login-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 34px;
+          width: 100%;
+          max-width: 420px;
+        }
+        .login-brand {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          text-align: center;
+        }
+        .login-right {
+          display: contents;
+        }
+        @media (min-width: 860px) {
+          .login-card {
+            flex-direction: row;
+            align-items: center;
+            gap: 64px;
+            max-width: 780px;
+          }
+          .login-brand {
+            flex: 1 1 auto;
+            align-items: flex-start;
+            text-align: left;
+            gap: 14px;
+          }
+          .login-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            flex: 0 0 360px;
+            max-width: 360px;
+          }
+        }
+      `}</style>
       <Blobs />
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 34,
-          width: "100%",
-          maxWidth: 420,
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={LOGO_SRC} alt="Antídoto" style={{ height: 192 }} />
-        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="login-card" style={{ position: "relative", zIndex: 1 }}>
+        <div className="login-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO_SRC} alt="Antídoto" style={{ height: 192 }} />
           <h1 style={{ ...calSans, fontSize: 34, lineHeight: 1.15, margin: 0, color: colors.ink }}>
             Tu pausa con propósito empieza aquí
           </h1>
@@ -50,73 +81,75 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
           </p>
         </div>
 
-        <form
-          action={formAction}
-          style={{
-            width: "100%",
-            background: "#ffffff",
-            borderRadius: 20,
-            padding: "28px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            boxShadow: colors.cardShadow,
-            borderTop: `4px solid ${colors.accentLight}`,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label htmlFor="name" style={fieldLabel}>
-              Tu nombre
-            </label>
-            <input id="name" name="name" placeholder="Ej. Camila Ríos" style={fieldInput} required />
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label htmlFor="code" style={fieldLabel}>
-              Código de actividad
-            </label>
-            <input
-              id="code"
-              name="code"
-              placeholder="Ej. RP-ACME24"
-              style={{ ...fieldInput, textTransform: "uppercase" }}
-              required
-            />
-          </div>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-            <input id="acceptedPolicy" name="acceptedPolicy" type="checkbox" style={{ marginTop: 3 }} />
-            <label htmlFor="acceptedPolicy" style={{ fontSize: 12.5, color: colors.muted, lineHeight: 1.4 }}>
-              Acepto la{" "}
-              <button type="button" onClick={() => setPolicyTab("privacidad")} className="btn-text" style={linkButton}>
-                política de tratamiento de datos
-              </button>{" "}
-              y los{" "}
-              <button type="button" onClick={() => setPolicyTab("terminos")} className="btn-text" style={linkButton}>
-                términos y condiciones
-              </button>
-              .
-            </label>
-          </div>
-          <button type="submit" disabled={pending} className="btn-primary" style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
-            {pending ? "Validando..." : "Comenzar mi pausa"}
-          </button>
-          {state?.error && (
-            <span role="alert" style={{ fontSize: 12.5, color: colors.danger, fontWeight: 600 }}>
-              {state.error}
-            </span>
-          )}
-        </form>
+        <div className="login-right">
+          <form
+            action={formAction}
+            style={{
+              width: "100%",
+              background: "#ffffff",
+              borderRadius: 20,
+              padding: "28px 24px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              boxShadow: colors.cardShadow,
+              borderTop: `4px solid ${colors.accentLight}`,
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label htmlFor="name" style={fieldLabel}>
+                Tu nombre
+              </label>
+              <input id="name" name="name" placeholder="Ej. Camila Ríos" style={fieldInput} required />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label htmlFor="code" style={fieldLabel}>
+                Código de actividad
+              </label>
+              <input
+                id="code"
+                name="code"
+                placeholder="Ej. RP-ACME24"
+                style={{ ...fieldInput, textTransform: "uppercase" }}
+                required
+              />
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+              <input id="acceptedPolicy" name="acceptedPolicy" type="checkbox" style={{ marginTop: 3 }} />
+              <label htmlFor="acceptedPolicy" style={{ fontSize: 12.5, color: colors.muted, lineHeight: 1.4 }}>
+                Acepto la{" "}
+                <button type="button" onClick={() => setPolicyTab("privacidad")} className="btn-text" style={linkButton}>
+                  política de tratamiento de datos
+                </button>{" "}
+                y los{" "}
+                <button type="button" onClick={() => setPolicyTab("terminos")} className="btn-text" style={linkButton}>
+                  términos y condiciones
+                </button>
+                .
+              </label>
+            </div>
+            <button type="submit" disabled={pending} className="btn-primary" style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
+              {pending ? "Validando..." : "Comenzar mi pausa"}
+            </button>
+            {state?.error && (
+              <span role="alert" style={{ fontSize: 12.5, color: colors.danger, fontWeight: 600 }}>
+                {state.error}
+              </span>
+            )}
+          </form>
 
-        <Link href="/admin/login" style={{ fontSize: 13, color: colors.muted }}>
-          ¿Eres administrador? <span style={{ color: colors.accent, fontWeight: 600 }}>Entrar al portal</span>
-        </Link>
-        <a
-          href="https://antidotocolombia.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ fontSize: 12.5, color: colors.muted, fontWeight: 600 }}
-        >
-          Visitar antidotocolombia.com ↗
-        </a>
+          <Link href="/admin/login" style={{ fontSize: 13, color: colors.muted }}>
+            ¿Eres administrador? <span style={{ color: colors.accent, fontWeight: 600 }}>Entrar al portal</span>
+          </Link>
+          <a
+            href="https://antidotocolombia.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 12.5, color: colors.muted, fontWeight: 600 }}
+          >
+            Visitar antidotocolombia.com ↗
+          </a>
+        </div>
       </div>
 
       {policyTab && (
