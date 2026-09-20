@@ -40,9 +40,7 @@ function resolveEstado(estado: string, expiresAt: string | null): Estado {
 }
 
 function scopeArgs(user: AdminUser): { clause: string; args: number[] } {
-  return user.role === "empresa"
-    ? { clause: "AND ac.company_id = ?", args: [user.company_id!] }
-    : { clause: "", args: [] };
+  return companyFilter(user.role, user.company_id);
 }
 
 export async function listMissions(user: AdminUser, search = ""): Promise<MissionOverview[]> {
