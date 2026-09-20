@@ -54,7 +54,7 @@ export default async function MisionCompletadaPage() {
           colectivo.
         </p>
         <form action={leaveActivity}>
-          <button type="submit" style={{ ...primaryButton, height: 50, padding: "0 30px", fontSize: 15 }}>
+          <button type="submit" className="btn-primary" style={{ ...primaryButton, height: 50, padding: "0 30px", fontSize: 15 }}>
             Volver al inicio
           </button>
         </form>
