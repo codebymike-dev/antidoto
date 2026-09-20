@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ViewTransition } from "react";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
@@ -16,7 +17,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${poppins.variable} h-full`}>
-      <body className="h-full">{children}</body>
+      <body className="h-full">
+        <ViewTransition>{children}</ViewTransition>
+      </body>
     </html>
   );
 }
