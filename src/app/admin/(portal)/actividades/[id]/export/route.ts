@@ -16,11 +16,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const mission = await getMission(id);
   if (!mission) return new NextResponse("Actividad no encontrada", { status: 404 });
 
+  const allGroups = await listGroups(id, user);
+  if (user.role === "empresa" && allGroups.length === 0) {
+    return new NextResponse("Actividad no encontrada", { status: 404 });
+  }
+
   const url = new URL(request.url);
   const q = url.searchParams.get("q") ?? "";
   const estado = url.searchParams.get("estado") ?? "todos";
 
-  const groups = (await listGroups(id, user)).filter(
+  const groups = allGroups.filter(
     (g) =>
       (estado === "todos" || g.estado === estado) &&
       (!q.trim() || g.empresa.toLowerCase().includes(q.trim().toLowerCase()))
