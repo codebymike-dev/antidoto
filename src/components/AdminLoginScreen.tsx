@@ -24,22 +24,70 @@ export default function AdminLoginScreen() {
         padding: "32px 20px",
       }}
     >
+      <style>{`
+        .login-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 34px;
+          width: 100%;
+          max-width: 420px;
+        }
+        .login-brand {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          text-align: center;
+        }
+        .login-form {
+          width: 100%;
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 28px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          box-shadow: ${colors.cardShadow};
+          border-top: 4px solid ${colors.accentLight};
+        }
+        @media (min-width: 860px) {
+          .login-card {
+            flex-direction: row;
+            align-items: stretch;
+            gap: 0;
+            max-width: 820px;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: ${colors.cardShadow};
+            border-top: 4px solid ${colors.accentLight};
+            overflow: hidden;
+          }
+          .login-brand {
+            flex: 0 0 42%;
+            align-items: flex-start;
+            justify-content: center;
+            text-align: left;
+            gap: 14px;
+            background: ${colors.accentTint};
+            padding: 56px 48px;
+            border-right: 1px solid ${colors.border};
+          }
+          .login-form {
+            flex: 1 1 auto;
+            justify-content: center;
+            box-shadow: none;
+            border-top: none;
+            border-radius: 0;
+            padding: 56px 56px;
+          }
+        }
+      `}</style>
       <Blobs />
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 34,
-          width: "100%",
-          maxWidth: 420,
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={LOGO_SRC} alt="Antídoto" style={{ height: 132 }} />
-        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="login-card" style={{ position: "relative", zIndex: 1 }}>
+        <div className="login-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO_SRC} alt="Antídoto" style={{ height: 132 }} />
           <h1 style={{ ...calSans, fontSize: 28, lineHeight: 1.15, margin: 0, color: colors.ink }}>
             Portal administrador
           </h1>
@@ -48,20 +96,7 @@ export default function AdminLoginScreen() {
           </p>
         </div>
 
-        <form
-          action={formAction}
-          style={{
-            width: "100%",
-            background: "#ffffff",
-            borderRadius: 20,
-            padding: "28px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            boxShadow: colors.cardShadow,
-            borderTop: `4px solid ${colors.accentLight}`,
-          }}
-        >
+        <form action={formAction} className="login-form">
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label htmlFor="username" style={fieldLabel}>
               Usuario
@@ -101,11 +136,10 @@ export default function AdminLoginScreen() {
             </span>
           )}
         </form>
-
-        <Link href="/" style={{ fontSize: 13, color: colors.muted }}>
-          ‹ Volver al sitio
-        </Link>
       </div>
+      <Link href="/" style={{ position: "relative", zIndex: 1, fontSize: 13, color: colors.muted, marginTop: 20 }}>
+        ‹ Volver al sitio
+      </Link>
     </div>
   );
 }
