@@ -131,18 +131,36 @@ button {
   background: #e3f6fc !important;
   border-color: #1c99ca !important;
   color: #0c5c7d !important;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+  filter: brightness(0.97);
 }
 
 .btn-text:hover {
   color: #0c5c7d !important;
 }
 
+.btn-text:active {
+  filter: brightness(0.9);
+}
+
 .btn-danger:hover {
-  color: #a6362a !important;
+  color: #9a2e22 !important;
+}
+
+.btn-danger:active {
+  filter: brightness(0.92);
 }
 
 .btn-icon:hover {
   background: #e3f6fc !important;
+}
+
+.btn-icon:active {
+  filter: brightness(0.95);
 }
 
 .btn-close:hover {
@@ -159,6 +177,11 @@ button {
   color: #0c5c7d !important;
 }
 
+.btn-tab:active,
+.btn-tab-active:active {
+  filter: brightness(0.96);
+}
+
 .btn-navlink:hover {
   background: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
@@ -166,6 +189,29 @@ button {
 
 .btn-navlink-active:hover {
   background: rgba(59, 200, 243, 0.26) !important;
+}
+
+.btn-navlink:active,
+.btn-navlink-active:active {
+  filter: brightness(0.9);
+}
+
+/* Tarjeta de misión completa como <Link> (dashboard admin): sin esto no daba
+   ninguna señal de hover pese a ser clickeable en toda su superficie. */
+.mission-card-link {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mission-card-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 45px rgba(12, 92, 125, 0.14);
+}
+
+/* El span "Entrar al portal" tiene su propio color inline y no reaccionaba
+   al hover del <Link> padre; se sincroniza aquí explícitamente. */
+.portal-link:hover,
+.portal-link:hover span {
+  color: #0c5c7d !important;
 }
 
 @keyframes viewFadeIn {
