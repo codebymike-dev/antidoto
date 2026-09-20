@@ -40,11 +40,8 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 10px;
+          gap: 16px;
           text-align: center;
-        }
-        .login-logo {
-          height: 192px;
         }
         .login-right {
           display: contents;
@@ -60,10 +57,6 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
             flex: 1 1 auto;
             align-items: flex-start;
             text-align: left;
-            gap: 14px;
-          }
-          .login-logo {
-            height: 80px;
           }
           .login-right {
             display: flex;
