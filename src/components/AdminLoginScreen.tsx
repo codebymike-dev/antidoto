@@ -54,32 +54,19 @@ export default function AdminLoginScreen() {
         @media (min-width: 860px) {
           .login-card {
             flex-direction: row;
-            align-items: stretch;
-            gap: 0;
-            max-width: 820px;
-            background: #ffffff;
-            border-radius: 24px;
-            box-shadow: ${colors.cardShadow};
-            border-top: 4px solid ${colors.accentLight};
-            overflow: hidden;
+            align-items: center;
+            gap: 64px;
+            max-width: 780px;
           }
           .login-brand {
-            flex: 0 0 42%;
+            flex: 1 1 auto;
             align-items: flex-start;
-            justify-content: center;
             text-align: left;
             gap: 14px;
-            background: ${colors.accentTint};
-            padding: 56px 48px;
-            border-right: 1px solid ${colors.border};
           }
           .login-form {
-            flex: 1 1 auto;
-            justify-content: center;
-            box-shadow: none;
-            border-top: none;
-            border-radius: 0;
-            padding: 56px 56px;
+            flex: 0 0 360px;
+            max-width: 360px;
           }
         }
       `}</style>
