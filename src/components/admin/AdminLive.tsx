@@ -121,6 +121,7 @@ export default function AdminLive({ missionId, missionTitle, groups, initialConn
                 <button
                   type="button"
                   onClick={() => setConnected((c) => c + 1)}
+                  className="btn-secondary"
                   style={{ ...secondaryButton, border: `1.5px solid ${colors.border}` }}
                 >
                   +1 conectado (demo)
@@ -131,6 +132,7 @@ export default function AdminLive({ missionId, missionTitle, groups, initialConn
                     setRound(1);
                     setStatus("question");
                   }}
+                  className="btn-filled"
                   style={{ ...filledButton, padding: "0 22px" }}
                 >
                   Iniciar sesión
