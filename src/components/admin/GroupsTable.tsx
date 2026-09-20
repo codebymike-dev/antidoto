@@ -126,6 +126,7 @@ export default function GroupsTable({ groups }: { groups: Group[] }) {
                   onClick={() => setExpanded(isExpanded ? null : g.codigo)}
                   aria-label={isExpanded ? "Contraer" : "Expandir"}
                   aria-expanded={isExpanded}
+                  className="btn-text"
                   style={{ cursor: "pointer", color: colors.muted, fontSize: 13, background: "none", border: "none" }}
                 >
                   {isExpanded ? "▾" : "▸"}
