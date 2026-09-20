@@ -39,6 +39,17 @@ export const metadata: Metadata = {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: SITE_TITLE,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: colors.accent,
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
