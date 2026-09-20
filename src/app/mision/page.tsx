@@ -34,6 +34,7 @@ export default async function MisionPage() {
           <form action={leaveActivity}>
             <button
               type="submit"
+              className="btn-text"
               style={{
                 background: "none",
                 border: "none",
@@ -99,6 +100,7 @@ export default async function MisionPage() {
             <form action={completeMission}>
               <button
                 type="submit"
+                className="btn-filled"
                 style={{
                   ...filledButton,
                   alignSelf: "flex-start",
