@@ -72,6 +72,7 @@ export default function PolicyModal({ tab, onTab, onClose, policyText, termsText
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
+          className="btn-close"
           style={{
             position: "absolute",
             top: 14,

@@ -96,7 +96,7 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
               .
             </label>
           </div>
-          <button type="submit" disabled={pending} style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
+          <button type="submit" disabled={pending} className="btn-primary" style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
             {pending ? "Validando..." : "Comenzar mi pausa"}
           </button>
           {state?.error && (
