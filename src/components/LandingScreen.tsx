@@ -132,7 +132,7 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
             )}
           </form>
 
-          <Link href="/admin/login" style={{ fontSize: 13, color: colors.muted }}>
+          <Link href="/admin/login" className="portal-link" style={{ fontSize: 13, color: colors.muted }}>
             ¿Eres administrador? <span style={{ color: colors.accent, fontWeight: 600 }}>Entrar al portal</span>
           </Link>
           <a

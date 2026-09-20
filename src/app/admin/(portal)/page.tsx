@@ -109,7 +109,7 @@ export default async function ActividadesPage({
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
         {missions.map((m) => (
-          <div key={m.id} style={{ ...card, padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div key={m.id} className="mission-card-link" style={{ ...card, padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
             <Link href={`/admin/actividades/${m.id}`} style={{ display: "flex", flexDirection: "column", gap: 12, color: "inherit" }}>
               <span
                 style={{

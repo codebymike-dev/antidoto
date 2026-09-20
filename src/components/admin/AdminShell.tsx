@@ -136,20 +136,7 @@ export default function AdminShell({ roleTitle, roleSubtitle, notifications, chi
             <button
               type="submit"
               className="btn-navlink"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "11px 14px",
-                borderRadius: 10,
-                fontSize: 13.5,
-                fontWeight: 600,
-                color: "#9FB8C2",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                width: "100%",
-              }}
+              style={{ ...navStyle(false), border: "none", cursor: "pointer", width: "100%" }}
             >
               <LogoutIcon />
               Cerrar sesión
