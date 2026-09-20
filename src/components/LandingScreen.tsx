@@ -86,11 +86,11 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
             <input id="acceptedPolicy" name="acceptedPolicy" type="checkbox" style={{ marginTop: 3 }} />
             <label htmlFor="acceptedPolicy" style={{ fontSize: 12.5, color: colors.muted, lineHeight: 1.4 }}>
               Acepto la{" "}
-              <button type="button" onClick={() => setPolicyTab("privacidad")} style={linkButton}>
+              <button type="button" onClick={() => setPolicyTab("privacidad")} className="btn-text" style={linkButton}>
                 política de tratamiento de datos
               </button>{" "}
               y los{" "}
-              <button type="button" onClick={() => setPolicyTab("terminos")} style={linkButton}>
+              <button type="button" onClick={() => setPolicyTab("terminos")} className="btn-text" style={linkButton}>
                 términos y condiciones
               </button>
               .
