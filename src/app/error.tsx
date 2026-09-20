@@ -46,10 +46,14 @@ export default function Error({
           {error.digest && <> (ref. {error.digest})</>}
         </p>
         <div style={{ display: "flex", gap: 12 }}>
-          <button type="button" onClick={() => retry()} className="btn-primary" style={primaryButton}>
+          <button type="button" onClick={() => retry()} className="btn-primary" style={{ ...primaryButton, padding: "0 24px", marginTop: 0 }}>
             Intentar de nuevo
           </button>
-          <Link href="/" className="btn-secondary" style={{ ...secondaryButton, display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+          <Link
+            href="/"
+            className="btn-secondary"
+            style={{ ...secondaryButton, height: 52, padding: "0 24px", fontSize: 15.5, display: "inline-flex", alignItems: "center", textDecoration: "none" }}
+          >
             Volver al inicio
           </Link>
         </div>
