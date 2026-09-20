@@ -48,6 +48,7 @@ export default async function ConfigPage({
           <Link
             key={t.key}
             href={`/admin/config?tab=${t.key}`}
+            className={active === t.key ? "btn-tab-active" : "btn-tab"}
             style={{
               padding: "10px 18px",
               borderRadius: 10,
@@ -133,7 +134,7 @@ async function CodesTab({
           </div>
         </div>
 
-        <button type="submit" style={{ ...filledButton, height: 46 }}>
+        <button type="submit" className="btn-filled" style={{ ...filledButton, height: 46 }}>
           Generar código
         </button>
       </form>

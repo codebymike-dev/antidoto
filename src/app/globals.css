@@ -47,6 +47,78 @@ button {
   font-family: "Poppins", sans-serif;
 }
 
+/* Hover states para todos los botones (y enlaces con apariencia de botón) del sitio.
+   Los estilos base viven como objetos inline en src/lib/styles.ts, así que el hover
+   necesita !important para ganarle a esos inline styles en las propiedades compartidas. */
+.btn-primary,
+.btn-filled,
+.btn-secondary,
+.btn-text,
+.btn-danger,
+.btn-icon,
+.btn-close,
+.btn-tab,
+.btn-tab-active,
+.btn-navlink,
+.btn-navlink-active {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease,
+    background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-filled:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  box-shadow: 0 16px 32px rgba(28, 153, 202, 0.42) !important;
+}
+
+.btn-primary:active:not(:disabled),
+.btn-filled:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.96);
+}
+
+.btn-secondary:hover {
+  background: #e3f6fc !important;
+  border-color: #1c99ca !important;
+  color: #0c5c7d !important;
+}
+
+.btn-text:hover {
+  color: #0c5c7d !important;
+}
+
+.btn-danger:hover {
+  color: #a6362a !important;
+}
+
+.btn-icon:hover {
+  background: #e3f6fc !important;
+}
+
+.btn-close:hover {
+  color: #0f181d !important;
+}
+
+.btn-tab:hover {
+  background: #eafbff !important;
+  color: #0c5c7d !important;
+}
+
+.btn-tab-active:hover {
+  background: #cdeffc !important;
+  color: #0c5c7d !important;
+}
+
+.btn-navlink:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.btn-navlink-active:hover {
+  background: rgba(59, 200, 243, 0.26) !important;
+}
+
 @keyframes viewFadeIn {
   from {
     opacity: 0;

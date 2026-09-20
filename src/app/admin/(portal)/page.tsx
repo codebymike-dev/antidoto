@@ -34,7 +34,11 @@ export default async function ActividadesPage({
             Misiones activas y el avance de cada grupo participante.
           </p>
         </div>
-        <Link href="/admin/config" style={{ ...filledButton, display: "inline-flex", alignItems: "center" }}>
+        <Link
+          href="/admin/config"
+          className="btn-filled"
+          style={{ ...filledButton, display: "inline-flex", alignItems: "center" }}
+        >
           ＋ Nueva actividad
         </Link>
       </div>
@@ -110,6 +114,7 @@ export default async function ActividadesPage({
                 <input type="hidden" name="missionId" value={m.id} />
                 <button
                   type="submit"
+                  className="btn-text"
                   style={{ background: "none", border: "none", cursor: "pointer", color: colors.muted, fontWeight: 600, fontSize: 12, padding: 0 }}
                 >
                   Duplicar
