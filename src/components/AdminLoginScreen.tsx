@@ -3,9 +3,10 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { loginAction, type LoginState } from "@/lib/actions";
-import { colors, LOGO_SRC, calSans } from "@/lib/theme";
+import { colors, calSans } from "@/lib/theme";
 import { fieldLabel, fieldInput, primaryButton } from "@/lib/styles";
 import Blobs from "./Blobs";
+import LogoMark from "./LogoMark";
 
 export default function AdminLoginScreen() {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(loginAction, null);
@@ -37,11 +38,8 @@ export default function AdminLoginScreen() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 10px;
+          gap: 16px;
           text-align: center;
-        }
-        .login-logo {
-          height: 132px;
         }
         .login-form {
           width: 100%;
@@ -60,10 +58,6 @@ export default function AdminLoginScreen() {
             flex: 1 1 auto;
             align-items: flex-start;
             text-align: left;
-            gap: 14px;
-          }
-          .login-logo {
-            height: 80px;
           }
           .login-form {
             flex: 0 0 360px;
@@ -74,8 +68,7 @@ export default function AdminLoginScreen() {
       <Blobs />
       <div className="login-card" style={{ position: "relative", zIndex: 1 }}>
         <div className="login-brand">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO_SRC} alt="Antídoto" className="login-logo" />
+          <LogoMark height={38} />
           <h1 style={{ ...calSans, fontSize: 28, lineHeight: 1.15, margin: 0, color: colors.ink }}>
             Portal administrador
           </h1>

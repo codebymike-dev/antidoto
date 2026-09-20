@@ -3,9 +3,10 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { joinActivity, type JoinState } from "@/lib/actions";
-import { colors, LOGO_SRC, calSans } from "@/lib/theme";
+import { colors, calSans } from "@/lib/theme";
 import { fieldLabel, fieldInput, primaryButton } from "@/lib/styles";
 import Blobs from "./Blobs";
+import LogoMark from "./LogoMark";
 import PolicyModal from "./PolicyModal";
 
 export default function LandingScreen({ policyText, termsText }: { policyText: string; termsText: string }) {
