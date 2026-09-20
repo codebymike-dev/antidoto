@@ -127,7 +127,7 @@ export default function AdminLoginScreen() {
               required
             />
           </div>
-          <button type="submit" disabled={pending} style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
+          <button type="submit" disabled={pending} className="btn-primary" style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
             {pending ? "Entrando..." : "Ingresar"}
           </button>
           {state?.error && (
