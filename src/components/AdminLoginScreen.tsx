@@ -40,6 +40,9 @@ export default function AdminLoginScreen() {
           gap: 10px;
           text-align: center;
         }
+        .login-logo {
+          height: 132px;
+        }
         .login-form {
           width: 100%;
           display: flex;
@@ -49,7 +52,7 @@ export default function AdminLoginScreen() {
         @media (min-width: 860px) {
           .login-card {
             flex-direction: row;
-            align-items: center;
+            align-items: flex-start;
             gap: 64px;
             max-width: 780px;
           }
@@ -58,6 +61,9 @@ export default function AdminLoginScreen() {
             align-items: flex-start;
             text-align: left;
             gap: 14px;
+          }
+          .login-logo {
+            height: 80px;
           }
           .login-form {
             flex: 0 0 360px;
@@ -69,7 +75,7 @@ export default function AdminLoginScreen() {
       <div className="login-card" style={{ position: "relative", zIndex: 1 }}>
         <div className="login-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO_SRC} alt="Antídoto" style={{ height: 132 }} />
+          <img src={LOGO_SRC} alt="Antídoto" className="login-logo" />
           <h1 style={{ ...calSans, fontSize: 28, lineHeight: 1.15, margin: 0, color: colors.ink }}>
             Portal administrador
           </h1>

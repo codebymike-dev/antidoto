@@ -42,13 +42,16 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
           gap: 10px;
           text-align: center;
         }
+        .login-logo {
+          height: 192px;
+        }
         .login-right {
           display: contents;
         }
         @media (min-width: 860px) {
           .login-card {
             flex-direction: row;
-            align-items: center;
+            align-items: flex-start;
             gap: 64px;
             max-width: 780px;
           }
@@ -57,6 +60,9 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
             align-items: flex-start;
             text-align: left;
             gap: 14px;
+          }
+          .login-logo {
+            height: 80px;
           }
           .login-right {
             display: flex;
@@ -72,7 +78,7 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
       <div className="login-card" style={{ position: "relative", zIndex: 1 }}>
         <div className="login-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO_SRC} alt="Antídoto" style={{ height: 192 }} />
+          <img src={LOGO_SRC} alt="Antídoto" className="login-logo" />
           <h1 style={{ ...calSans, fontSize: 34, lineHeight: 1.15, margin: 0, color: colors.ink }}>
             Tu pausa con propósito empieza aquí
           </h1>

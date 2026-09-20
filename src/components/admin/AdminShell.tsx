@@ -48,19 +48,8 @@ export default function AdminShell({ roleTitle, roleSubtitle, notifications, chi
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 11,
-              padding: "6px 10px",
-              display: "flex",
-              alignItems: "center",
-              width: "fit-content",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO_SRC} alt="Antídoto" style={{ height: 36 }} />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO_SRC} alt="Antídoto" style={{ height: 36, width: "fit-content" }} />
           <div
             style={{
               display: "flex",
