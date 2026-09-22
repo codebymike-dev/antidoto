@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { duplicateGame, launchMatch, saveGame } from "@/lib/live-games-actions";
+import { duplicateGame, saveGame } from "@/lib/live-games-actions";
 import {
   LIMITS,
   QUESTION_TYPES,
@@ -17,6 +17,7 @@ import { colors, calSans } from "@/lib/theme";
 import { card, filledButton, secondaryButton } from "@/lib/styles";
 import { Field, input } from "./EditorField";
 import QuestionCard from "./QuestionCard";
+import PlayPanel from "./PlayPanel";
 
 export type EditorQuestion = DraftQuestion & { key: string };
 
@@ -120,8 +121,6 @@ export default function GameEditor({ gameId, archived, readOnlyReason, companies
   }
 
   const totalSeconds = questions.reduce((s, q) => s + q.timeLimit, 0);
-  // La partida se juega con lo guardado: con cambios pendientes se pide guardar antes.
-  const canLaunch = !archived && !dirty && questions.length > 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18, maxWidth: 860 }}>
@@ -130,39 +129,16 @@ export default function GameEditor({ gameId, archived, readOnlyReason, companies
       </Link>
 
       {!archived && (
-        <div
-          style={{
-            ...card,
-            padding: "16px 18px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 14,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: "1 1 320px" }}>
-            <span style={{ ...calSans, fontSize: 16, color: colors.ink }}>Jugar en vivo</span>
-            <span style={{ fontSize: 13, color: colors.muted, lineHeight: 1.5 }}>
-              {questions.length === 0
-                ? "Agrega al menos una pregunta y guarda para poder jugar."
-                : dirty
-                  ? "Guarda los cambios antes de abrir una partida."
-                  : "Abre una partida: se genera un PIN, un QR y un enlace para que los jugadores entren desde el celular."}
-            </span>
-          </div>
-          <form action={launchMatch}>
-            <input type="hidden" name="id" value={gameId} />
-            <button
-              type="submit"
-              className="btn-filled"
-              style={{ ...filledButton, opacity: canLaunch ? 1 : 0.6 }}
-              disabled={!canLaunch}
-            >
-              ▸ Abrir partida
-            </button>
-          </form>
-        </div>
+        <PlayPanel
+          gameId={gameId}
+          blockedReason={
+            questions.length === 0
+              ? "Agrega al menos una pregunta y guarda para poder jugar."
+              : dirty
+                ? "Guarda los cambios antes de jugar: la partida usa la versión guardada."
+                : null
+          }
+        />
       )}
 
       {(readOnlyReason || archived) && (
