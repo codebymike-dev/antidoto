@@ -189,7 +189,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
             </span>
           )}
           {inGame && <span>{state.nicknames.length} jugadores</span>}
-          {connection !== "connected" && connection !== "initialized" && (
+          {(connection === "disconnected" || connection === "suspended") && (
             <span role="status" style={{ color: "#E8A33D", fontWeight: 600 }}>
               Reconectando…
             </span>
