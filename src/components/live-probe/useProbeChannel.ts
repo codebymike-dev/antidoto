@@ -25,23 +25,33 @@ export function useProbeChannel({ onMessage, enterPresence, watchPresence }: Opt
     const realtime = new Ably.Realtime({ authUrl: "/api/live/token", authMethod: "GET" });
     const channel = realtime.channels.get(PROBE_CHANNEL);
 
-    // Al desmontar, close() rechaza lo que siga pendiente (attach, enter): no es un error.
-    const ignoreClosed = () => {};
-
+    let closed = false;
     realtime.connection.on((change) => setState(change.current));
-    channel.subscribe((msg) => handleMessage(msg)).catch(ignoreClosed);
 
     async function refreshPresence() {
       const members = await channel.presence.get();
       setPresent(members.filter((m) => m.clientId.startsWith("anon:")).length);
     }
-    if (watchPresence) {
-      channel.presence.subscribe(() => void refreshPresence().catch(ignoreClosed)).catch(ignoreClosed);
-      refreshPresence().catch(ignoreClosed);
-    }
-    if (nickname) channel.presence.enter({ nickname }).catch(ignoreClosed);
 
-    return () => realtime.close();
+    // Primero el attach explícito y luego lo demás: presence.enter() hace su propio
+    // attach interno sin manejar el rechazo, y close() al desmontar lo dispara.
+    (async () => {
+      await channel.attach();
+      if (closed) return;
+      await channel.subscribe((msg) => handleMessage(msg));
+      if (watchPresence) {
+        await channel.presence.subscribe(() => void refreshPresence().catch(() => {}));
+        await refreshPresence();
+      }
+      if (nickname) await channel.presence.enter({ nickname });
+    })().catch(() => {
+      // Solo falla por close() al desmontar; los cortes de red los reintenta Ably.
+    });
+
+    return () => {
+      closed = true;
+      realtime.close();
+    };
   }, [nickname, watchPresence]);
 
   return { state, present };
