@@ -454,20 +454,20 @@ export async function joinMatch(input: {
   nickname: string;
   acceptedPolicy: boolean;
   currentPlayerId: string | null;
-}): Promise<Result<{ playerId: string; matchId: number; nickname: string }>> {
+}): Promise<Result<{ playerId: string; matchId: number; nickname: string; closesAt: string | null }>> {
   const pin = input.pin.replace(/\s/g, "");
   if (!/^\d{6}$/.test(pin)) return err("El PIN tiene 6 dígitos.");
 
   // Una partida en vivo vence a las STALE_HOURS; un desafío, en su fecha de cierre.
-  const match = await one<{ id: number; join_locked: number; challenge: number }>(
-    `SELECT m.id, m.join_locked, c.match_id IS NOT NULL AS challenge
+  const match = await one<{ id: number; join_locked: number; closes_at: string | null }>(
+    `SELECT m.id, m.join_locked, c.closes_at
      FROM live_matches m LEFT JOIN live_challenges c ON c.match_id = m.id
      WHERE m.pin = ? AND m.status <> 'finished'
        AND (CASE WHEN c.match_id IS NULL THEN m.created_at >= datetime('now', ?) ELSE c.closes_at > datetime('now') END)`,
     [pin, `-${STALE_HOURS} hours`]
   );
   if (!match) return err("No hay una partida abierta con ese PIN.", 404);
-  const isChallenge = match.challenge === 1;
+  const isChallenge = match.closes_at !== null;
 
   // Recargar o volver a entrar con la misma cookie: se reusa el jugador.
   if (input.currentPlayerId) {
@@ -476,7 +476,9 @@ export async function joinMatch(input: {
       [input.currentPlayerId, match.id]
     );
     if (existing?.kicked_at) return err("El host te sacó de esta partida.", 403);
-    if (existing) return { ok: true, playerId: input.currentPlayerId, matchId: match.id, nickname: existing.nickname };
+    if (existing) {
+      return { ok: true, playerId: input.currentPlayerId, matchId: match.id, nickname: existing.nickname, closesAt: match.closes_at };
+    }
   }
 
   if (match.join_locked) return err("El host cerró la entrada a esta partida.", 403);
@@ -499,7 +501,7 @@ export async function joinMatch(input: {
   }
   // El desafío no tiene pantalla de host que avisar.
   if (!isChallenge) after(() => publishPlayers(match.id, match.join_locked === 1));
-  return { ok: true, playerId, matchId: match.id, nickname: nick.nickname };
+  return { ok: true, playerId, matchId: match.id, nickname: nick.nickname, closesAt: match.closes_at };
 }
 
 interface PlayerRow {
