@@ -316,3 +316,75 @@ button {
     border-radius: 55% 45% 40% 60% / 45% 55% 60% 40%;
   }
 }
+
+/* --- Módulo en vivo (proyector y celular) ------------------------------------
+   Botones sobre el fondo oscuro del juego y entradas con rebote. El pulido completo
+   (sonido, coreografías) va en docs/investigacion-ux-kahoot.md. */
+.btn-live {
+  transition: filter 0.15s ease, transform 0.1s ease, background 0.15s ease;
+}
+
+.btn-live:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+.btn-live:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-live:focus-visible {
+  outline: 2px solid #3bc8f3;
+  outline-offset: 2px;
+}
+
+@keyframes livePop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes liveRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes liveFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(18px, -24px) rotate(8deg);
+  }
+}
+
+.live-pop {
+  animation: livePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.live-rise {
+  animation: liveRise 0.4s cubic-bezier(0.05, 0.48, 0.47, 1.28) both;
+}
+
+.live-float {
+  animation: liveFloat 14s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-pop,
+  .live-rise,
+  .live-float {
+    animation: none;
+  }
+}
