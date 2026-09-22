@@ -47,8 +47,9 @@ export function useHostSound(state: HostSnapshot, offsetMs: number) {
     // Música según la fase.
     if (state.status === "lobby") sound.playLobby();
     else if (state.status === "question" && q && q.pausedRemainingMs === null) {
-      const msLeft = q.endsAt - (Date.now() + offsetMs);
-      if (msLeft > 0) sound.playQuestion(msLeft);
+      const serverNow = Date.now() + offsetMs;
+      const msLeft = q.endsAt - serverNow;
+      if (msLeft > 0) sound.playQuestion(msLeft, q.startedAt - serverNow);
     } else sound.stopMusic();
 
     if (!before) return;

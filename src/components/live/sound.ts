@@ -184,8 +184,10 @@ class LiveSound {
   gong() {
     const t = this.now();
     this.tone(110, t, 1.8, { gain: 0.45, slideTo: 98 });
-    this.tone(220, t, 1.2, { gain: 0.2 });
-    this.tone(331, t, 0.9, { gain: 0.1 });
+    // Parciales altos: son los que se oyen en parlantes chicos.
+    this.tone(220, t, 1.4, { gain: 0.28 });
+    this.tone(331, t, 1.0, { gain: 0.16 });
+    this.tone(442, t, 0.7, { type: "triangle", gain: 0.08 });
   }
 
   /** Tic de tono ascendente mientras crecen las barras de resultado. */
@@ -236,10 +238,12 @@ class LiveSound {
    * Música de pregunta: pulso tranquilo que se acelera y suma una capa de tensión en
    * los últimos 5 s, con el clímax en el final del tiempo (ver 3.2).
    */
-  playQuestion(msLeft: number) {
+  playQuestion(msLeft: number, startsInMs = 0) {
     if (!this.ctx) return;
     this.questionEndsAt = this.now() + msLeft / 1000;
-    this.startTrack("question");
+    // Durante la entrada ("¡Prepárate!") solo suenan los pitidos 3-2-1: la música
+    // arranca cuando aparecen las opciones.
+    this.startTrack("question", Math.max(0, startsInMs) / 1000);
   }
 
   stopMusic() {
@@ -248,13 +252,13 @@ class LiveSound {
     this.track = null;
   }
 
-  private startTrack(track: "lobby" | "question") {
+  private startTrack(track: "lobby" | "question", delay = 0) {
     if (!this.ctx) return;
     if (this.track === track && this.scheduler) return;
     this.stopMusic();
     this.track = track;
     this.step = 0;
-    this.nextNoteAt = this.now() + 0.05;
+    this.nextNoteAt = this.now() + 0.05 + delay;
     // Planificador con margen: se agendan las notas de los próximos 150 ms.
     this.scheduler = setInterval(() => this.schedule(), 25);
   }
@@ -283,8 +287,13 @@ class LiveSound {
     const left = this.questionEndsAt - at;
     if (left <= 0) return this.stopMusic();
     const tense = left < 5;
-    // Pulso grave constante.
-    if (step % 2 === 0) this.tone(tense ? 98 : 110, at, 0.25, { type: "sine", gain: 0.4, bus: this.musicBus });
+    // Pulso grave constante. Parlantes de notebook y proyector casi no dan nada bajo
+    // ~150 Hz: la onda triangular y la octava de arriba hacen que el pulso se oiga igual.
+    if (step % 2 === 0) {
+      const f = tense ? 98 : 110;
+      this.tone(f, at, 0.25, { type: "triangle", gain: 0.4, bus: this.musicBus });
+      this.tone(f * 2, at, 0.18, { type: "sine", gain: 0.14, bus: this.musicBus });
+    }
     // Motivo que sube de registro a medida que se acaba el tiempo.
     const lift = Math.min(4, Math.floor((1 - Math.min(1, left / 20)) * 5));
     const f = SCALE[(step + lift) % SCALE.length] * (tense ? 2 : 1);
