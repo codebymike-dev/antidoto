@@ -219,7 +219,7 @@ async function buildReveal(match: MatchRow, q: FullQuestion, questions: FullQues
   };
 }
 
-function publicQuestion(q: FullQuestion, state: MatchState, total: number): PublicQuestion {
+export function publicQuestion(q: FullQuestion, state: MatchState, total: number): PublicQuestion {
   return {
     position: q.position,
     total,
