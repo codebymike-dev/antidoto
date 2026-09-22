@@ -454,8 +454,8 @@ Contrastado con el código el 2026-09-22, con todas las fases del módulo termin
 | ¿Acerté? | Hecho | `outcomeOf`: `reveal.correct` contra la opción guardada |
 | Tiempos fijos por pregunta | Hecho | `TIME_LIMITS`: 5, 10, 20, 30, 60, 90, 120, 240 s |
 | Ranking animado (antes y después) | Hecho | `leaderboardMotion` reconstruye el antes con `score - lastPoints` y `rank + movement`, sin datos extra |
-| 1000 fijos si responde en menos de 0.5 s | **Pendiente** | Opcional; detalle menor |
-| Mensajes de "racha perdida" en grupo | **Pendiente** | Necesita la racha anterior en `LeaderboardEntry` |
+| 1000 fijos si responde en menos de 0.5 s | Hecho | `FULL_POINTS_MS` en `basePoints` |
+| Mensajes de "racha perdida" | Hecho | `lostStreak` en `LeaderboardEntry`; "¡Ronda difícil!" y "¡Se cortó el combo!" en `live-celebrations.ts` |
 
 **Sonido** (`src/components/live/sound.ts`, sintetizado con Web Audio, solo en el proyector):
 lobby a 120 BPM, música de pregunta que se tensa en los últimos 5 s, pops de entrada
@@ -470,9 +470,10 @@ ping en la nube, conteo de puntos y whoosh en el ranking, pasos y fanfarria en e
   por cada duración.
 - La intro de la pregunta dura 4 s en vez de ~5 s.
 
-**Riesgo sin verificar**: los graves del gong y del pulso de la pregunta (98 a 110 Hz)
-pueden no oírse en parlantes de notebook o proyector. Probar con los parlantes reales y,
-si hace falta, subirlos una octava o sumarles armónicos.
+**Por verificar con parlantes reales**: los graves del gong y del pulso de la pregunta
+(98 a 110 Hz) casi no suenan en parlantes de notebook o proyector. Ya se reforzaron con
+parciales altos (el gong suma 220, 331 y 442 Hz; el pulso usa onda triangular más su
+octava), pero conviene escucharlo en la sala antes del primer uso.
 
 ---
 
@@ -481,7 +482,7 @@ si hace falta, subirlos una octava o sumarles armónicos.
 **Sonido**
 - [x] Módulo de audio único para el proyector, desbloqueo en el primer clic, música y
       efectos por separado.
-- [ ] Control de volumen en pantalla (la preferencia existe, falta el control).
+- [x] Control de volumen en el pie de pantalla del host.
 - [x] Música de lobby en loop.
 - [x] Música de pregunta con tensión creciente hacia el final.
 - [x] Pop al entrar cada jugador; tick por cada respuesta (throttle 60 ms).
@@ -503,10 +504,9 @@ si hace falta, subirlos una octava o sumarles armónicos.
 - [x] Coreografía del podio con confeti, "Saltar" y "Repetir".
 - [x] Shake en error, pop en acierto.
 - [x] Todo respetando `prefers-reduced-motion`.
-- [ ] Respuesta inmediata al tocar en el celular (hoy la forma elegida aparece recién
-      cuando responde el servidor).
-- [ ] Empates en el podio: la columna muestra el puesto fijo (1, 2, 3), no el `rank`.
-- [ ] La música de pregunta ya suena durante la intro de 4 s.
+- [x] Respuesta inmediata al tocar en el celular (se deshace si el servidor la rechaza).
+- [x] Empates en el podio: cada columna toma color, altura y número del `rank` real.
+- [x] Durante la intro de 4 s solo suenan los pitidos 3-2-1; la música entra con las opciones.
 
 **Copy**
 - [x] Textos de resultado, ánimo, celebración y titulares finales con variantes.

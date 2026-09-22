@@ -106,23 +106,29 @@ function Connected({
     vibrate(40);
     setSending(true);
     setError(null);
+    // Se muestra la elección al instante (el servidor puede tardar unos cientos de ms) y
+    // se deshace si la rechaza. Solo si sigue siendo la misma pregunta.
+    const samePosition = (s: PlayerSnapshot) => s.question?.position === q.position;
+    setState((s) =>
+      samePosition(s)
+        ? { ...s, myAnswer: "optionIndex" in body ? { optionIndex: body.optionIndex, text: null } : { optionIndex: null, text: body.text } }
+        : s
+    );
+    const undo = () => setState((s) => (samePosition(s) ? { ...s, myAnswer: null } : s));
     try {
       const res = await fetch("/api/live/answer", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ position: q.position, ...body }),
       });
-      if (res.ok) {
-        setState((s) => ({
-          ...s,
-          myAnswer: "optionIndex" in body ? { optionIndex: body.optionIndex, text: null } : { optionIndex: null, text: body.text },
-        }));
-      } else {
+      if (!res.ok) {
+        undo();
         setError((await res.json().catch(() => null))?.error ?? "No se pudo enviar.");
         // Puede que ya hubiera respondido o que la pregunta cerrara: la foto lo aclara.
         await resync();
       }
     } catch {
+      undo();
       setError("Sin conexión. Vuelve a intentarlo.");
     } finally {
       setSending(false);
@@ -263,8 +269,8 @@ function QuestionView({
           </span>
         )}
         {state.myAnswer.text && <span style={{ ...calSans, fontSize: 32 }}>“{state.myAnswer.text}”</span>}
-        <h1 style={title}>Respuesta enviada</h1>
-        <p style={subtitle}>Esperando a los demás…</p>
+        <h1 style={title}>{sending ? "Enviando…" : "Respuesta enviada"}</h1>
+        <p style={subtitle}>{sending ? "Un momento" : "Esperando a los demás…"}</p>
       </Centered>
     );
   }
