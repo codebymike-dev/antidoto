@@ -5,6 +5,7 @@ import { companyFilter } from "./scope";
 import { loadQuestions, type FullQuestion } from "./live-match";
 import { computeLeaderboard, questionStats, scored, type LeaderboardEntry, type QuestionStats } from "./live-engine";
 import type { LiveMatchStatus } from "./types";
+import { sqliteToMs } from "./live-challenge-engine";
 
 // Reportes de partidas en vivo. Todo se calcula desde live_answers con el mismo motor
 // que la partida: el reporte y lo que se vio en el proyector no pueden diferir.
@@ -56,7 +57,13 @@ export interface AnswerRow {
 }
 
 export interface MatchReport {
-  match: MatchSummary & { gameId: number; gameTitle: string; lastPosition: number | null };
+  match: MatchSummary & {
+    gameId: number;
+    gameTitle: string;
+    lastPosition: number | null;
+    /** Desafío que todavía se puede jugar (ni cerrado a mano ni vencido). */
+    challengeOpen: boolean;
+  };
   questions: (FullQuestion & { stats: QuestionStats; players: number })[];
   ranking: (LeaderboardEntry & { avgResponseMs: number | null })[];
   players: PlayerRow[];
@@ -155,6 +162,7 @@ export async function getMatchReport(gameId: number, matchId: number, user: Admi
       // Hasta dónde llegó la partida: las preguntas posteriores no se jugaron. En un
       // desafío cada jugador va por su cuenta, así que todas cuentan como jugables.
       lastPosition: match.closes_at !== null ? questions.length : match.current_position,
+      challengeOpen: match.closes_at !== null && match.status !== "finished" && sqliteToMs(match.closes_at) > Date.now(),
       players: active.length,
       answers: activeAnswers.length,
     },

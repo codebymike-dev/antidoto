@@ -9,7 +9,6 @@ import { card, secondaryButton } from "@/lib/styles";
 import { CheckIcon } from "@/components/icons";
 import AnswerShape, { ANSWER_STYLES } from "@/components/live/AnswerShape";
 import { TYPE_LABELS } from "@/lib/live-validation";
-import { sqliteToMs } from "@/lib/live-challenge-engine";
 import ChallengeShare from "@/components/admin/live/ChallengeShare";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +31,7 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
   const isChallenge = match.closes_at !== null;
   // En un desafío la duración no dice nada: cada jugador juega en un momento distinto.
   const minutes = isChallenge ? null : durationMinutes(match.started_at, match.finished_at);
-  const challengeOpen = isChallenge && match.status !== "finished" && sqliteToMs(match.closes_at!) > Date.now();
+  const challengeOpen = match.challengeOpen;
 
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
