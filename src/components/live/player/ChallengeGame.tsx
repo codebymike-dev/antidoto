@@ -160,13 +160,12 @@ function QuestionView({
   const introLeft = serverNow === null ? null : q.startedAt - serverNow;
   const timeUp = serverNow !== null && remainingMs(q, offset, serverNow - offset) === 0;
 
-  // Al vencer el tiempo, el servidor (con su margen) pasa la pregunta a resultado.
-  const asked = useRef(false);
+  // Al vencer el tiempo, el servidor (con su margen) pasa la pregunta a resultado. Se
+  // pregunta hasta que lo haga: los relojes nunca coinciden al milisegundo.
   useEffect(() => {
-    if (!timeUp || asked.current) return;
-    asked.current = true;
-    const id = setTimeout(() => void onTimeUp(), 900);
-    return () => clearTimeout(id);
+    if (!timeUp) return;
+    const id = setInterval(() => void onTimeUp(), 1200);
+    return () => clearInterval(id);
   }, [timeUp, onTimeUp]);
 
   if (introLeft === null || introLeft > 0) {

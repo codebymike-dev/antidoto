@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { PlayerSnapshot } from "@/lib/live-protocol";
+import type { ChallengeSnapshot, PlayerSnapshot } from "@/lib/live-protocol";
 import { NICKNAME_MAX } from "@/lib/live-engine";
 import PolicyModal from "@/components/PolicyModal";
 import { LOGO_SRC } from "@/lib/theme";
@@ -11,7 +11,7 @@ interface Props {
   initialPin: string;
   policyText: string;
   termsText: string;
-  onJoined: (snapshot: PlayerSnapshot) => void;
+  onJoined: (snapshot: PlayerSnapshot | ChallengeSnapshot) => void;
 }
 
 export default function JoinForm({ initialPin, policyText, termsText, onJoined }: Props) {
