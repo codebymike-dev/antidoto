@@ -234,24 +234,3 @@ export async function markNotificationsRead() {
   await run("UPDATE admin_users SET notifications_read_at = datetime('now') WHERE id = ?", [user.id]);
   revalidatePath("/admin", "layout");
 }
-
-export async function saveLiveSession(formData: FormData) {
-  const user = await requireUser();
-  const missionId = String(formData.get("missionId") ?? "");
-
-  await run(
-    `INSERT INTO live_sessions (mission_id, host_user_id, connected, rounds_completed, scores_json, finished_at)
-     VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-    [
-      missionId,
-      user.id,
-      Number(formData.get("connected") ?? 0),
-      Number(formData.get("rounds") ?? 0),
-      String(formData.get("scores") ?? "{}"),
-    ]
-  );
-
-  const mission = await one<{ title: string }>("SELECT title FROM missions WHERE id = ?", [missionId]);
-  await audit(`Sesión en vivo de "${mission?.title ?? missionId}" finalizada.`, user);
-  revalidatePath("/admin");
-}
