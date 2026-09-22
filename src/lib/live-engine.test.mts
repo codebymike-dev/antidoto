@@ -254,6 +254,23 @@ describe("ranking", () => {
     assert.deepEqual(board.map((e) => e.rank), [1, 1]);
   });
 
+  test("la racha va en cada entrada y se corta al fallar o no responder", () => {
+    const answers = [
+      { nickname: "Ana", position: 1, points: 900, isCorrect: true, responseMs: 1 },
+      { nickname: "Ana", position: 2, points: 0, isCorrect: null, responseMs: 1 }, // encuesta: no cuenta
+      { nickname: "Ana", position: 3, points: 1000, isCorrect: true, responseMs: 1 },
+      { nickname: "Beto", position: 1, points: 900, isCorrect: true, responseMs: 1 },
+      // Beto no respondió la 3.
+      { nickname: "Caro", position: 1, points: 0, isCorrect: false, responseMs: 1 },
+      { nickname: "Caro", position: 3, points: 900, isCorrect: true, responseMs: 1 },
+    ];
+    const board = computeLeaderboard(players, answers, 3, [1, 3]);
+    const streak = Object.fromEntries(board.map((e) => [e.nickname, e.streak]));
+    assert.deepEqual(streak, { Ana: 2, Beto: 0, Caro: 1 });
+    // Hasta la 1, sin mirar la 3.
+    assert.equal(computeLeaderboard(players, answers, 1, [1, 3]).find((e) => e.nickname === "Beto")?.streak, 1);
+  });
+
   test("ignora respuestas de preguntas posteriores y de jugadores no listados", () => {
     const answers = [
       { nickname: "Ana", position: 3, points: 1_000, isCorrect: true, responseMs: 1 },

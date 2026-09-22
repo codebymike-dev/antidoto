@@ -261,6 +261,8 @@ export interface LeaderboardEntry {
   lastPoints: number;
   /** Puestos ganados (+) o perdidos (-) respecto de la pregunta anterior. */
   movement: number;
+  /** Aciertos seguidos al cierre de `upTo` (va en el ranking para no perderla al reconectar). */
+  streak: number;
 }
 
 function standings(players: RankPlayer[], answers: RankAnswer[], upTo: number) {
@@ -293,14 +295,33 @@ function standings(players: RankPlayer[], answers: RankAnswer[], upTo: number) {
   return { sorted, totals, ranks };
 }
 
-/** Ranking hasta la pregunta `upTo` (incluida). Excluir a los expulsados antes de llamar. */
-export function computeLeaderboard(players: RankPlayer[], answers: RankAnswer[], upTo: number): LeaderboardEntry[] {
+/**
+ * Ranking hasta la pregunta `upTo` (incluida). Excluir a los expulsados antes de llamar.
+ * `scoredPositions` son las posiciones con puntaje (quiz y V/F): no responder una de
+ * ellas también corta la racha.
+ */
+export function computeLeaderboard(
+  players: RankPlayer[],
+  answers: RankAnswer[],
+  upTo: number,
+  scoredPositions: number[] = []
+): LeaderboardEntry[] {
   const now = standings(players, answers, upTo);
   const before = upTo > 1 ? standings(players, answers, upTo - 1) : null;
+
+  const correctAt = new Map<string, Set<number>>();
+  for (const a of answers) {
+    if (!a.isCorrect) continue;
+    const set = correctAt.get(a.nickname) ?? new Set<number>();
+    set.add(a.position);
+    correctAt.set(a.nickname, set);
+  }
+  const history = scoredPositions.filter((p) => p <= upTo).sort((a, b) => a - b);
 
   return now.sorted.map((p) => {
     const t = now.totals.get(p.nickname)!;
     const rank = now.ranks.get(p.nickname)!;
+    const mine = correctAt.get(p.nickname);
     return {
       nickname: p.nickname,
       rank,
@@ -308,6 +329,7 @@ export function computeLeaderboard(players: RankPlayer[], answers: RankAnswer[],
       correct: t.correct,
       lastPoints: t.last,
       movement: before ? before.ranks.get(p.nickname)! - rank : 0,
+      streak: currentStreak(history.map((pos) => mine?.has(pos) ?? false)),
     };
   });
 }

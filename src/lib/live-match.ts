@@ -146,7 +146,9 @@ async function answerCounts(matchId: number, questionId: number) {
   return { answered: row?.answered ?? 0, players: row?.players ?? 0 };
 }
 
-async function standings(matchId: number, upTo: number): Promise<LeaderboardEntry[]> {
+const scoredPositions = (questions: FullQuestion[]) => questions.filter((q) => scored(q.type)).map((q) => q.position);
+
+async function standings(matchId: number, upTo: number, questions: FullQuestion[]): Promise<LeaderboardEntry[]> {
   const players = (await activeNicknames(matchId)).map((nickname, i) => ({ nickname, joinOrder: i }));
   const answers = await all<{ nickname: string; position: number; points: number; is_correct: number | null; response_ms: number }>(
     `SELECT p.nickname, q.position, a.points, a.is_correct, a.response_ms
@@ -165,11 +167,12 @@ async function standings(matchId: number, upTo: number): Promise<LeaderboardEntr
       isCorrect: a.is_correct === null ? null : a.is_correct === 1,
       responseMs: a.response_ms,
     })),
-    upTo
+    upTo,
+    scoredPositions(questions)
   );
 }
 
-async function buildReveal(match: MatchRow, q: FullQuestion): Promise<RevealData> {
+async function buildReveal(match: MatchRow, q: FullQuestion, questions: FullQuestion[]): Promise<RevealData> {
   const rows = await all<{ option_id: number | null; text: string | null; is_correct: number | null; response_ms: number }>(
     `SELECT a.option_id, a.text, a.is_correct, a.response_ms
      FROM live_answers a JOIN live_players p ON p.id = a.player_id
@@ -191,7 +194,7 @@ async function buildReveal(match: MatchRow, q: FullQuestion): Promise<RevealData
     distribution: stats.distribution,
     words: stats.words,
     answered: stats.answered,
-    entries: await standings(match.id, q.position),
+    entries: await standings(match.id, q.position, questions),
   };
 }
 
@@ -240,13 +243,13 @@ async function announce(match: MatchRow, prev: MatchState, next: MatchState, que
   }
 
   if (next.status === "reveal" && prev.status === "question" && q) {
-    await publishPublic(match.id, { name: "reveal", data: await buildReveal(match, q) });
+    await publishPublic(match.id, { name: "reveal", data: await buildReveal(match, q, questions) });
   }
   if (next.status === "leaderboard" && prev.status !== "leaderboard") {
-    await publishPublic(match.id, { name: "leaderboard", data: { position: next.currentPosition ?? 0, entries: await standings(match.id, next.currentPosition ?? 0) } });
+    await publishPublic(match.id, { name: "leaderboard", data: { position: next.currentPosition ?? 0, entries: await standings(match.id, next.currentPosition ?? 0, questions) } });
   }
   if (next.status === "finished" && prev.status !== "finished") {
-    await publishPublic(match.id, { name: "finished", data: { entries: await standings(match.id, next.currentPosition ?? 0) } });
+    await publishPublic(match.id, { name: "finished", data: { entries: await standings(match.id, next.currentPosition ?? 0, questions) } });
   }
 }
 
@@ -510,7 +513,7 @@ async function baseSnapshot(match: MatchRow, questions: FullQuestion[]): Promise
   const state = toState(match);
   const q = state.currentPosition ? questions[state.currentPosition - 1] : undefined;
   const revealed = state.status === "reveal" || state.status === "leaderboard" || (state.status === "finished" && !!q);
-  const reveal = revealed && q ? await buildReveal(match, q) : null;
+  const reveal = revealed && q ? await buildReveal(match, q, questions) : null;
   return {
     matchId: match.id,
     status: state.status,
@@ -519,7 +522,7 @@ async function baseSnapshot(match: MatchRow, questions: FullQuestion[]): Promise
     totalQuestions: questions.length,
     question: q && state.status !== "finished" ? publicQuestion(q, state, questions.length) : null,
     reveal,
-    entries: reveal?.entries ?? (state.status === "finished" ? await standings(match.id, 0) : []),
+    entries: reveal?.entries ?? (state.status === "finished" ? await standings(match.id, 0, questions) : []),
     serverNow: Date.now(),
   };
 }

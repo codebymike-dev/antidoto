@@ -1,11 +1,13 @@
-// Las 4 respuestas del juego (editor, proyector y celular). Salen de la paleta de
-// marca, y cada una lleva además una forma para no depender solo del color.
+// Las 4 respuestas del juego (editor, proyector y celular). Cuatro matices bien
+// distintos (se reconocen desde el fondo de una sala con proyector lavado), con el
+// cian de marca como uno de ellos. Cada una lleva además su forma, para no depender
+// solo del color.
 
 export const ANSWER_STYLES = [
-  { name: "triángulo", bg: "#3BC8F3", fg: "#0F181D" },
-  { name: "rombo", bg: "#0C5C7D", fg: "#FFFFFF" },
-  { name: "círculo", bg: "#80DCFF", fg: "#0F181D" },
-  { name: "cuadrado", bg: "#0F181D", fg: "#FFFFFF" },
+  { name: "triángulo", bg: "#F2545B", fg: "#FFFFFF" },
+  { name: "rombo", bg: "#1C99CA", fg: "#FFFFFF" },
+  { name: "círculo", bg: "#E8A33D", fg: "#0F181D" },
+  { name: "cuadrado", bg: "#2FA66A", fg: "#FFFFFF" },
 ] as const;
 
 const PATHS = [
