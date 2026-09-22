@@ -14,11 +14,20 @@ const TIMELINE = { bronze: 0.4, bronzeName: 1.2, silver: 2.0, silverName: 2.8, s
 type Step = keyof typeof TIMELINE;
 const END = TIMELINE.rest + 0.1;
 
+// Columnas por orden de llegada (2º a la izquierda, 1º al centro, 3º a la derecha). El
+// color, la altura y el número salen del puesto real: con empate, dos columnas comparten
+// medalla (1, 1, 3 o 1, 2, 2).
 const COLUMNS = [
-  { place: 2, height: "58%", color: "#C9D6DC", column: "silver", name: "silverName" },
-  { place: 1, height: "82%", color: "#E8A33D", column: "gold", name: "goldName" },
-  { place: 3, height: "42%", color: "#D98C5F", column: "bronze", name: "bronzeName" },
+  { place: 2, column: "silver", name: "silverName" },
+  { place: 1, column: "gold", name: "goldName" },
+  { place: 3, column: "bronze", name: "bronzeName" },
 ] as const;
+
+const MEDALS: Record<number, { height: string; color: string }> = {
+  1: { height: "82%", color: "#E8A33D" },
+  2: { height: "58%", color: "#C9D6DC" },
+  3: { height: "42%", color: "#D98C5F" },
+};
 
 export default function HostPodium({ entries, reportHref }: { entries: LeaderboardEntry[]; reportHref: string }) {
   const [elapsed, setElapsed] = useState(0);
@@ -81,12 +90,14 @@ export default function HostPodium({ entries, reportHref }: { entries: Leaderboa
           )}
           {COLUMNS.map((c) => {
             const e = entries[c.place - 1];
+            const rank = e?.rank ?? c.place;
+            const medal = MEDALS[rank] ?? MEDALS[3];
             const showColumn = seen(c.column);
             return (
               <div key={c.place} style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: 12, height: "100%", justifyContent: "flex-end" }}>
                 {e && seen(c.name) && (
                   <div className="live-pop" style={{ textAlign: "center" }}>
-                    <div style={{ fontWeight: 700, fontSize: c.place === 1 ? "clamp(22px, 2.6vw, 40px)" : "clamp(18px, 2vw, 30px)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div style={{ fontWeight: 700, fontSize: rank === 1 ? "clamp(22px, 2.6vw, 40px)" : "clamp(18px, 2vw, 30px)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {e.nickname}
                     </div>
                     <div style={{ ...calSans, color: game.muted, fontSize: "clamp(16px, 1.6vw, 24px)" }}>{e.score} pts</div>
@@ -95,9 +106,9 @@ export default function HostPodium({ entries, reportHref }: { entries: Leaderboa
                 <div
                   className={showColumn ? "live-grow" : undefined}
                   style={{
-                    height: c.height,
+                    height: medal.height,
                     visibility: showColumn ? "visible" : "hidden",
-                    background: c.color,
+                    background: medal.color,
                     borderRadius: "16px 16px 4px 4px",
                     display: "flex",
                     alignItems: "flex-start",
@@ -105,10 +116,10 @@ export default function HostPodium({ entries, reportHref }: { entries: Leaderboa
                     paddingTop: 16,
                     color: game.bg,
                     opacity: e ? 1 : 0.25,
-                    boxShadow: c.place === 1 && seen("goldName") ? "0 0 60px rgba(232,163,61,0.55)" : "none",
+                    boxShadow: rank === 1 && seen(c.name) ? "0 0 60px rgba(232,163,61,0.55)" : "none",
                   }}
                 >
-                  <span style={{ ...calSans, fontSize: "clamp(36px, 5vw, 72px)" }}>{c.place}</span>
+                  <span style={{ ...calSans, fontSize: "clamp(36px, 5vw, 72px)" }}>{rank}</span>
                 </div>
               </div>
             );
