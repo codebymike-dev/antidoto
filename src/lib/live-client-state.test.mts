@@ -31,7 +31,7 @@ const host = (): HostSnapshot => ({
   answered: 0,
 });
 
-const entry = (nickname: string) => ({ nickname, rank: 1, score: 0, correct: 0, lastPoints: 0, movement: 0, streak: 0 });
+const entry = (nickname: string) => ({ nickname, rank: 1, score: 0, correct: 0, lastPoints: 0, movement: 0, streak: 0, lostStreak: 0 });
 
 test("pregunta nueva conserva el ranking acumulado", () => {
   const s = applyPublicEvent({ ...host(), entries: [entry("Ana")] }, { name: "question", data: { ...question(2), serverNow: 0 } });

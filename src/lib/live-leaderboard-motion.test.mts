@@ -10,6 +10,7 @@ const e = (nickname: string, rank: number, score: number, lastPoints: number, mo
   lastPoints,
   movement,
   streak: 0,
+  lostStreak: 0,
 });
 
 test("reconstruye puntaje y puesto anteriores", () => {

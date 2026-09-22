@@ -15,7 +15,7 @@ const q = (type: PublicQuestion["type"]): PublicQuestion => ({
   pausedRemainingMs: null,
 });
 const reveal = (correct: number[]): RevealData => ({ position: 2, correct, distribution: [], words: [], answered: 0, entries: [] });
-const e = (nickname: string, rank: number, score: number, streak = 0) => ({ nickname, rank, score, correct: 0, lastPoints: 0, movement: 0, streak });
+const e = (nickname: string, rank: number, score: number, streak = 0) => ({ nickname, rank, score, correct: 0, lastPoints: 0, movement: 0, streak, lostStreak: 0 });
 
 test("resultado: correcto, incorrecto, sin respuesta y participación", () => {
   assert.equal(outcomeOf({ question: q("quiz"), reveal: reveal([0, 2]), myAnswer: { optionIndex: 2, text: null } }), "correct");
