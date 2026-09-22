@@ -453,7 +453,7 @@ export async function submitAnswer(
   const match = await getMatch(player.match_id);
   if (!match) return err("La partida ya no existe.", 404);
   const state = toState(match);
-  if (state.status !== "question" || state.currentPosition !== body.position) {
+  if (state.status !== "question" || state.currentPosition === null || state.currentPosition !== body.position) {
     return err("Esta pregunta ya no recibe respuestas.", 409);
   }
 
