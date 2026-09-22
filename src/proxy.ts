@@ -12,6 +12,7 @@ export function proxy(request: NextRequest) {
     style-src 'self' 'unsafe-inline';
     img-src 'self' data: blob: https://antidotocolombia.com;
     font-src 'self' https://cdn.jsdelivr.net;
+    connect-src 'self' https://*.ably.net wss://*.ably.net https://*.ably-realtime.com wss://*.ably-realtime.com;
     object-src 'none';
     base-uri 'self';
     form-action 'self';
