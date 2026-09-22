@@ -103,7 +103,7 @@ export default function LandingScreen({ policyText, termsText }: { policyText: s
               <input
                 id="code"
                 name="code"
-                placeholder="Ej. RP-ACME24"
+                placeholder="Ej. RP-ACME-7KX9QM"
                 style={{ ...fieldInput, textTransform: "uppercase" }}
                 required
               />

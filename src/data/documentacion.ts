@@ -240,7 +240,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         estado: "implementado",
         origen: "generateCode en src/lib/actions.ts, tabla activity_codes",
         notas:
-          "Formato PREFIJO-EMPRESANN; el sufijo aleatorio se reintenta hasta 10 veces si choca con el UNIQUE. El admin de empresa solo genera para la suya: el campo del formulario se ignora.",
+          "Formato PREFIJO-EMPRESA-XXXXXX: sufijo de 6 caracteres con crypto (sin 0/O ni 1/I), ~1.000 millones de combinaciones; antes eran 2 dígitos y bastaban 89 intentos. Se reintenta hasta 10 veces si choca con el UNIQUE. El admin de empresa solo genera para la suya: el campo del formulario se ignora.",
         relacionados: ["RF-004", "RF-302"],
       },
       {
@@ -574,7 +574,7 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
         id: "RNF-03",
         titulo: "Límite de intentos contra fuerza bruta",
         descripcion:
-          "El login admite 10 intentos por IP cada 5 minutos y 5 por usuario cada 15; los códigos de actividad y los PIN, 15 fallos por IP por minuto.",
+          "El login admite 10 intentos por IP cada 5 minutos y 5 por usuario desde una misma IP cada 15 (atado a la IP para que nadie pueda bloquear al superadmin desde fuera); los códigos de actividad y los PIN, 15 fallos por IP por minuto.",
         prioridad: "alta",
         estado: "implementado",
         origen: "src/lib/rate-limit.ts, tabla rate_limit_hits",

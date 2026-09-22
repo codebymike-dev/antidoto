@@ -95,9 +95,11 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
 
   if (!username || !password) return { error: "Ingresa tu usuario y contraseña." };
 
+  // El límite por usuario va atado a la IP: si contara global, cualquiera podría dejar
+  // al superadmin sin acceso con 5 intentos fallidos desde su casa.
   const ip = await clientIp();
   const ipOk = await rateLimit(`login:ip:${ip}`, 10, 300);
-  const userOk = await rateLimit(`login:user:${username.trim().toLowerCase()}`, 5, 900);
+  const userOk = await rateLimit(`login:user:${username.trim().toLowerCase()}:${ip}`, 5, 900);
   if (!ipOk || !userOk) {
     return { error: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo." };
   }
@@ -113,6 +115,15 @@ export async function logoutAction() {
 }
 
 // --- Configuración admin --------------------------------------------------
+
+// Sin 0/O ni 1/I, que se confunden al dictar o copiar el código. Son 32 símbolos:
+// byte % 32 no tiene sesgo. 6 caracteres dan ~1.000 millones de combinaciones, así
+// que conocer la misión y la empresa ya no basta para adivinar un código.
+const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+function randomCodeSuffix(length = 6): string {
+  return Array.from(randomBytes(length), (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
+}
 
 export async function generateCode(formData: FormData) {
   const user = await requireUser();
@@ -139,7 +150,7 @@ export async function generateCode(formData: FormData) {
   let code = "";
   // code es UNIQUE: si el sufijo aleatorio choca, se reintenta.
   for (let attempt = 0; attempt < 10 && !code; attempt++) {
-    const candidate = `${prefix}-${slug}${Math.floor(10 + Math.random() * 89)}`;
+    const candidate = `${prefix}-${slug}-${randomCodeSuffix()}`;
     const taken = await one("SELECT 1 FROM activity_codes WHERE code = ?", [candidate]);
     if (!taken) code = candidate;
   }
