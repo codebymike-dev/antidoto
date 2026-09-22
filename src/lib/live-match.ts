@@ -1,7 +1,7 @@
 import "server-only";
 import { after } from "next/server";
 import { randomBytes } from "node:crypto";
-import { all, one, run } from "./db";
+import { all, db, one, run } from "./db";
 import type { AdminUser } from "./auth";
 import { companyFilter } from "./scope";
 import { getGame } from "./live-games";
@@ -17,6 +17,7 @@ import {
   questionStats,
   scored,
   shouldEndQuestion,
+  type AnswerCheck,
   type EngineQuestion,
   type HostCommand,
   type LeaderboardEntry,
@@ -48,7 +49,7 @@ const err = (error: string, status = 400): { ok: false; error: string; status: n
 
 // --- Lectura ------------------------------------------------------------------
 
-interface MatchRow {
+export interface MatchRow {
   id: number;
   game_id: number;
   game_title: string;
@@ -168,7 +169,7 @@ async function answerCounts(matchId: number, questionId: number) {
 
 const scoredPositions = (questions: FullQuestion[]) => questions.filter((q) => scored(q.type)).map((q) => q.position);
 
-async function standings(matchId: number, upTo: number, questions: FullQuestion[]): Promise<LeaderboardEntry[]> {
+export async function standings(matchId: number, upTo: number, questions: FullQuestion[]): Promise<LeaderboardEntry[]> {
   const players = (await activeNicknames(matchId)).map((nickname, i) => ({ nickname, joinOrder: i }));
   const answers = await all<{ nickname: string; position: number; points: number; is_correct: number | null; response_ms: number }>(
     `SELECT p.nickname, q.position, a.points, a.is_correct, a.response_ms
@@ -341,33 +342,71 @@ async function maybeClose(match: MatchRow, now: number, questions?: FullQuestion
   if (shouldEndQuestion(state, now, answered, players)) await transition(match, "endQuestion", now, qs);
 }
 
+/** Pasa a 'finished' los desafíos vencidos: liberan su PIN y el reporte los muestra cerrados. */
+export async function closeExpiredChallenges(): Promise<void> {
+  await run(
+    `UPDATE live_matches
+     SET status = 'finished', finished_at = (SELECT closes_at FROM live_challenges WHERE match_id = live_matches.id)
+     WHERE status <> 'finished'
+       AND id IN (SELECT match_id FROM live_challenges WHERE closes_at <= datetime('now'))`
+  );
+}
+
 // --- Host --------------------------------------------------------------------------
 
-export async function createMatch(user: AdminUser, gameId: number): Promise<Result<{ matchId: number; pin: string }>> {
+/**
+ * Abre una partida en vivo o, con `closesAt` (UTC en formato de SQLite, ya validado),
+ * un desafío asíncrono que queda abierto hasta esa fecha.
+ */
+export async function createMatch(
+  user: AdminUser,
+  gameId: number,
+  closesAt: string | null = null
+): Promise<Result<{ matchId: number; pin: string }>> {
   const game = await getGame(gameId, user);
   if (!game) return err("El juego no existe o no tienes acceso.", 404);
   if (game.archived_at) return err("El juego está archivado.");
   const count = await one<{ n: number }>("SELECT COUNT(*) AS n FROM live_questions WHERE game_id = ?", [game.id]);
   if (!count?.n) return err("El juego no tiene preguntas.");
 
-  // Las partidas abandonadas liberan su PIN.
+  // Las partidas abandonadas y los desafíos vencidos liberan su PIN.
   await run(
     `UPDATE live_matches SET status = 'finished', finished_at = datetime('now')
-     WHERE status <> 'finished' AND created_at < datetime('now', ?)`,
+     WHERE status <> 'finished' AND created_at < datetime('now', ?)
+       AND id NOT IN (SELECT match_id FROM live_challenges)`,
     [`-${STALE_HOURS} hours`]
   );
+  await closeExpiredChallenges();
 
   // La partida queda a nombre de la empresa del juego, o de la del host si el juego es global.
   const companyId = user.role === "empresa" ? user.company_id : game.company_id;
   for (let attempt = 0; attempt < 10; attempt++) {
     const pin = generatePin();
     try {
-      const res = await run(
-        "INSERT INTO live_matches (game_id, host_user_id, company_id, pin) VALUES (?, ?, ?, ?)",
-        [game.id, user.id, companyId, pin]
-      );
-      const matchId = Number(res.lastInsertRowid);
-      await audit(`Partida en vivo de "${game.title}" creada (PIN ${pin}).`, user, companyId);
+      let matchId: number;
+      if (closesAt === null) {
+        const res = await run(
+          "INSERT INTO live_matches (game_id, host_user_id, company_id, pin) VALUES (?, ?, ?, ?)",
+          [game.id, user.id, companyId, pin]
+        );
+        matchId = Number(res.lastInsertRowid);
+      } else {
+        // Las dos filas juntas: un desafío a medias quedaría como una partida en vivo huérfana.
+        // started_at desde ya: el desafío está en juego apenas se crea.
+        const [res] = await db().batch(
+          [
+            {
+              sql: "INSERT INTO live_matches (game_id, host_user_id, company_id, pin, started_at) VALUES (?, ?, ?, ?, datetime('now'))",
+              args: [game.id, user.id, companyId, pin],
+            },
+            { sql: "INSERT INTO live_challenges (match_id, closes_at) VALUES (last_insert_rowid(), ?)", args: [closesAt] },
+          ],
+          "write"
+        );
+        matchId = Number(res.lastInsertRowid);
+      }
+      const kind = closesAt === null ? "Partida en vivo" : `Desafío (cierra ${closesAt} UTC)`;
+      await audit(`${kind} de "${game.title}" creado (PIN ${pin}).`, user, companyId);
       return { ok: true, matchId, pin };
     } catch (e) {
       // El PIN chocó con otra partida abierta: se prueba otro.
@@ -380,6 +419,7 @@ export async function createMatch(user: AdminUser, gameId: number): Promise<Resu
 export async function hostCommand(matchId: number, user: AdminUser, command: HostCommand): Promise<Result> {
   const match = await getMatchForHost(matchId, user);
   if (!match) return err("Partida no encontrada.", 404);
+  if (match.closes_at !== null) return err("Un desafío no tiene host: cada jugador avanza solo.", 409);
   return transition(match, command, Date.now());
 }
 
@@ -387,6 +427,7 @@ export async function hostCommand(matchId: number, user: AdminUser, command: Hos
 export async function hostTick(matchId: number, user: AdminUser): Promise<Result> {
   const match = await getMatchForHost(matchId, user);
   if (!match) return err("Partida no encontrada.", 404);
+  if (match.closes_at !== null) return { ok: true };
   await maybeClose(match, Date.now());
   return { ok: true };
 }
@@ -417,12 +458,16 @@ export async function joinMatch(input: {
   const pin = input.pin.replace(/\s/g, "");
   if (!/^\d{6}$/.test(pin)) return err("El PIN tiene 6 dígitos.");
 
-  const match = await one<{ id: number; join_locked: number }>(
-    `SELECT id, join_locked FROM live_matches
-     WHERE pin = ? AND status <> 'finished' AND created_at >= datetime('now', ?)`,
+  // Una partida en vivo vence a las STALE_HOURS; un desafío, en su fecha de cierre.
+  const match = await one<{ id: number; join_locked: number; challenge: number }>(
+    `SELECT m.id, m.join_locked, c.match_id IS NOT NULL AS challenge
+     FROM live_matches m LEFT JOIN live_challenges c ON c.match_id = m.id
+     WHERE m.pin = ? AND m.status <> 'finished'
+       AND (CASE WHEN c.match_id IS NULL THEN m.created_at >= datetime('now', ?) ELSE c.closes_at > datetime('now') END)`,
     [pin, `-${STALE_HOURS} hours`]
   );
   if (!match) return err("No hay una partida abierta con ese PIN.", 404);
+  const isChallenge = match.challenge === 1;
 
   // Recargar o volver a entrar con la misma cookie: se reusa el jugador.
   if (input.currentPlayerId) {
@@ -440,7 +485,7 @@ export async function joinMatch(input: {
   if (!nick.ok) return err(nick.error);
 
   const players = await one<{ n: number }>("SELECT COUNT(*) AS n FROM live_players WHERE match_id = ? AND kicked_at IS NULL", [match.id]);
-  if ((players?.n ?? 0) >= MAX_PLAYERS) return err("La partida está llena.", 403);
+  if ((players?.n ?? 0) >= (isChallenge ? MAX_CHALLENGE_PLAYERS : MAX_PLAYERS)) return err("La partida está llena.", 403);
 
   const playerId = randomBytes(16).toString("hex");
   try {
@@ -452,7 +497,8 @@ export async function joinMatch(input: {
     if (String(e).includes("UNIQUE")) return err("Ese apodo ya está en uso en esta partida.", 409);
     throw e;
   }
-  after(() => publishPlayers(match.id, match.join_locked === 1));
+  // El desafío no tiene pantalla de host que avisar.
+  if (!isChallenge) after(() => publishPlayers(match.id, match.join_locked === 1));
   return { ok: true, playerId, matchId: match.id, nickname: nick.nickname };
 }
 
@@ -467,30 +513,18 @@ async function getPlayer(playerId: string): Promise<PlayerRow | null> {
   return one<PlayerRow>("SELECT id, nickname, kicked_at, match_id FROM live_players WHERE id = ?", [playerId]);
 }
 
-export async function submitAnswer(
+/**
+ * Valida, puntúa y guarda una respuesta. Lo comparten la partida en vivo y el desafío:
+ * cambia solo de dónde sale el reloj (`state`).
+ */
+export async function scoreAndSave(
   playerId: string,
+  gameId: number,
+  state: MatchState,
+  q: FullQuestion,
   body: Record<string, unknown>,
   now: number
-): Promise<Result> {
-  const row = await one<MatchRow & { player_id: string; kicked_at: string | null }>(
-    `SELECT ${MATCH_COLUMNS}, p.id AS player_id, p.kicked_at
-     FROM live_players p JOIN ${MATCH_FROM} ON m.id = p.match_id
-     WHERE p.id = ?`,
-    [playerId]
-  );
-  if (!row) return err("No estás en ninguna partida.", 401);
-  if (row.kicked_at) return err("El host te sacó de esta partida.", 403);
-  const player = { id: row.player_id };
-  const match: MatchRow = row;
-  const state = toState(match);
-  if (state.status !== "question" || state.currentPosition === null || state.currentPosition !== body.position) {
-    return err("Esta pregunta ya no recibe respuestas.", 409);
-  }
-
-  const questions = await loadQuestions(match.game_id);
-  const q = questions[state.currentPosition - 1];
-  if (!q) return err("Pregunta no encontrada.", 404);
-
+): Promise<Result<{ check: Extract<AnswerCheck, { ok: true }> }>> {
   // Racha: preguntas con puntaje anteriores, en orden; no responder también la corta.
   const history = scored(q.type)
     ? (
@@ -499,7 +533,7 @@ export async function submitAnswer(
            LEFT JOIN live_answers a ON a.question_id = q.id AND a.player_id = ?
            WHERE q.game_id = ? AND q.type IN ('quiz', 'vf') AND q.position < ?
            ORDER BY q.position`,
-          [player.id, match.game_id, q.position]
+          [playerId, gameId, q.position]
         )
       ).map((r) => r.is_correct === 1)
     : [];
@@ -514,7 +548,7 @@ export async function submitAnswer(
       `INSERT INTO live_answers (player_id, question_id, option_id, text, is_correct, response_ms, points)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
-        player.id,
+        playerId,
         q.id,
         check.optionIndex === null ? null : q.optionIds[check.optionIndex],
         check.text,
@@ -527,6 +561,37 @@ export async function submitAnswer(
     if (String(e).includes("UNIQUE")) return err("Ya respondiste esta pregunta.", 409);
     throw e;
   }
+  return { ok: true, check };
+}
+
+export async function submitAnswer(
+  playerId: string,
+  body: Record<string, unknown>,
+  now: number
+): Promise<Result> {
+  const row = await one<MatchRow & { player_id: string; kicked_at: string | null }>(
+    `SELECT ${MATCH_COLUMNS}, p.id AS player_id, p.kicked_at
+     FROM live_players p JOIN live_matches m ON m.id = p.match_id JOIN live_games g ON g.id = m.game_id
+     LEFT JOIN live_challenges c ON c.match_id = m.id
+     WHERE p.id = ?`,
+    [playerId]
+  );
+  if (!row) return err("No estás en ninguna partida.", 401);
+  if (row.kicked_at) return err("El host te sacó de esta partida.", 403);
+  if (row.closes_at !== null) return err("Esta partida es un desafío.", 409);
+  const player = { id: row.player_id };
+  const match: MatchRow = row;
+  const state = toState(match);
+  if (state.status !== "question" || state.currentPosition === null || state.currentPosition !== body.position) {
+    return err("Esta pregunta ya no recibe respuestas.", 409);
+  }
+
+  const questions = await loadQuestions(match.game_id);
+  const q = questions[state.currentPosition - 1];
+  if (!q) return err("Pregunta no encontrada.", 404);
+
+  const saved = await scoreAndSave(player.id, match.game_id, state, q, body, now);
+  if (!saved.ok) return saved;
 
   // El jugador ya tiene su respuesta guardada: el contador del host y el cierre de la
   // pregunta (si respondieron todos) corren después de contestarle.
