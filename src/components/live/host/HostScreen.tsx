@@ -94,7 +94,9 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
   }, [state.status, state.question, offset, matchId]);
 
   useHostSound(state, offset);
-  const [soundReady, musicOn, effectsOn] = useSoundState().split("|").map((v) => v === "true");
+  const [readyRaw, musicRaw, effectsRaw, volumeRaw] = useSoundState().split("|");
+  const [soundReady, musicOn, effectsOn] = [readyRaw, musicRaw, effectsRaw].map((v) => v === "true");
+  const volume = Number(volumeRaw);
   const sound = liveSound();
 
   function toggleFullscreen() {
@@ -228,6 +230,19 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
               >
                 Música {musicOn ? "sí" : "no"}
               </button>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, color: game.muted, fontSize: 13, fontWeight: 600 }}>
+                Volumen
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={volume}
+                  onChange={(e) => sound.setPrefs({ volume: Number(e.target.value) })}
+                  aria-valuetext={`${Math.round(volume * 100)}%`}
+                  style={{ width: 96, accentColor: game.accent }}
+                />
+              </label>
               <button
                 type="button"
                 className="btn-live"
