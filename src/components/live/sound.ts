@@ -140,9 +140,27 @@ class LiveSound {
   // --- Efectos -------------------------------------------------------------------
 
   /** Un jugador entró al lobby. `n` sube el tono con cada uno (hasta la octava). */
-  pop(n = 0) {
+  pop(n = 0, delay = 0) {
     const f = SCALE[n % SCALE.length] * 2 * this.jitter();
-    this.tone(f, this.now(), 0.12, { gain: 0.25, slideTo: f * 1.5 });
+    this.tone(f, this.now() + delay, 0.12, { gain: 0.25, slideTo: f * 1.5 });
+  }
+
+  /**
+   * Nube de palabras: un pop por palabra, con el tono subiendo, y un ping más largo
+   * para la más votada, que aparece al final. Los tiempos coinciden con la animación.
+   */
+  wordCloud(count: number, start: number, step: number, topAt: number) {
+    const t = this.now();
+    for (let i = 0; i < count - 1; i++) {
+      // Reparte la subida en dos octavas, sean 3 palabras o 50.
+      const degree = Math.floor((i / Math.max(1, count - 2)) * (SCALE.length * 2 - 1));
+      const f = SCALE[degree % SCALE.length] * (degree >= SCALE.length ? 4 : 2) * this.jitter();
+      this.tone(f, t + start + i * step, 0.1, { gain: 0.18, slideTo: f * 1.4 });
+    }
+    if (count > 0) {
+      this.tone(1567.98, t + topAt, 0.9, { type: "triangle", gain: 0.22 });
+      this.tone(2093, t + topAt + 0.06, 0.7, { gain: 0.12 });
+    }
   }
 
   /** Llegó una respuesta. Con tope de uno cada 60 ms: 50 respuestas en un segundo no saturan. */
@@ -175,6 +193,15 @@ class LiveSound {
     const t = this.now();
     for (let i = 0; i < count; i++) {
       this.tone(500 + i * 90, t + (i * span) / count, 0.05, { type: "square", gain: 0.06 });
+    }
+  }
+
+  /** Puntos sumando en el ranking: tics suaves y rápidos que suben durante `dur` s. */
+  points(dur: number, delay = 0) {
+    const t = this.now() + delay;
+    const count = Math.max(1, Math.round(dur / 0.05));
+    for (let i = 0; i < count; i++) {
+      this.tone(900 + (i / count) * 900, t + i * 0.05, 0.03, { type: "triangle", gain: 0.05 });
     }
   }
 

@@ -364,10 +364,10 @@ function ResultView({ state, outcome }: { state: PlayerSnapshot; outcome: NonNul
   const me = standingOf(state.entries, state.nickname);
   const seed = `${state.nickname}:${state.reveal?.position}`;
   const look = {
-    correct: { bg: "#2FA66A", title: "¡Correcto!" },
-    incorrect: { bg: "#F2545B", title: "Incorrecto" },
+    correct: { bg: ANSWER_STYLES[3].bg, title: "¡Correcto!" },
+    incorrect: { bg: ANSWER_STYLES[0].bg, title: "Incorrecto" },
     noAnswer: { bg: game.surfaceStrong, title: "Se acabó el tiempo" },
-    participated: { bg: "#1C99CA", title: "¡Gracias por participar!" },
+    participated: { bg: ANSWER_STYLES[1].bg, title: "¡Gracias por participar!" },
   }[outcome];
 
   return (

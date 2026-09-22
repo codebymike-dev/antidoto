@@ -23,10 +23,12 @@ const COLUMNS = [
 export default function HostPodium({ entries, reportHref }: { entries: LeaderboardEntry[]; reportHref: string }) {
   const [elapsed, setElapsed] = useState(0);
   const [run, setRun] = useState(0);
+  const [skipped, setSkipped] = useState(false);
   const seen = (step: Step) => elapsed >= TIMELINE[step];
 
-  // Reloj de la coreografía; "Repetir" la reinicia.
+  // Reloj de la coreografía; "Repetir" la reinicia y "Saltar" lo detiene.
   useEffect(() => {
+    if (skipped) return;
     const t0 = performance.now();
     const id = setInterval(() => {
       const s = (performance.now() - t0) / 1000;
@@ -34,11 +36,11 @@ export default function HostPodium({ entries, reportHref }: { entries: Leaderboa
       if (s > END) clearInterval(id);
     }, 100);
     return () => clearInterval(id);
-  }, [run]);
+  }, [run, skipped]);
 
-  // Sonido y confeti en su momento exacto.
+  // Sonido y confeti en su momento exacto (al saltar se cancelan los pendientes).
   useEffect(() => {
-    if (entries.length === 0) return;
+    if (entries.length === 0 || skipped) return;
     const sound = liveSound();
     const timers = [
       setTimeout(() => sound.ready && sound.podiumStep(3), TIMELINE.bronze * 1000),
@@ -49,9 +51,17 @@ export default function HostPodium({ entries, reportHref }: { entries: Leaderboa
       setTimeout(() => burst(0.8), TIMELINE.goldName * 1000 + 1200),
     ];
     return () => timers.forEach(clearTimeout);
-  }, [run, entries.length]);
+  }, [run, entries.length, skipped]);
 
-  const skip = () => setElapsed(END + 1);
+  const skip = () => {
+    setSkipped(true);
+    setElapsed(END + 1);
+  };
+  const replay = () => {
+    setSkipped(false);
+    setElapsed(0);
+    setRun((r) => r + 1);
+  };
   const done = elapsed > END;
 
   return (
@@ -119,7 +129,7 @@ export default function HostPodium({ entries, reportHref }: { entries: Leaderboa
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
         {entries.length > 0 &&
           (done ? (
-            <button type="button" className="btn-live" style={liveGhostButton} onClick={() => setRun((r) => r + 1)}>
+            <button type="button" className="btn-live" style={liveGhostButton} onClick={replay}>
               Repetir animación
             </button>
           ) : (
@@ -145,7 +155,7 @@ function burst(x = 0.5) {
     spread: 100,
     startVelocity: 45,
     origin: { x, y: 0.55 },
-    colors: ANSWER_STYLES.map((s) => s.bg),
+    colors: ANSWER_STYLES.map((s) => s.bright),
     disableForReducedMotion: true,
   });
 }

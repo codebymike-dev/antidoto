@@ -6,7 +6,20 @@ import { calSans, game, liveButton, liveGhostButton } from "../game-theme";
 import { PromptCard } from "./HostQuestion";
 
 /** Segundo en que se marca la correcta: coincide con el acorde de useHostSound. */
-const REVEAL_AT = 1.1;
+export const REVEAL_AT = 1.1;
+
+/**
+ * Tiempos de la nube (segundos), compartidos con su sonido: las palabras aparecen de la
+ * menos a la más votada, y la ganadora llega sola al final, tras una pausa.
+ */
+export function wordCloudTiming(count: number) {
+  const start = 0.5;
+  const step = Math.min(0.12, 2.4 / Math.max(1, count - 1));
+  const topAt = start + Math.max(0, count - 1) * step + 0.5;
+  /** `i` es el índice en `words`, ordenadas de más a menos votos. */
+  const delayOf = (i: number) => (i === 0 ? topAt : start + (count - 1 - i) * step);
+  return { start, step, topAt, delayOf };
+}
 
 interface Props {
   question: PublicQuestion;
@@ -83,15 +96,22 @@ export default function HostReveal({ question, reveal, isLast, busy, onLeaderboa
           {reveal.answered === 1 ? "1 respuesta" : `${reveal.answered} respuestas`}
           {question.type === "encuesta" && " · encuesta, sin respuesta correcta"}
         </span>
+        {/* El ranking es el paso principal: ahí están las celebraciones. Saltarlo es la excepción. */}
         <div style={{ display: "flex", gap: 12 }}>
-          {!isLast && (
-            <button type="button" className="btn-live" style={liveGhostButton} onClick={onLeaderboard} disabled={busy}>
-              Ver ranking
+          {isLast ? (
+            <button type="button" className="btn-live" style={liveButton} onClick={onNext} disabled={busy}>
+              Ver podio
             </button>
+          ) : (
+            <>
+              <button type="button" className="btn-live" style={liveGhostButton} onClick={onNext} disabled={busy}>
+                Saltar a la siguiente
+              </button>
+              <button type="button" className="btn-live" style={liveButton} onClick={onLeaderboard} disabled={busy}>
+                Ver ranking
+              </button>
+            </>
           )}
-          <button type="button" className="btn-live" style={liveButton} onClick={onNext} disabled={busy}>
-            {isLast ? "Ver podio" : "Siguiente pregunta"}
-          </button>
         </div>
       </div>
     </div>
@@ -103,6 +123,7 @@ function WordCloud({ words }: { words: RevealData["words"] }) {
     return <p style={{ textAlign: "center", color: game.muted, fontSize: 22 }}>Nadie escribió una palabra.</p>;
   }
   const max = words[0].count;
+  const { delayOf } = wordCloudTiming(words.length);
   return (
     <ul
       aria-label="Nube de palabras"
@@ -116,8 +137,8 @@ function WordCloud({ words }: { words: RevealData["words"] }) {
           style={{
             ...calSans,
             fontSize: `clamp(18px, ${1.4 + (w.count / max) * 4}vw, ${24 + (w.count / max) * 72}px)`,
-            color: ANSWER_STYLES[i % 4].bg,
-            animationDelay: `${i * 60}ms`,
+            color: ANSWER_STYLES[i % 4].bright,
+            animationDelay: `${delayOf(i)}s`,
             lineHeight: 1.1,
           }}
         >

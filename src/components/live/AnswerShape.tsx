@@ -2,12 +2,16 @@
 // distintos (se reconocen desde el fondo de una sala con proyector lavado), con el
 // cian de marca como uno de ellos. Cada una lleva además su forma, para no depender
 // solo del color.
+//
+// `bg` es el fondo de los botones: oscurecido hasta contraste 4.5:1 con su texto,
+// porque el proyector lava los colores. `bright` es el mismo matiz más luminoso, para
+// usar como texto o decoración sobre el fondo oscuro del juego.
 
 export const ANSWER_STYLES = [
-  { name: "triángulo", bg: "#F2545B", fg: "#FFFFFF" },
-  { name: "rombo", bg: "#1C99CA", fg: "#FFFFFF" },
-  { name: "círculo", bg: "#E8A33D", fg: "#0F181D" },
-  { name: "cuadrado", bg: "#2FA66A", fg: "#FFFFFF" },
+  { name: "triángulo", bg: "#C94950", fg: "#FFFFFF", bright: "#F2545B" },
+  { name: "rombo", bg: "#197DA4", fg: "#FFFFFF", bright: "#3BC8F3" },
+  { name: "círculo", bg: "#E8A33D", fg: "#0F181D", bright: "#E8A33D" },
+  { name: "cuadrado", bg: "#278458", fg: "#FFFFFF", bright: "#2FA66A" },
 ] as const;
 
 const PATHS = [

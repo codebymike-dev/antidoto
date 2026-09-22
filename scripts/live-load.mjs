@@ -6,7 +6,7 @@
 //
 // Solo contra la base local (turso dev) y `npm run dev`: crea una sesión temporal del
 // primer superadmin y la borra al terminar, junto con la partida de prueba.
-// Consume mensajes reales de Ably: una corrida de 100 jugadores usa ~3.000.
+// Consume mensajes reales de Ably: una corrida de 100 jugadores usa ~1.300 (plan gratis: 6 M/mes).
 
 import { createHash, randomBytes } from "node:crypto";
 import * as Ably from "ably";
@@ -41,7 +41,8 @@ function realtime(cookie, query = "") {
   return new Ably.Realtime({
     authCallback: async (_p, cb) => {
       const r = await call(`/api/live/token${query}`, { cookie });
-      r.status === 200 ? cb(null, r.data) : cb(new Error(`token ${r.status}`), null);
+      if (r.status === 200) cb(null, r.data);
+      else cb(new Error(`token ${r.status}`), null);
     },
   });
 }

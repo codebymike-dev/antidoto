@@ -3,6 +3,11 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import type { HostSnapshot } from "@/lib/live-protocol";
 import { liveSound } from "../sound";
+import { REVEAL_AT, wordCloudTiming } from "./HostReveal";
+
+/** Pops de entrada por foto de estado y separación entre ellos (s). */
+const MAX_POPS = 6;
+const POP_GAP = 0.07;
 
 /** Estado del motor de audio (desbloqueado y preferencias) para los controles del host. */
 export function useSoundState() {
@@ -48,16 +53,25 @@ export function useHostSound(state: HostSnapshot, offsetMs: number) {
 
     if (!before) return;
 
-    // Jugadores que entran: un pop por cada uno, con el tono subiendo.
+    // Jugadores que entran: un pop por cada uno, con el tono subiendo. La foto llega cada
+    // 2 s y puede traer varios juntos: se escalonan y se limitan para no saturar.
     if (state.status === "lobby" && state.nicknames.length > before.nicknames.length) {
-      for (let i = before.nicknames.length; i < state.nicknames.length; i++) sound.pop(i);
+      const first = Math.max(before.nicknames.length, state.nicknames.length - MAX_POPS);
+      for (let i = first; i < state.nicknames.length; i++) sound.pop(i, (i - first) * POP_GAP);
     }
     if (questionChanged) sound.whoosh();
     if (state.status === "question" && before.status === "question" && state.answered > before.answered) sound.answer();
-    if (state.status === "reveal" && before.status === "question") {
+    if (state.status === "reveal" && before.status === "question" && q) {
       sound.gong();
-      sound.risingTicks();
-      sound.reveal(1.1);
+      if (q.type === "nube") {
+        const count = state.reveal?.words.length ?? 0;
+        const { start, step, topAt } = wordCloudTiming(count);
+        sound.wordCloud(count, start, step, topAt);
+      } else {
+        sound.risingTicks();
+        // Solo quiz y VF tienen correcta; la encuesta no la "revela".
+        if (q.type === "quiz" || q.type === "vf") sound.reveal(REVEAL_AT);
+      }
     }
     if (state.status === "leaderboard" && before.status !== "leaderboard") sound.whoosh();
     // El podio suena desde HostPodium, sincronizado con su coreografía (y al repetirla).

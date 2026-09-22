@@ -4,7 +4,8 @@ Referencia para el pulido visual, sonoro y de animación del módulo en vivo de 
 (pantallas del proyector y del celular). Se usa **después** de que todas las funciones
 estén programadas: aquí no hay lógica nueva, solo cómo debe verse, sonar y sentirse.
 
-Investigado el 2026-09-22. Fuentes al final. Cada dato indica de dónde sale:
+Investigado el 2026-09-22 y contrastado con la implementación el mismo día (el estado
+real está en las secciones 8 y 9). Fuentes al final. Cada dato indica de dónde sale:
 
 - **[código]**: extraído de los bundles públicos de Kahoot (`kahoot.it`, app del jugador, y
   `play.kahoot.it`, app del host/proyector). Es lo que el producto hace hoy, no una opinión.
@@ -100,17 +101,22 @@ celular, los botones muestran solo la forma, sin texto. [oficial]
   azul oscuro `#0C5C7D`, con formas geométricas grandes y translúcidas flotando lento
   (como los fondos de Kahoot). El proyecto ya tiene "blobs" animados en la landing que
   pueden reutilizarse.
-- **Decisión abierta: paleta de respuestas.** Hoy `AnswerShape.tsx` usa 4 tonos de la
-  marca (`#3BC8F3`, `#0C5C7D`, `#80DCFF`, `#0F181D`), que se distinguen por luminosidad y
-  forma. Kahoot usa **4 tonos de matiz muy distinto** (rojo, azul, amarillo, verde), y esa
-  diferencia es gran parte de la sensación "Kahoot": se reconocen de un vistazo desde el
-  fondo de una sala con proyector lavado. Opciones:
-  1. Mantener la paleta de marca (más sobria, más "Antídoto", menos lúdica). Ojo:
-     `#80DCFF` y `#3BC8F3` pueden confundirse en un proyector con poco contraste.
-  2. **(Recomendada)** 4 matices distintos armonizados con la marca, conservando el cian
-     `#3BC8F3` como uno de ellos. Por ejemplo: coral, ámbar, verde y cian, con saturación
-     y luminosidad parecidas. Más energía de juego sin romper la identidad.
-  Es decisión del usuario; no cambiar sin confirmar.
+- **Paleta de respuestas (decidida).** Se descartaron los 4 tonos de marca (todos azules,
+  se confundían en un proyector lavado) y se eligieron **4 matices distintos**, como
+  Kahoot. Viven en `src/components/live/AnswerShape.tsx`, en dos variantes:
+
+  | Forma | `bg` (botón, texto encima) | `bright` (sobre fondo oscuro) |
+  |---|---|---|
+  | Triángulo | coral `#C94950`, texto blanco | `#F2545B` |
+  | Rombo | azul `#197DA4`, texto blanco | cian de marca `#3BC8F3` |
+  | Círculo | ámbar `#E8A33D`, texto `#0F181D` | `#E8A33D` |
+  | Cuadrado | verde `#278458`, texto blanco | `#2FA66A` |
+
+  Los `bg` salieron de mezclar el tono vivo con el casi negro de marca hasta contraste
+  4.5:1 con su texto (el proyector lava los colores; Kahoot también usa tonos oscuros).
+  Los `bright` tienen buen contraste sobre `#0F181D`: se usan como texto (nube de
+  palabras) y en el confeti. Verdadero/Falso usa triángulo y rombo en ese orden; se
+  decidió mantenerlo así aunque "Verdadero" quede coral.
 - Confeti y celebraciones usan **los 4 colores de respuesta** (Kahoot hace exactamente eso).
 
 ---
@@ -314,7 +320,8 @@ adelante solo su puntaje. [oficial]
 3. **Intro de la pregunta**: la pregunta sola, grande, con el tipo arriba ("Quiz",
    "Verdadero o falso", "Encuesta", "Nube de palabras", "Puntos dobles") y una barra de
    carga que da tiempo de leer (~5 s) antes de mostrar las opciones. [código: existe
-   `QuestionIntroLoadingBar`; duración observada, no extraída]
+   `QuestionIntroLoadingBar`; duración observada, no extraída]. Antídoto usa 4 s
+   (`QUESTION_INTRO_MS`), con la cuenta 3-2-1 al final.
 4. **Pregunta activa**: pregunta arriba, imagen al centro, timer a la izquierda, contador
    "N respuestas" a la derecha, y las 4 opciones abajo en grilla 2x2 con forma + texto.
    Música por duración. Un sonido por cada respuesta que llega.
@@ -431,62 +438,79 @@ Kahoot los muestra como *toast*, sin sacar al jugador de la pantalla.
 
 ---
 
-## 8. Lo que implica para el motor y el protocolo de Antídoto
+## 8. Estado de la implementación en Antídoto
 
-Estado actual (`src/lib/live-engine.ts`, `src/lib/live-protocol.ts`) comparado con lo que
-la UX necesita:
+Contrastado con el código el 2026-09-22, con todas las fases del módulo terminadas.
 
-| Necesidad de UX | Estado | Nota |
+**Motor y protocolo** (`src/lib/live-engine.ts`, `src/lib/live-protocol.ts`):
+
+| Necesidad de UX | Estado | Dónde |
 |---|---|---|
-| Puntaje por velocidad 500 a 1000 | Ya existe | Fórmula idéntica a la de Kahoot |
-| Kahoot da 1000 fijos si responde en menos de 0.5 s | No existe | Opcional; es un detalle menor |
-| Bono de racha +100 por nivel, tope 500 | Ya existe | Coincide con Kahoot |
-| "+950" en el celular | Ya existe | `lastPoints` en `LeaderboardEntry` |
-| Puesto y "a X puntos de {rival}" | Derivable | Con la lista completa del evento `leaderboard`, el jugador se busca por apodo y mira la entrada de arriba. Confirmar que el evento lleve **todas** las entradas, no solo el top 5 |
-| "Subió N puestos" | Ya existe | `movement` |
-| Badge de racha y mensajes de racha grupal | **Falta** | Agregar `streak` a `LeaderboardEntry`. El cliente podría calcularlo, pero se pierde al reconectar |
-| ¿Acerté? | Derivable | Evento `reveal.correct` contra la opción que eligió el jugador (guardarla en el cliente) |
-| Sonido por cada respuesta en el proyector | Casi | El evento `answers` ya trae el conteo; sonar una vez por incremento con throttle |
-| Gong al terminar | Ya existe | Llegada de `reveal` (o del corte del servidor) |
-| Música por duración | Depende | Limitar `timeLimit` a una lista fija facilita tener una pista por duración |
-| Pausa dramática antes de revelar | Lado cliente | Retrasar la animación en el cliente, no el evento |
+| Puntaje por velocidad 500 a 1000 | Hecho | `basePoints`, fórmula idéntica a Kahoot |
+| Bono de racha +100 por nivel, tope 500 | Hecho | `streakBonus` |
+| Racha en el ranking | Hecho | `streak` en `LeaderboardEntry` |
+| "+950", puesto y "A X puntos de {rival}" | Hecho | El reveal trae el ranking completo (todos los jugadores); `standingOf` en `live-player-view.ts` |
+| "Subió N puestos" | Hecho | `movement` |
+| ¿Acerté? | Hecho | `outcomeOf`: `reveal.correct` contra la opción guardada |
+| Tiempos fijos por pregunta | Hecho | `TIME_LIMITS`: 5, 10, 20, 30, 60, 90, 120, 240 s |
+| Ranking animado (antes y después) | Hecho | `leaderboardMotion` reconstruye el antes con `score - lastPoints` y `rank + movement`, sin datos extra |
+| 1000 fijos si responde en menos de 0.5 s | **Pendiente** | Opcional; detalle menor |
+| Mensajes de "racha perdida" en grupo | **Pendiente** | Necesita la racha anterior en `LeaderboardEntry` |
+
+**Sonido** (`src/components/live/sound.ts`, sintetizado con Web Audio, solo en el proyector):
+lobby a 120 BPM, música de pregunta que se tensa en los últimos 5 s, pops de entrada
+escalonados (máximo 6 por foto), tic por respuesta (60 ms), pitidos 3-2-1, gong, tics
+ascendentes en las barras, acorde de la correcta (solo quiz y VF), pops ascendentes y
+ping en la nube, conteo de puntos y whoosh en el ranking, pasos y fanfarria en el podio.
+
+**Diferencias deliberadas con Kahoot**:
+- Podio más corto (~6 s en vez de ~17 s) y el foco de luz se reemplazó por el texto
+  "Y el primer lugar es…".
+- La música de pregunta es una sola pista sintetizada con capas, no una pista compuesta
+  por cada duración.
+- La intro de la pregunta dura 4 s en vez de ~5 s.
+
+**Riesgo sin verificar**: los graves del gong y del pulso de la pregunta (98 a 110 Hz)
+pueden no oírse en parlantes de notebook o proyector. Probar con los parlantes reales y,
+si hace falta, subirlos una octava o sumarles armónicos.
 
 ---
 
-## 9. Checklist de implementación (para cuando las funciones estén listas)
+## 9. Checklist de implementación
 
-**Sonido (primero, es lo que más rinde)**
-- [ ] Módulo de audio único para el proyector (Web Audio o Howler), con desbloqueo en el
-      primer clic del host y controles música/efectos/volumen.
-- [ ] Música de lobby en loop.
-- [ ] Música de pregunta con tensión creciente hacia el final.
-- [ ] Pop al entrar cada jugador; tick por cada respuesta (throttle 60 ms).
-- [ ] Cuenta regresiva 3-2-1 con whoosh; gong de fin.
-- [ ] Tick de tono ascendente en barras; sonido de reveal.
-- [ ] Conteo de puntos y whoosh en el marcador.
-- [ ] Pista de podio y fanfarria del ganador.
-- [ ] Vibración en el celular al responder, acertar y fallar.
+**Sonido**
+- [x] Módulo de audio único para el proyector, desbloqueo en el primer clic, música y
+      efectos por separado.
+- [ ] Control de volumen en pantalla (la preferencia existe, falta el control).
+- [x] Música de lobby en loop.
+- [x] Música de pregunta con tensión creciente hacia el final.
+- [x] Pop al entrar cada jugador; tick por cada respuesta (throttle 60 ms).
+- [x] Cuenta regresiva 3-2-1; gong de fin.
+- [x] Tick de tono ascendente en barras; sonido de reveal según el tipo de pregunta.
+- [x] Conteo de puntos y whoosh en el marcador.
+- [x] Fanfarria del ganador (sin pista de música de podio).
+- [x] Vibración en el celular al responder, acertar y fallar.
 
 **Visual**
-- [ ] Decidir paleta de respuestas (2.5).
-- [ ] Fondo de juego oscuro de marca con formas geométricas animadas.
-- [ ] Cal Sans para números y gritos.
+- [x] Paleta de respuestas (2.5), con contraste 4.5:1.
+- [x] Fondo de juego oscuro de marca con formas geométricas animadas.
+- [x] Cal Sans para números y gritos.
 - [ ] Modo alto contraste para proyector.
 
 **Movimiento**
-- [ ] Tokens de easing con overshoot y duraciones (entradas 200 a 500 ms).
-- [ ] Barras de resultado animadas; reordenamiento animado del marcador.
-- [ ] Coreografía del podio con la línea de tiempo de 4.3, foco y confeti.
-- [ ] Shake en error, pop en acierto.
-- [ ] Todo respetando `prefers-reduced-motion`.
+- [x] Easing con overshoot (entradas de 350 a 800 ms).
+- [x] Barras de resultado animadas; reordenamiento animado del marcador con conteo.
+- [x] Coreografía del podio con confeti, "Saltar" y "Repetir".
+- [x] Shake en error, pop en acierto.
+- [x] Todo respetando `prefers-reduced-motion`.
+- [ ] Respuesta inmediata al tocar en el celular (hoy la forma elegida aparece recién
+      cuando responde el servidor).
+- [ ] Empates en el podio: la columna muestra el puesto fijo (1, 2, 3), no el `rank`.
+- [ ] La música de pregunta ya suena durante la intro de 4 s.
 
 **Copy**
-- [ ] Textos de resultado, ánimo, celebración y titulares finales con variantes al azar.
-- [ ] Mensaje "a X puntos de {rival}".
-
-**Protocolo**
-- [ ] `streak` en `LeaderboardEntry`.
-- [ ] Confirmar que `leaderboard` lleve todas las entradas.
+- [x] Textos de resultado, ánimo, celebración y titulares finales con variantes.
+- [x] Mensaje "A X puntos de {rival}".
 
 ---
 

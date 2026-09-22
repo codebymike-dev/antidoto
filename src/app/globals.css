@@ -455,4 +455,10 @@ button {
     animation: none;
     opacity: 0.4;
   }
+
+  /* Ranking: las filas saltan a su puesto sin deslizarse. Las transiciones van inline,
+     por eso el !important. */
+  .live-motion {
+    transition: none !important;
+  }
 }
