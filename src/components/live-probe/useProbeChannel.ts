@@ -25,18 +25,21 @@ export function useProbeChannel({ onMessage, enterPresence, watchPresence }: Opt
     const realtime = new Ably.Realtime({ authUrl: "/api/live/token", authMethod: "GET" });
     const channel = realtime.channels.get(PROBE_CHANNEL);
 
+    // Al desmontar, close() rechaza lo que siga pendiente (attach, enter): no es un error.
+    const ignoreClosed = () => {};
+
     realtime.connection.on((change) => setState(change.current));
-    void channel.subscribe((msg) => handleMessage(msg));
+    channel.subscribe((msg) => handleMessage(msg)).catch(ignoreClosed);
 
     async function refreshPresence() {
       const members = await channel.presence.get();
       setPresent(members.filter((m) => m.clientId.startsWith("anon:")).length);
     }
     if (watchPresence) {
-      void channel.presence.subscribe(() => void refreshPresence());
-      void refreshPresence();
+      channel.presence.subscribe(() => void refreshPresence().catch(ignoreClosed)).catch(ignoreClosed);
+      refreshPresence().catch(ignoreClosed);
     }
-    if (nickname) void channel.presence.enter({ nickname });
+    if (nickname) channel.presence.enter({ nickname }).catch(ignoreClosed);
 
     return () => realtime.close();
   }, [nickname, watchPresence]);
