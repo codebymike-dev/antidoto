@@ -73,7 +73,7 @@ export default async function DetallePage({
           <p style={{ fontSize: 14, color: colors.muted, margin: 0, maxWidth: 520 }}>{mission.description}</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <
+          <a
             href={`/admin/actividades/${id}/export?${exportQuery}`}
             className="btn-secondary"
             style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
