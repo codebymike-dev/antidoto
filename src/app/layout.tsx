@@ -22,6 +22,16 @@ export const metadata: Metadata = {
     template: "%s · Antídoto",
   },
   description: SITE_DESCRIPTION,
+  keywords: ["misiones interactivas", "trivia en equipo", "dinámicas para equipos", "Antídoto"],
+  authors: [{ name: "Antídoto", url: "https://antidotocolombia.com" }],
+  creator: "Antídoto",
+  publisher: "Antídoto",
+  category: "entertainment",
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
   robots: {
     index: true,
     follow: true,

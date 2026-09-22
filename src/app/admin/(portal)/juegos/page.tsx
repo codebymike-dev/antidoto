@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { listGames } from "@/lib/live-games";
-import { archiveGame, createGame, duplicateGame, restoreGame } from "@/lib/live-games-actions";
+import { archiveGame, createGame, duplicateGame, launchMatch, restoreGame } from "@/lib/live-games-actions";
 import { canEditGame } from "@/lib/scope";
 import { colors, calSans } from "@/lib/theme";
 import { card, filledButton, tabButton, tabButtonActive } from "@/lib/styles";
@@ -12,10 +12,10 @@ export const dynamic = "force-dynamic";
 export default async function JuegosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; archivados?: string }>;
+  searchParams: Promise<{ q?: string; archivados?: string; error?: string }>;
 }) {
   const user = (await currentUser())!;
-  const { q = "", archivados } = await searchParams;
+  const { q = "", archivados, error } = await searchParams;
   const archived = archivados === "1";
   const games = await listGames(user, archived, q);
 
@@ -43,6 +43,12 @@ export default async function JuegosPage({
           </button>
         </form>
       </div>
+
+      {error && (
+        <p role="alert" style={{ ...card, padding: "12px 16px", margin: "0 0 16px 0", color: colors.danger, fontSize: 13.5, boxShadow: "none", background: "#FCE4E1" }}>
+          {error}
+        </p>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 20 }}>
         <form style={{ flex: "1 1 240px", maxWidth: 320 }}>
@@ -190,6 +196,14 @@ export default async function JuegosPage({
                   <ArrowRightIcon />
                 </Link>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {!archived && g.questions > 0 && (
+                    <form action={launchMatch}>
+                      <input type="hidden" name="id" value={g.id} />
+                      <button type="submit" className="btn-filled" style={{ ...filledButton, height: 30, padding: "0 12px", fontSize: 12.5 }}>
+                        ▸ Jugar
+                      </button>
+                    </form>
+                  )}
                   {editable && (
                     <form action={archived ? restoreGame : archiveGame}>
                       <input type="hidden" name="id" value={g.id} />

@@ -6,6 +6,7 @@ import type { Transaction } from "@libsql/client/web";
 import { db, one } from "./db";
 import { audit, requireUser } from "./admin-guard";
 import { getGame, getGameDraft } from "./live-games";
+import { createMatch } from "./live-match";
 import { parseGameDraft, type DraftErrors, type DraftQuestion } from "./live-validation";
 
 export type SaveGameResult =
@@ -132,4 +133,12 @@ export async function archiveGame(formData: FormData) {
 
 export async function restoreGame(formData: FormData) {
   await setArchived(formData, false);
+}
+
+/** Abre una partida del juego y lleva al host a la pantalla del proyector. */
+export async function launchMatch(formData: FormData) {
+  const user = await requireUser();
+  const res = await createMatch(user, Number(formData.get("id")));
+  if (!res.ok) redirect(`/admin/juegos?error=${encodeURIComponent(res.error)}`);
+  redirect(`/admin/vivo/${res.matchId}`);
 }

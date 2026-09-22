@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { colors } from "@/lib/theme";
 
+export const alt = "Antídoto · Misiones interactivas para tu equipo";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
