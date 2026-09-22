@@ -4,21 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions";
 import { colors, LOGO_SRC } from "@/lib/theme";
-import { GridIcon, GearIcon, LogoutIcon, PlayIcon } from "@/components/icons";
+import { DocIcon, GridIcon, GearIcon, LogoutIcon, PlayIcon } from "@/components/icons";
 import NotificationsBell from "./NotificationsBell";
 
 interface Props {
   roleTitle: string;
   roleSubtitle: string;
+  /** La documentación de ingeniería solo la ve el superadmin. */
+  showDocs: boolean;
   notifications: { id: number; text: string; time: string; read: boolean }[];
   children: React.ReactNode;
 }
 
-export default function AdminShell({ roleTitle, roleSubtitle, notifications, children }: Props) {
+export default function AdminShell({ roleTitle, roleSubtitle, showDocs, notifications, children }: Props) {
   const pathname = usePathname();
   const navConfigOn = pathname.startsWith("/admin/config");
   const navGamesOn = pathname.startsWith("/admin/juegos");
-  const navActivitiesOn = !navConfigOn && !navGamesOn;
+  const navDocsOn = pathname.startsWith("/admin/docs");
+  const navActivitiesOn = !navConfigOn && !navGamesOn && !navDocsOn;
   const roleInitial = roleSubtitle === "Acceso total" ? "S" : roleSubtitle.charAt(0).toUpperCase();
 
   function navStyle(active: boolean) {
@@ -135,6 +138,16 @@ export default function AdminShell({ roleTitle, roleSubtitle, notifications, chi
             <GearIcon />
             Configuración
           </Link>
+          {showDocs && (
+            <Link
+              href="/admin/docs"
+              className={navDocsOn ? "btn-navlink-active" : "btn-navlink"}
+              style={navStyle(navDocsOn)}
+            >
+              <DocIcon />
+              Documentación
+            </Link>
+          )}
         </div>
 
         <div style={{ flex: 1 }} />

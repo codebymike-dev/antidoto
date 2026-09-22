@@ -45,8 +45,8 @@ export default function HostReveal({ question, reveal, isLast, busy, onLeaderboa
                 <span style={{ ...calSans, textAlign: "center", fontSize: "clamp(26px, 3vw, 44px)" }}>{count}</span>
                 <div
                   style={{
-                    height: `${Math.max(4, (count / max) * 100)}%`,
-                    maxHeight: "70%",
+                    // Hasta el 70% de la columna: el resto es para el número y la etiqueta.
+                    height: `${Math.max(4, (count / max) * 70)}%`,
                     minHeight: 12,
                     background: style.bg,
                     borderRadius: "12px 12px 4px 4px",

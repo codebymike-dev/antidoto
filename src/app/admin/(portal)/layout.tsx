@@ -21,6 +21,7 @@ export default async function PortalLayout({ children }: { children: React.React
     <AdminShell
       roleTitle={user.role === "empresa" ? "Admin de empresa" : "Superadmin"}
       roleSubtitle={user.role === "empresa" ? user.company_name ?? "" : "Acceso total"}
+      showDocs={user.role === "super"}
       notifications={notifications}
     >
       {children}

@@ -1,5 +1,5 @@
 import "server-only";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { run } from "./db";
 import { currentUser, type AdminUser } from "./auth";
 
@@ -9,6 +9,13 @@ import { currentUser, type AdminUser } from "./auth";
 export async function requireUser(): Promise<AdminUser> {
   const user = await currentUser();
   if (!user) redirect("/admin/login");
+  return user;
+}
+
+/** Para lo que solo ve el superadmin: a un admin de empresa le responde 404, no 403. */
+export async function requireSuper(): Promise<AdminUser> {
+  const user = await requireUser();
+  if (user.role !== "super") notFound();
   return user;
 }
 
