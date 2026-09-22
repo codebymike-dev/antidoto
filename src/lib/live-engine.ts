@@ -158,12 +158,16 @@ export const STREAK_STEP = 100;
 export const STREAK_CAP = 500;
 export const WORD_MAX = 30;
 
+/** Acertar antes de este tiempo da el máximo, sin descuento por velocidad (como Kahoot). */
+export const FULL_POINTS_MS = 500;
+
 /**
  * Estilo Kahoot: responder correcto al instante da 1000; al final del tiempo, 500.
  * Incorrecto o sin responder, 0.
  */
 export function basePoints(correct: boolean, responseMs: number, timeLimitMs: number): number {
   if (!correct) return 0;
+  if (responseMs < FULL_POINTS_MS) return MAX_POINTS;
   const ratio = Math.min(Math.max(responseMs, 0), timeLimitMs) / timeLimitMs;
   return Math.round(MAX_POINTS * (1 - ratio / 2));
 }
@@ -270,6 +274,8 @@ export interface LeaderboardEntry {
   movement: number;
   /** Aciertos seguidos al cierre de `upTo` (va en el ranking para no perderla al reconectar). */
   streak: number;
+  /** Racha que se cortó justo en `upTo` (0 si no perdió ninguna). */
+  lostStreak: number;
 }
 
 function standings(players: RankPlayer[], answers: RankAnswer[], upTo: number) {
@@ -329,6 +335,10 @@ export function computeLeaderboard(
     const t = now.totals.get(p.nickname)!;
     const rank = now.ranks.get(p.nickname)!;
     const mine = correctAt.get(p.nickname);
+    const hits = history.map((pos) => mine?.has(pos) ?? false);
+    const streak = currentStreak(hits);
+    // Racha antes de `upTo`: si `upTo` no tiene puntaje, es la misma y no se pierde nada.
+    const previous = currentStreak(history.filter((pos) => pos < upTo).map((pos) => mine?.has(pos) ?? false));
     return {
       nickname: p.nickname,
       rank,
@@ -336,7 +346,8 @@ export function computeLeaderboard(
       correct: t.correct,
       lastPoints: t.last,
       movement: before ? before.ranks.get(p.nickname)! - rank : 0,
-      streak: currentStreak(history.map((pos) => mine?.has(pos) ?? false)),
+      streak,
+      lostStreak: streak < previous ? previous : 0,
     };
   });
 }

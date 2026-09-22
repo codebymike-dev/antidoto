@@ -173,6 +173,12 @@ describe("puntaje", () => {
     assert.equal(basePoints(false, 0, 20_000), 0);
   });
 
+  test("bajo 0.5 s da el máximo aunque el tiempo sea corto", () => {
+    // Con 5 s, 499 ms serían 950 por la fórmula; Kahoot da 1000.
+    assert.equal(basePoints(true, 499, 5_000), 1000);
+    assert.equal(basePoints(true, 500, 5_000), 950);
+  });
+
   test("bono de racha: desde el segundo acierto, con tope", () => {
     assert.deepEqual([0, 1, 2, 3, 6, 10].map(streakBonus), [0, 0, 100, 200, 500, 500]);
   });
@@ -295,6 +301,10 @@ describe("ranking", () => {
     assert.deepEqual(streak, { Ana: 2, Beto: 0, Caro: 1 });
     // Hasta la 1, sin mirar la 3.
     assert.equal(computeLeaderboard(players, answers, 1, [1, 3]).find((e) => e.nickname === "Beto")?.streak, 1);
+    // Beto tenía racha de 1 y la perdió en la 3; en la encuesta (2) nadie pierde nada.
+    const lost = Object.fromEntries(board.map((e) => [e.nickname, e.lostStreak]));
+    assert.deepEqual(lost, { Ana: 0, Beto: 1, Caro: 0 });
+    assert.ok(computeLeaderboard(players, answers, 2, [1, 3]).every((e) => e.lostStreak === 0));
   });
 
   test("ignora respuestas de preguntas posteriores y de jugadores no listados", () => {

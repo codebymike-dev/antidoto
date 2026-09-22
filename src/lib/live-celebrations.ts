@@ -15,8 +15,14 @@ export function celebration(entries: LeaderboardEntry[]): string | null {
   const onFire = entries.filter((e) => e.streak >= 3);
   if (onFire.length >= 2) return `¡${onFire.length} jugadores llevan racha de 3 o más!`;
 
+  const lost = entries.filter((e) => e.lostStreak >= 2);
+  if (lost.length >= 2) return `¡Ronda difícil! ${lost.length} jugadores perdieron su racha`;
+
   const best = [...entries].sort((a, b) => b.streak - a.streak)[0];
   if (best.streak >= 3) return `¡${best.nickname} lleva una racha de ${best.streak}!`;
+
+  const broken = [...entries].sort((a, b) => b.lostStreak - a.lostStreak)[0];
+  if (broken.lostStreak >= 3) return `¡Se cortó el combo! ${broken.nickname} perdió su racha de ${broken.lostStreak}`;
 
   return null;
 }
