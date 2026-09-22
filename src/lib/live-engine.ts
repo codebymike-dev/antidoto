@@ -391,7 +391,7 @@ export const NICKNAME_MAX = 20;
 
 export function normalizeNickname(input: string): { ok: true; nickname: string } | { ok: false; error: string } {
   const nickname = input
-    .replace(/[\u0000-\u001f\u007f​-‏ -‮⁠-⁯﻿]/g, "")
+    .replace(/[\u0000-\u001f\u007f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g, "")
     .replace(/\s+/g, " ")
     .trim();
   if (!nickname) return { ok: false, error: "Escribe un apodo." };
