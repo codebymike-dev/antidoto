@@ -36,15 +36,18 @@ export default function PlayerApp({ initial, initialPin, policyText, termsText }
       }}
     >
       <GameBackdrop />
-      {snapshot ? (
-        isChallengeSnapshot(snapshot) ? (
-          <ChallengeGame key={snapshot.matchId} initial={snapshot} onLeave={leave} />
+      {/* Columna de ancho de lectura: en computador, preguntas y opciones de borde a borde cansan la vista. */}
+      <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", width: "100%", maxWidth: 640, margin: "0 auto" }}>
+        {snapshot ? (
+          isChallengeSnapshot(snapshot) ? (
+            <ChallengeGame key={snapshot.matchId} initial={snapshot} onLeave={leave} />
+          ) : (
+            <PlayerGame key={snapshot.matchId} initial={snapshot} onLeave={leave} />
+          )
         ) : (
-          <PlayerGame key={snapshot.matchId} initial={snapshot} onLeave={leave} />
-        )
-      ) : (
-        <JoinForm initialPin={initialPin} policyText={policyText} termsText={termsText} onJoined={setSnapshot} />
-      )}
+          <JoinForm initialPin={initialPin} policyText={policyText} termsText={termsText} onJoined={setSnapshot} />
+        )}
+      </div>
     </div>
   );
 }
