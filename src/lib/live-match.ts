@@ -38,6 +38,8 @@ import type { LiveMatchStatus } from "./types";
 
 /** Tope por partida: el plan gratis de Ably admite 200 conexiones simultáneas en total. */
 export const MAX_PLAYERS = 100;
+/** Un desafío no usa Ably: el tope solo protege la base de datos. */
+export const MAX_CHALLENGE_PLAYERS = 2000;
 /** Una partida abierta más de esto se da por abandonada y libera su PIN. */
 const STALE_HOURS = 12;
 
@@ -58,10 +60,13 @@ interface MatchRow {
   question_started_at: number | null;
   question_ends_at: number | null;
   paused_remaining_ms: number | null;
+  /** No nulo = desafío asíncrono (ver live_challenges). */
+  closes_at: string | null;
 }
 
 const MATCH_COLUMNS = `m.id, m.game_id, g.title AS game_title, m.company_id, m.pin, m.status, m.join_locked,
-  m.current_position, m.question_started_at, m.question_ends_at, m.paused_remaining_ms`;
+  m.current_position, m.question_started_at, m.question_ends_at, m.paused_remaining_ms, c.closes_at`;
+const MATCH_FROM = `live_matches m JOIN live_games g ON g.id = m.game_id LEFT JOIN live_challenges c ON c.match_id = m.id`;
 
 function toState(row: MatchRow): MatchState {
   return {
@@ -78,15 +83,13 @@ function toState(row: MatchRow): MatchState {
 export async function getMatchForHost(matchId: number, user: AdminUser): Promise<MatchRow | null> {
   const { clause, args } = companyFilter(user.role, user.company_id, "m.company_id");
   return one<MatchRow>(
-    `SELECT ${MATCH_COLUMNS} FROM live_matches m JOIN live_games g ON g.id = m.game_id WHERE m.id = ? ${clause}`,
+    `SELECT ${MATCH_COLUMNS} FROM ${MATCH_FROM} WHERE m.id = ? ${clause}`,
     [matchId, ...args]
   );
 }
 
-async function getMatch(matchId: number): Promise<MatchRow | null> {
-  return one<MatchRow>(`SELECT ${MATCH_COLUMNS} FROM live_matches m JOIN live_games g ON g.id = m.game_id WHERE m.id = ?`, [
-    matchId,
-  ]);
+export async function getMatch(matchId: number): Promise<MatchRow | null> {
+  return one<MatchRow>(`SELECT ${MATCH_COLUMNS} FROM ${MATCH_FROM} WHERE m.id = ?`, [matchId]);
 }
 
 export interface FullQuestion extends EngineQuestion {
@@ -471,7 +474,7 @@ export async function submitAnswer(
 ): Promise<Result> {
   const row = await one<MatchRow & { player_id: string; kicked_at: string | null }>(
     `SELECT ${MATCH_COLUMNS}, p.id AS player_id, p.kicked_at
-     FROM live_players p JOIN live_matches m ON m.id = p.match_id JOIN live_games g ON g.id = m.game_id
+     FROM live_players p JOIN ${MATCH_FROM} ON m.id = p.match_id
      WHERE p.id = ?`,
     [playerId]
   );

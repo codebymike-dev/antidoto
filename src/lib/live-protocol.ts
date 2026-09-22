@@ -89,3 +89,49 @@ export interface PlayerSnapshot extends MatchSnapshot {
   /** Lo que respondió en la pregunta actual, si respondió. */
   myAnswer: { optionIndex: number | null; text: string | null } | null;
 }
+
+// --- Desafío asíncrono -------------------------------------------------------------
+// Sin Ably: el celular pide la foto por HTTP en cada paso. Solo lleva los datos de
+// este jugador, así que la correcta se puede mandar apenas él responde o se le acaba el tiempo.
+
+export interface ChallengeFeedback {
+  /** Índices de las opciones correctas; vacío en encuesta y nube. */
+  correct: number[];
+  /** null en encuesta y nube, o si no alcanzó a responder. */
+  isCorrect: boolean | null;
+  points: number;
+  /** Aciertos seguidos después de esta pregunta. */
+  streak: number;
+}
+
+export interface ChallengeSnapshot {
+  mode: "challenge";
+  matchId: number;
+  gameTitle: string;
+  nickname: string;
+  kicked: boolean;
+  totalQuestions: number;
+  /** Epoch ms del cierre. */
+  closesAt: number;
+  /** Cerró por fecha o a mano. */
+  closed: boolean;
+  phase: "intro" | "question" | "feedback" | "finished";
+  /** Pregunta abierta o la que se acaba de responder; null en la entrada y al final. */
+  question: PublicQuestion | null;
+  myAnswer: { optionIndex: number | null; text: string | null } | null;
+  /** Solo en la fase de resultado de la pregunta. */
+  feedback: ChallengeFeedback | null;
+  score: number;
+  /** Puesto en el ranking del momento; solo al final. */
+  result: {
+    rank: number;
+    players: number;
+    correct: number;
+    answered: number;
+    top: { nickname: string; score: number; rank: number }[];
+  } | null;
+  serverNow: number;
+}
+
+export const isChallengeSnapshot = (s: PlayerSnapshot | ChallengeSnapshot): s is ChallengeSnapshot =>
+  "mode" in s && s.mode === "challenge";
