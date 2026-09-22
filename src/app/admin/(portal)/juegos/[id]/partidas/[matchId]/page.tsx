@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { getMatchReport } from "@/lib/live-reports";
@@ -8,6 +9,8 @@ import { card, secondaryButton } from "@/lib/styles";
 import { CheckIcon } from "@/components/icons";
 import AnswerShape, { ANSWER_STYLES } from "@/components/live/AnswerShape";
 import { TYPE_LABELS } from "@/lib/live-validation";
+import { sqliteToMs } from "@/lib/live-challenge-engine";
+import ChallengeShare from "@/components/admin/live/ChallengeShare";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +29,14 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
   const withTime = played.filter((q) => q.stats.avgResponseMs !== null);
   const avgTime = withTime.length ? withTime.reduce((s, q) => s + (q.stats.avgResponseMs ?? 0), 0) / withTime.length : null;
   const kicked = players.filter((p) => p.kicked);
-  const minutes = durationMinutes(match.started_at, match.finished_at);
+  const isChallenge = match.closes_at !== null;
+  // En un desafío la duración no dice nada: cada jugador juega en un momento distinto.
+  const minutes = isChallenge ? null : durationMinutes(match.started_at, match.finished_at);
+  const challengeOpen = isChallenge && match.status !== "finished" && sqliteToMs(match.closes_at!) > Date.now();
+
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 980 }}>
@@ -36,12 +46,14 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
 
       <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
-          <span style={{ fontSize: 11.5, fontWeight: 700, color: colors.accent, letterSpacing: 1 }}>REPORTE DE PARTIDA</span>
+          <span style={{ fontSize: 11.5, fontWeight: 700, color: colors.accent, letterSpacing: 1 }}>
+            {isChallenge ? "DESAFÍO A SU RITMO" : "REPORTE DE PARTIDA"}
+          </span>
           <h1 style={{ ...calSans, fontSize: 26, margin: "4px 0 6px 0", color: colors.ink, fontWeight: 400 }}>
             {formatDateTime(match.started_at ?? match.created_at)}
           </h1>
           <p style={{ margin: 0, fontSize: 13.5, color: colors.muted }}>
-            {matchStatusLabel(match.status, match.started_at)} · PIN {match.pin}
+            {matchStatusLabel(match.status, match.started_at, match.closes_at)} · PIN {match.pin}
             {match.host && ` · host ${match.host}`}
             {minutes !== null && ` · ${minutes} min`}
           </p>
@@ -55,15 +67,33 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
         </a>
       </header>
 
+      {isChallenge && (
+        <ChallengeShare
+          matchId={match.id}
+          pin={match.pin}
+          joinUrl={`${proto}://${host}/jugar?pin=${match.pin}`}
+          closesLabel={formatDateTime(match.closes_at)}
+          open={challengeOpen}
+        />
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
         <Stat label="Jugadores" value={String(match.players)} />
-        <Stat label="Preguntas jugadas" value={`${played.length} de ${questions.length}`} />
+        {isChallenge ? (
+          <Stat
+            label="Terminaron"
+            value={`${report.finished} de ${match.players}`}
+            hint="Jugadores que respondieron hasta la última pregunta"
+          />
+        ) : (
+          <Stat label="Preguntas jugadas" value={`${played.length} de ${questions.length}`} />
+        )}
         <Stat label="Acierto promedio" value={avgCorrect === null ? "–" : `${avgCorrect}%`} hint="En quiz y V/F, sobre quienes respondieron" />
         <Stat label="Tiempo de respuesta" value={formatSeconds(avgTime)} hint="Promedio de todas las preguntas" />
       </div>
 
       <section style={{ ...card, padding: 0, overflow: "hidden" }}>
-        <h2 style={{ ...calSans, fontSize: 18, margin: 0, padding: "18px 22px 10px", color: colors.ink, fontWeight: 400 }}>Ranking final</h2>
+        <h2 style={{ ...calSans, fontSize: 18, margin: 0, padding: "18px 22px 10px", color: colors.ink, fontWeight: 400 }}>{challengeOpen ? "Ranking hasta ahora" : "Ranking final"}</h2>
         {ranking.length === 0 ? (
           <p style={{ margin: 0, padding: "0 22px 18px", color: colors.muted, fontSize: 13.5 }}>No hubo jugadores.</p>
         ) : (

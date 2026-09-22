@@ -61,6 +61,8 @@ export interface MatchReport {
   ranking: (LeaderboardEntry & { avgResponseMs: number | null })[];
   players: PlayerRow[];
   answers: AnswerRow[];
+  /** Desafío: jugadores (no expulsados) que llegaron al final. 0 en vivo. */
+  finished: number;
 }
 
 /** Reporte completo de una partida del juego, si el admin puede verla. */
@@ -78,7 +80,7 @@ export async function getMatchReport(gameId: number, matchId: number, user: Admi
   );
   if (!match) return null;
 
-  const [questions, playerRows, answerRows] = await Promise.all([
+  const [questions, playerRows, answerRows, finishedRow] = await Promise.all([
     loadQuestions(match.game_id),
     all<{ nickname: string; kicked_at: string | null; joined_at: string }>(
       "SELECT nickname, kicked_at, joined_at FROM live_players WHERE match_id = ? ORDER BY rowid",
@@ -97,6 +99,11 @@ export async function getMatchReport(gameId: number, matchId: number, user: Admi
       `SELECT p.nickname, p.kicked_at, a.question_id, a.option_id, a.text, a.is_correct, a.response_ms, a.points
        FROM live_answers a JOIN live_players p ON p.id = a.player_id
        WHERE p.match_id = ?`,
+      [match.id]
+    ),
+    one<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM live_challenge_progress pr JOIN live_players p ON p.id = pr.player_id
+       WHERE p.match_id = ? AND p.kicked_at IS NULL AND pr.finished_at IS NOT NULL`,
       [match.id]
     ),
   ]);
@@ -159,5 +166,6 @@ export async function getMatchReport(gameId: number, matchId: number, user: Admi
     ranking,
     players,
     answers,
+    finished: finishedRow?.n ?? 0,
   };
 }
