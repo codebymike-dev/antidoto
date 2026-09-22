@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getLegalTexts } from "@/lib/queries";
-import { playerSnapshot } from "@/lib/live-match";
+import { snapshotForPlayer } from "@/lib/live-challenge";
 import { playerIdFromCookie } from "@/lib/live-http";
 import PlayerApp from "@/components/live/player/PlayerApp";
 
@@ -19,7 +19,7 @@ export default async function JugarPage({ searchParams }: { searchParams: Promis
 
   // Si ya está en una partida (recargó, o volvió desde otra app), sigue donde estaba.
   const playerId = await playerIdFromCookie();
-  const current = playerId ? await playerSnapshot(playerId) : null;
+  const current = playerId ? await snapshotForPlayer(playerId) : null;
   const initial = current?.ok && !current.snapshot.kicked ? current.snapshot : null;
 
   const legal = await getLegalTexts().catch(() => ({ privacidad: LEGAL_NO_DISPONIBLE, terminos: LEGAL_NO_DISPONIBLE }));

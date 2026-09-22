@@ -1,4 +1,4 @@
-import { submitAnswer } from "@/lib/live-match";
+import { answerForPlayer } from "@/lib/live-challenge";
 import { fail, json, playerIdFromCookie, readJson, sameOrigin } from "@/lib/live-http";
 
 export async function POST(request: Request) {
@@ -8,6 +8,6 @@ export async function POST(request: Request) {
   const playerId = await playerIdFromCookie();
   if (!playerId) return fail("No estás en ninguna partida.", 401);
 
-  const res = await submitAnswer(playerId, await readJson(request), now);
+  const res = await answerForPlayer(playerId, await readJson(request), now);
   return res.ok ? json({ ok: true }) : fail(res.error, res.status);
 }

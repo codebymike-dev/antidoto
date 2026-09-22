@@ -19,16 +19,19 @@ export interface MatchSummary {
   host: string | null;
   players: number;
   answers: number;
+  /** No nulo = desafío asíncrono, abierto hasta esta fecha (UTC, formato de SQLite). */
+  closes_at: string | null;
 }
 
 export async function listMatches(gameId: number, user: AdminUser): Promise<MatchSummary[]> {
   const { clause, args } = companyFilter(user.role, user.company_id, "m.company_id");
   return all<MatchSummary>(
-    `SELECT m.id, m.pin, m.status, m.created_at, m.started_at, m.finished_at, u.username AS host,
+    `SELECT m.id, m.pin, m.status, m.created_at, m.started_at, m.finished_at, u.username AS host, c.closes_at,
             (SELECT COUNT(*) FROM live_players p WHERE p.match_id = m.id AND p.kicked_at IS NULL) AS players,
             (SELECT COUNT(*) FROM live_answers a JOIN live_players p ON p.id = a.player_id WHERE p.match_id = m.id) AS answers
      FROM live_matches m
      LEFT JOIN admin_users u ON u.id = m.host_user_id
+     LEFT JOIN live_challenges c ON c.match_id = m.id
      WHERE m.game_id = ? ${clause}
      ORDER BY m.id DESC`,
     [gameId, ...args]
@@ -64,11 +67,12 @@ export interface MatchReport {
 export async function getMatchReport(gameId: number, matchId: number, user: AdminUser): Promise<MatchReport | null> {
   const { clause, args } = companyFilter(user.role, user.company_id, "m.company_id");
   const match = await one<MatchSummary & { game_id: number; game_title: string; current_position: number | null }>(
-    `SELECT m.id, m.pin, m.status, m.created_at, m.started_at, m.finished_at, u.username AS host,
+    `SELECT m.id, m.pin, m.status, m.created_at, m.started_at, m.finished_at, u.username AS host, c.closes_at,
             m.game_id, g.title AS game_title, m.current_position, 0 AS players, 0 AS answers
      FROM live_matches m
      JOIN live_games g ON g.id = m.game_id
      LEFT JOIN admin_users u ON u.id = m.host_user_id
+     LEFT JOIN live_challenges c ON c.match_id = m.id
      WHERE m.id = ? AND m.game_id = ? ${clause}`,
     [matchId, gameId, ...args]
   );
@@ -141,8 +145,9 @@ export async function getMatchReport(gameId: number, matchId: number, user: Admi
       ...match,
       gameId: match.game_id,
       gameTitle: match.game_title,
-      // Hasta dónde llegó la partida: las preguntas posteriores no se jugaron.
-      lastPosition: match.current_position,
+      // Hasta dónde llegó la partida: las preguntas posteriores no se jugaron. En un
+      // desafío cada jugador va por su cuenta, así que todas cuentan como jugables.
+      lastPosition: match.closes_at !== null ? questions.length : match.current_position,
       players: active.length,
       answers: activeAnswers.length,
     },

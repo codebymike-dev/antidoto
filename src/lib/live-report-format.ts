@@ -31,8 +31,15 @@ export function csvCell(value: string | number | null): string {
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-/** Estado legible de una partida para el historial. */
-export function matchStatusLabel(status: string, startedAt: string | null): string {
+/**
+ * Estado legible de una partida para el historial. Un desafío (con `closesAt`) cierra
+ * solo al llegar la fecha, aunque la fila siga abierta hasta que alguien la actualice.
+ */
+export function matchStatusLabel(status: string, startedAt: string | null, closesAt: string | null = null, now = Date.now()): string {
+  if (closesAt !== null) {
+    const closed = status === "finished" || Date.parse(closesAt.replace(" ", "T") + "Z") <= now;
+    return closed ? "Desafío cerrado" : `Desafío abierto hasta ${formatDateTime(closesAt)}`;
+  }
   if (status === "finished") return startedAt ? "Terminada" : "Cerrada sin jugar";
   if (status === "lobby") return "En sala de espera";
   return "En curso";

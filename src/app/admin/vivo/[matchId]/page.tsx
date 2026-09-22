@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { hostSnapshot } from "@/lib/live-match";
+import { getMatchForHost, hostSnapshot } from "@/lib/live-match";
 import HostScreen from "@/components/live/host/HostScreen";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,9 @@ export default async function VivoPage({ params }: { params: Promise<{ matchId: 
   if (!user) redirect("/admin/login");
 
   const { matchId } = await params;
+  // Un desafío no tiene pantalla de proyector: su página es la del reporte, con el enlace.
+  const match = await getMatchForHost(Number(matchId), user);
+  if (match?.closes_at) redirect(`/admin/juegos/${match.game_id}/partidas/${match.id}`);
   const res = await hostSnapshot(Number(matchId), user);
   if (!res.ok) notFound();
 

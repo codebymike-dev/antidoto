@@ -42,13 +42,14 @@ export async function playerIdFromCookie(): Promise<string | null> {
   return value && /^[0-9a-f]{32}$/.test(value) ? value : null;
 }
 
-export async function setPlayerCookie(playerId: string) {
+/** Por defecto dura lo que una partida en vivo; un desafío la pide hasta después de su cierre. */
+export async function setPlayerCookie(playerId: string, maxAgeSeconds = 60 * 60 * 12) {
   (await cookies()).set(PLAYER_COOKIE, playerId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 12,
+    maxAge: maxAgeSeconds,
   });
 }
 

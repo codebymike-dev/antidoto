@@ -7,6 +7,8 @@ import { db, one } from "./db";
 import { audit, requireUser } from "./admin-guard";
 import { getGame, getGameDraft } from "./live-games";
 import { createMatch } from "./live-match";
+import { closeChallenge } from "./live-challenge";
+import { parseClosesAt } from "./live-challenge-engine";
 import { parseGameDraft, type DraftErrors, type DraftQuestion } from "./live-validation";
 
 export type SaveGameResult =
@@ -141,4 +143,30 @@ export async function launchMatch(formData: FormData) {
   const res = await createMatch(user, Number(formData.get("id")));
   if (!res.ok) redirect(`/admin/juegos?error=${encodeURIComponent(res.error)}`);
   redirect(`/admin/vivo/${res.matchId}`);
+}
+
+export type AssignResult = { ok: false; error: string } | null;
+
+/**
+ * Crea un desafío asíncrono y lleva a su página, donde está el enlace para compartir.
+ * `closesAt` llega en ISO con zona: el navegador convierte la hora local del admin.
+ */
+export async function assignChallenge(_prev: AssignResult, formData: FormData): Promise<AssignResult> {
+  const user = await requireUser();
+  const closes = parseClosesAt(formData.get("closesAt"), Date.now());
+  if (!closes.ok) return { ok: false, error: closes.error };
+
+  const gameId = Number(formData.get("id"));
+  const res = await createMatch(user, gameId, closes.value);
+  if (!res.ok) return { ok: false, error: res.error };
+  revalidatePath(`/admin/juegos/${gameId}`);
+  redirect(`/admin/juegos/${gameId}/partidas/${res.matchId}`);
+}
+
+export async function closeChallengeNow(formData: FormData) {
+  const user = await requireUser();
+  const res = await closeChallenge(Number(formData.get("matchId")), user);
+  if (!res.ok) return;
+  revalidatePath(`/admin/juegos/${res.gameId}`);
+  revalidatePath(`/admin/juegos/${res.gameId}/partidas/${Number(formData.get("matchId"))}`);
 }

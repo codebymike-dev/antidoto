@@ -1,4 +1,5 @@
 import { joinMatch } from "@/lib/live-match";
+import { sqliteToMs } from "@/lib/live-challenge-engine";
 import { clientIp, isLimited, recordHit } from "@/lib/rate-limit";
 import { fail, json, playerIdFromCookie, readJson, sameOrigin, setPlayerCookie } from "@/lib/live-http";
 
@@ -24,6 +25,9 @@ export async function POST(request: Request) {
     return fail(res.error, res.status);
   }
 
-  await setPlayerCookie(res.playerId);
+  // En un desafío la cookie es el único intento del celular: dura hasta una semana después
+  // del cierre, para que al volver vea su resultado en vez de empezar con otro apodo.
+  const maxAge = res.closesAt ? Math.round((sqliteToMs(res.closesAt) - Date.now()) / 1000) + 7 * 86_400 : undefined;
+  await setPlayerCookie(res.playerId, maxAge);
   return json({ matchId: res.matchId, nickname: res.nickname });
 }
