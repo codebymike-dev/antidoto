@@ -119,6 +119,32 @@ describe("máquina de estados", () => {
   });
 });
 
+describe("entrada de la pregunta (¡Prepárate!)", () => {
+  const intro = { introMs: 4_000 };
+
+  test("el reloj arranca al terminar la entrada", () => {
+    const s = run(initialMatchState(), ["start", intro]);
+    assert.equal(s.questionStartedAt, T0 + 4_000);
+    assert.equal(s.questionEndsAt, T0 + 24_000);
+  });
+
+  test("durante la entrada no se aceptan respuestas; después, el tiempo cuenta desde el inicio real", () => {
+    const s = run(initialMatchState(), ["start", intro]);
+    assert.equal(checkAnswer(s, quiz, { optionIndex: 0 }, T0 + 3_999, 0).ok, false);
+    const res = checkAnswer(s, quiz, { optionIndex: 0 }, T0 + 5_000, 0);
+    assert.ok(res.ok);
+    if (res.ok) assert.equal(res.responseMs, 1_000);
+  });
+
+  test("pausar durante la entrada y reanudar conserva la entrada restante", () => {
+    let s = run(initialMatchState(), ["start", intro], ["pause", { now: T0 + 1_000 }]);
+    assert.equal(s.pausedRemainingMs, 23_000);
+    s = run(s, ["resume", { now: T0 + 60_000 }]);
+    assert.equal(s.questionStartedAt, T0 + 63_000);
+    assert.equal(s.questionEndsAt, T0 + 83_000);
+  });
+});
+
 describe("cierre automático de la pregunta", () => {
   const open = () => run(initialMatchState(), ["start"]);
 

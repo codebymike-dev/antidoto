@@ -381,10 +381,78 @@ button {
   animation: liveFloat 14s ease-in-out infinite;
 }
 
+/* Barras de resultado: crecen desde abajo con rebote; el conteo aparece después y
+   las incorrectas se atenúan cuando suena el acorde de la correcta. */
+@keyframes liveGrow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes liveFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes liveDim {
+  to {
+    opacity: 0.4;
+  }
+}
+
+.live-grow {
+  transform-origin: bottom;
+  animation: liveGrow 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.live-fade-in {
+  animation: liveFadeIn 0.3s ease both;
+}
+
+.live-dim {
+  animation: liveDim 0.4s ease both;
+}
+
+/* Error en el celular: sacudida corta (el acierto usa live-pop). */
+@keyframes liveShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-10px);
+  }
+  40%,
+  80% {
+    transform: translateX(10px);
+  }
+}
+
+.live-shake {
+  animation: liveShake 0.45s ease both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .live-pop,
+  .live-shake,
   .live-rise,
-  .live-float {
+  .live-float,
+  .live-grow,
+  .live-fade-in {
     animation: none;
+  }
+
+  /* Sin animación, el estado final igual tiene que verse. */
+  .live-dim {
+    animation: none;
+    opacity: 0.4;
   }
 }

@@ -12,6 +12,8 @@ import HostQuestion from "./HostQuestion";
 import HostReveal from "./HostReveal";
 import HostLeaderboard from "./HostLeaderboard";
 import HostPodium from "./HostPodium";
+import { useHostSound, useSoundState } from "./useHostSound";
+import { liveSound } from "../sound";
 
 interface Props {
   initial: HostSnapshot;
@@ -67,6 +69,14 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
   }
   const command = (c: HostCommand) => post("command", { command: c });
 
+  // La lista de jugadores y el contador viajan "a mejor esfuerzo" (pueden perderse con el
+  // límite de Ably en ráfagas): mientras cambian, la foto completa los corrige.
+  useEffect(() => {
+    if (state.status !== "lobby" && state.status !== "question") return;
+    const id = setInterval(() => void resync(), 2000);
+    return () => clearInterval(id);
+  }, [state.status, resync]);
+
   // Sin proceso vivo en el servidor: cuando el reloj llega al final, el host avisa y
   // el servidor decide con el suyo. Se reintenta mientras la pregunta siga abierta.
   const lastTick = useRef(0);
@@ -82,6 +92,10 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
     }, 250);
     return () => clearInterval(id);
   }, [state.status, state.question, offset, matchId]);
+
+  useHostSound(state, offset);
+  const [soundReady, musicOn, effectsOn] = useSoundState().split("|").map((v) => v === "true");
+  const sound = liveSound();
 
   function toggleFullscreen() {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -155,7 +169,9 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         {state.status === "leaderboard" && (
           <HostLeaderboard entries={state.entries} isLast={isLast} busy={busy} onNext={() => command("next")} />
         )}
-        {state.status === "finished" && <HostPodium entries={state.entries} />}
+        {state.status === "finished" && (
+          <HostPodium entries={state.entries} reportHref={`/admin/juegos/${state.gameId}/partidas/${matchId}`} />
+        )}
       </main>
 
       {error && (
@@ -199,6 +215,32 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
           {inGame && (
             <button type="button" className="btn-live" style={{ ...liveGhostButton, height: 38, fontSize: 13 }} onClick={() => command(state.joinLocked ? "unlockJoin" : "lockJoin")} disabled={busy}>
               {state.joinLocked ? "Abrir la entrada" : "Cerrar la entrada"}
+            </button>
+          )}
+          {soundReady ? (
+            <>
+              <button
+                type="button"
+                className="btn-live"
+                aria-pressed={musicOn}
+                style={{ ...liveGhostButton, height: 38, fontSize: 13, opacity: musicOn ? 1 : 0.55 }}
+                onClick={() => sound.setPrefs({ music: !musicOn })}
+              >
+                Música {musicOn ? "sí" : "no"}
+              </button>
+              <button
+                type="button"
+                className="btn-live"
+                aria-pressed={effectsOn}
+                style={{ ...liveGhostButton, height: 38, fontSize: 13, opacity: effectsOn ? 1 : 0.55 }}
+                onClick={() => sound.setPrefs({ effects: !effectsOn })}
+              >
+                Efectos {effectsOn ? "sí" : "no"}
+              </button>
+            </>
+          ) : (
+            <button type="button" className="btn-live" style={{ ...liveGhostButton, height: 38, fontSize: 13, background: "#E8A33D", color: "#0F181D" }} onClick={() => sound.unlock()}>
+              Activar sonido
             </button>
           )}
           <button type="button" className="btn-live" style={{ ...liveGhostButton, height: 38, fontSize: 13 }} onClick={toggleFullscreen}>

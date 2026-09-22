@@ -19,17 +19,21 @@ export async function isLimited(key: string, limit: number, windowSeconds: numbe
   // La ventana se calcula en SQLite y no con toISOString(): created_at se guarda como
   // "YYYY-MM-DD HH:MM:SS" y, comparado como texto contra "YYYY-MM-DDTHH:MM:SSZ", el
   // espacio siempre queda antes que la "T" (nunca contaba intentos y borraba todos).
-  const windowStart = `-${windowSeconds} seconds`;
-  await run("DELETE FROM rate_limit_hits WHERE key = ? AND created_at < datetime('now', ?)", [key, windowStart]);
+  // Solo lectura: se consulta en cada entrada (100 jugadores a la vez) y una escritura
+  // aquí se serializaría. Las filas viejas se podan al registrar, que es lo raro.
   const row = await one<{ hits: number }>(
     "SELECT COUNT(*) AS hits FROM rate_limit_hits WHERE key = ? AND created_at >= datetime('now', ?)",
-    [key, windowStart]
+    [key, `-${windowSeconds} seconds`]
   );
   return (row?.hits ?? 0) >= limit;
 }
 
-/** Registra un intento para `key`. */
+/** Registra un intento para `key` y poda los suyos de más de una hora. */
 export async function recordHit(key: string): Promise<void> {
+  await run("DELETE FROM rate_limit_hits WHERE key = ? AND created_at < datetime('now', ?)", [
+    key,
+    `-${GLOBAL_CLEANUP_AGE_SECONDS} seconds`,
+  ]);
   await run("INSERT INTO rate_limit_hits (key) VALUES (?)", [key]);
   if (Math.random() < GLOBAL_CLEANUP_CHANCE) {
     await run("DELETE FROM rate_limit_hits WHERE created_at < datetime('now', ?)", [

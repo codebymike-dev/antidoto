@@ -1,11 +1,12 @@
 import "server-only";
+import { after } from "next/server";
 import { randomBytes } from "node:crypto";
 import { all, one, run } from "./db";
 import type { AdminUser } from "./auth";
 import { companyFilter } from "./scope";
 import { getGame } from "./live-games";
 import { audit } from "./admin-guard";
-import { publish } from "./realtime";
+import { publishBestEffort, publishReliable } from "./realtime";
 import {
   applyCommand,
   checkAnswer,
@@ -22,6 +23,7 @@ import {
   type MatchState,
 } from "./live-engine";
 import {
+  QUESTION_INTRO_MS,
   hostChannel,
   matchChannel,
   type HostEvent,
@@ -87,14 +89,29 @@ async function getMatch(matchId: number): Promise<MatchRow | null> {
   ]);
 }
 
-interface FullQuestion extends EngineQuestion {
+export interface FullQuestion extends EngineQuestion {
   id: number;
   prompt: string;
   optionIds: number[];
   optionTexts: string[];
 }
 
-async function loadQuestions(gameId: number): Promise<FullQuestion[]> {
+// Las preguntas de un juego con partidas no cambian (el editor lo bloquea), así que cada
+// instancia las guarda un rato en memoria en vez de leerlas en cada respuesta.
+const QUESTIONS_TTL_MS = 60_000;
+const questionsCache = new Map<number, { at: number; questions: Promise<FullQuestion[]> }>();
+
+export function loadQuestions(gameId: number): Promise<FullQuestion[]> {
+  const hit = questionsCache.get(gameId);
+  if (hit && Date.now() - hit.at < QUESTIONS_TTL_MS) return hit.questions;
+  const questions = readQuestions(gameId);
+  questionsCache.set(gameId, { at: Date.now(), questions });
+  // Un error no debe quedar guardado en la caché.
+  questions.catch(() => questionsCache.delete(gameId));
+  return questions;
+}
+
+async function readQuestions(gameId: number): Promise<FullQuestion[]> {
   const rows = await all<{
     id: number;
     position: number;
@@ -214,8 +231,10 @@ function publicQuestion(q: FullQuestion, state: MatchState, total: number): Publ
 
 // --- Publicación -----------------------------------------------------------------
 
-const publishPublic = (matchId: number, e: PublicEvent) => publish(matchChannel(matchId), e.name, e.data);
-const publishHost = (matchId: number, e: HostEvent) => publish(hostChannel(matchId), e.name, e.data);
+const publishPublic = (matchId: number, e: PublicEvent) => publishReliable(matchChannel(matchId), e.name, e.data);
+// Cambian con cada jugador y pueden chocar con el límite de Ably; la pantalla del host
+// se resincroniza sola cada pocos segundos.
+const publishHost = (matchId: number, e: HostEvent) => publishBestEffort(hostChannel(matchId), e.name, e.data);
 
 async function publishPlayers(matchId: number, joinLocked: boolean) {
   await publishHost(matchId, { name: "players", data: { nicknames: await activeNicknames(matchId), joinLocked } });
@@ -298,6 +317,7 @@ async function transition(match: MatchRow, command: HostCommand, now: number, qu
     totalQuestions: qs.length,
     activePlayers: players,
     timeLimitAt: (position) => qs[position - 1]?.timeLimit ?? 20,
+    introMs: QUESTION_INTRO_MS,
   });
   if (!res.ok) return err(res.error, 409);
   if (!(await persistState(match.id, prev, res.state))) {
@@ -429,7 +449,7 @@ export async function joinMatch(input: {
     if (String(e).includes("UNIQUE")) return err("Ese apodo ya está en uso en esta partida.", 409);
     throw e;
   }
-  await publishPlayers(match.id, match.join_locked === 1);
+  after(() => publishPlayers(match.id, match.join_locked === 1));
   return { ok: true, playerId, matchId: match.id, nickname: nick.nickname };
 }
 
@@ -449,12 +469,16 @@ export async function submitAnswer(
   body: Record<string, unknown>,
   now: number
 ): Promise<Result> {
-  const player = await getPlayer(playerId);
-  if (!player) return err("No estás en ninguna partida.", 401);
-  if (player.kicked_at) return err("El host te sacó de esta partida.", 403);
-
-  const match = await getMatch(player.match_id);
-  if (!match) return err("La partida ya no existe.", 404);
+  const row = await one<MatchRow & { player_id: string; kicked_at: string | null }>(
+    `SELECT ${MATCH_COLUMNS}, p.id AS player_id, p.kicked_at
+     FROM live_players p JOIN live_matches m ON m.id = p.match_id JOIN live_games g ON g.id = m.game_id
+     WHERE p.id = ?`,
+    [playerId]
+  );
+  if (!row) return err("No estás en ninguna partida.", 401);
+  if (row.kicked_at) return err("El host te sacó de esta partida.", 403);
+  const player = { id: row.player_id };
+  const match: MatchRow = row;
   const state = toState(match);
   if (state.status !== "question" || state.currentPosition === null || state.currentPosition !== body.position) {
     return err("Esta pregunta ya no recibe respuestas.", 409);
@@ -501,9 +525,13 @@ export async function submitAnswer(
     throw e;
   }
 
-  const { answered, players } = await answerCounts(match.id, q.id);
-  await publishHost(match.id, { name: "answers", data: { position: q.position, answered, players } });
-  if (shouldEndQuestion(state, now, answered, players)) await transition(match, "endQuestion", now, questions);
+  // El jugador ya tiene su respuesta guardada: el contador del host y el cierre de la
+  // pregunta (si respondieron todos) corren después de contestarle.
+  after(async () => {
+    const { answered, players } = await answerCounts(match.id, q.id);
+    await publishHost(match.id, { name: "answers", data: { position: q.position, answered, players } });
+    if (shouldEndQuestion(state, now, answered, players)) await transition(match, "endQuestion", now, questions);
+  });
   return { ok: true };
 }
 
@@ -522,7 +550,8 @@ async function baseSnapshot(match: MatchRow, questions: FullQuestion[]): Promise
     totalQuestions: questions.length,
     question: q && state.status !== "finished" ? publicQuestion(q, state, questions.length) : null,
     reveal,
-    entries: reveal?.entries ?? (state.status === "finished" ? await standings(match.id, 0, questions) : []),
+    // Con la pregunta abierta, el ranking es el acumulado hasta la anterior.
+    entries: reveal?.entries ?? (await standings(match.id, Math.max(0, (state.currentPosition ?? 1) - 1), questions)),
     serverNow: Date.now(),
   };
 }
@@ -537,6 +566,7 @@ export async function hostSnapshot(matchId: number, user: AdminUser): Promise<Re
     ok: true,
     snapshot: {
       ...base,
+      gameId: match.game_id,
       pin: match.pin,
       nicknames: await activeNicknames(match.id),
       answered: q ? (await answerCounts(match.id, q.id)).answered : 0,

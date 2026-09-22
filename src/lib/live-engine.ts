@@ -46,18 +46,24 @@ export interface CommandContext {
   activePlayers: number;
   /** Tiempo límite en segundos de la pregunta en esa posición. */
   timeLimitAt: (position: number) => number;
+  /**
+   * Entrada de la pregunta ("¡Prepárate!"): se muestra sola antes de aceptar respuestas.
+   * El reloj arranca al terminar, así no le resta tiempo a nadie.
+   */
+  introMs?: number;
 }
 
 export type CommandResult = { ok: true; state: MatchState } | { ok: false; error: string };
 
 function openQuestion(state: MatchState, position: number, ctx: CommandContext): MatchState {
   const limitMs = ctx.timeLimitAt(position) * 1000;
+  const startsAt = ctx.now + (ctx.introMs ?? 0);
   return {
     ...state,
     status: "question",
     currentPosition: position,
-    questionStartedAt: ctx.now,
-    questionEndsAt: ctx.now + limitMs,
+    questionStartedAt: startsAt,
+    questionEndsAt: startsAt + limitMs,
     pausedRemainingMs: null,
   };
 }
@@ -209,6 +215,7 @@ export function checkAnswer(
   if (state.pausedRemainingMs !== null) return { ok: false, error: "La pregunta está en pausa." };
   if (state.questionEndsAt === null || state.questionStartedAt === null) return { ok: false, error: "Pregunta sin reloj." };
   if (now > state.questionEndsAt + ANSWER_GRACE_MS) return { ok: false, error: "Se acabó el tiempo." };
+  if (now < state.questionStartedAt) return { ok: false, error: "La pregunta todavía no empieza." };
 
   const limitMs = question.timeLimit * 1000;
   const responseMs = Math.min(Math.max(now - state.questionStartedAt, 0), limitMs);

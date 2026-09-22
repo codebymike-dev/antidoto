@@ -1,16 +1,12 @@
 "use client";
 
-import type { PublicQuestion } from "@/lib/live-protocol";
+import { QUESTION_INTRO_MS, type PublicQuestion } from "@/lib/live-protocol";
+import { TYPE_LABELS } from "@/lib/live-validation";
 import AnswerTile from "../AnswerTile";
 import CountdownRing from "../CountdownRing";
+import { useServerNow } from "../useServerNow";
 import { calSans, game, liveButton, liveGhostButton } from "../game-theme";
 
-export const TYPE_LABELS: Record<PublicQuestion["type"], string> = {
-  quiz: "Quiz",
-  vf: "Verdadero o falso",
-  encuesta: "Encuesta",
-  nube: "Nube de palabras",
-};
 
 interface Props {
   question: PublicQuestion;
@@ -24,6 +20,42 @@ interface Props {
 
 export default function HostQuestion({ question, offsetMs, answered, players, busy, onPauseToggle, onSkip }: Props) {
   const paused = question.pausedRemainingMs !== null;
+  const now = useServerNow(offsetMs);
+  // En pausa durante la entrada, lo que falta para arrancar sale de lo que queda en total.
+  const introLeft = paused
+    ? Math.max(0, question.pausedRemainingMs! - question.timeLimitMs)
+    : now === null
+      ? QUESTION_INTRO_MS
+      : Math.max(0, question.startedAt - now);
+
+  if (introLeft > 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 28, width: "100%", alignItems: "center" }}>
+        {question.position === 1 && (
+          <span className="live-pop" style={{ ...calSans, fontSize: "clamp(28px, 3vw, 44px)", color: game.accent }}>
+            ¡Prepárate!
+          </span>
+        )}
+        <PromptCard question={question} />
+        <div aria-hidden style={{ width: "min(640px, 80%)", height: 10, borderRadius: 999, background: game.surfaceStrong, overflow: "hidden" }}>
+          <div
+            style={{
+              height: "100%",
+              width: `${(introLeft / QUESTION_INTRO_MS) * 100}%`,
+              background: game.accent,
+              transition: "width 0.2s linear",
+            }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button type="button" className="btn-live" style={liveGhostButton} onClick={onPauseToggle} disabled={busy}>
+            {paused ? "Reanudar" : "Pausar"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 3vh, 32px)", width: "100%" }}>
       <PromptCard question={question} />

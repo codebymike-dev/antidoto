@@ -1,6 +1,7 @@
 "use client";
 
 import type { LeaderboardEntry } from "@/lib/live-engine";
+import { celebration } from "@/lib/live-celebrations";
 import { calSans, game, liveButton } from "../game-theme";
 
 interface Props {
@@ -12,11 +13,17 @@ interface Props {
 
 export default function HostLeaderboard({ entries, isLast, busy, onNext }: Props) {
   const top = entries.slice(0, 5);
+  const message = celebration(entries);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, width: "100%", maxWidth: 980, margin: "0 auto" }}>
       <h1 className="live-rise" style={{ ...calSans, margin: 0, textAlign: "center", fontSize: "clamp(34px, 4vw, 60px)", fontWeight: 400 }}>
         Ranking
       </h1>
+      {message && (
+        <p className="live-pop" style={{ ...calSans, margin: 0, textAlign: "center", color: "#E8A33D", fontSize: "clamp(20px, 2.2vw, 32px)", animationDelay: "0.6s" }}>
+          {message}
+        </p>
+      )}
       <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
         {top.map((e, i) => (
           <li

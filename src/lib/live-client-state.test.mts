@@ -25,12 +25,18 @@ const host = (): HostSnapshot => ({
   reveal: null,
   entries: [],
   serverNow: 0,
+  gameId: 1,
   pin: "123456",
   nicknames: ["Ana", "Beto"],
   answered: 0,
 });
 
 const entry = (nickname: string) => ({ nickname, rank: 1, score: 0, correct: 0, lastPoints: 0, movement: 0, streak: 0 });
+
+test("pregunta nueva conserva el ranking acumulado", () => {
+  const s = applyPublicEvent({ ...host(), entries: [entry("Ana")] }, { name: "question", data: { ...question(2), serverNow: 0 } });
+  assert.deepEqual(s.entries.map((e) => e.nickname), ["Ana"]);
+});
 
 test("pregunta nueva: limpia el reveal y el contador", () => {
   let s = { ...host(), answered: 5, reveal: { position: 1, correct: [], distribution: [], words: [], answered: 5, entries: [] } };

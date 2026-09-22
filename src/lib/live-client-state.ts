@@ -8,7 +8,8 @@ export function applyPublicEvent<S extends MatchSnapshot>(state: S, event: Publi
   switch (event.name) {
     case "question": {
       const { serverNow, ...question } = event.data;
-      return { ...state, status: "question", question, reveal: null, entries: [], serverNow, ...resetAnswer(state) };
+      // El ranking se conserva: es el puntaje acumulado que el jugador ve durante la pregunta.
+      return { ...state, status: "question", question, reveal: null, serverNow, ...resetAnswer(state) };
     }
     case "paused":
       if (state.question?.position !== event.data.position) return state;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { applyPublicEvent, remainingMs } from "@/lib/live-client-state";
+import { useServerNow } from "../useServerNow";
 import type { PlayerSnapshot } from "@/lib/live-protocol";
 import { encouragement, finalHeadline, outcomeOf, standingLine, standingOf } from "@/lib/live-player-view";
 import AnswerShape, { ANSWER_STYLES } from "../AnswerShape";
@@ -225,18 +226,29 @@ function QuestionView({
   const q = state.question!;
   const [word, setWord] = useState("");
   const [showText, setShowText] = useState(false);
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(id);
-  }, []);
-  const timeUp = now !== null && remainingMs(q, offset, now) === 0;
+  const serverNow = useServerNow(offset, 250);
+  const timeUp = serverNow !== null && remainingMs(q, offset, serverNow - offset) === 0;
+  const introLeft = serverNow === null ? null : q.startedAt - serverNow;
 
   if (q.pausedRemainingMs !== null) {
     return (
       <Centered>
         <h1 style={title}>En pausa</h1>
         <p style={subtitle}>El host pausó la pregunta.</p>
+      </Centered>
+    );
+  }
+
+  if (introLeft === null || introLeft > 0) {
+    return (
+      <Centered>
+        <p style={subtitle}>
+          Pregunta {q.position} de {q.total}
+        </p>
+        <h1 className="live-pop" style={title}>¡Prepárate!</h1>
+        <span aria-live="polite" style={{ ...calSans, fontSize: 72, color: game.accent }}>
+          {introLeft === null ? "" : Math.ceil(introLeft / 1000)}
+        </span>
       </Centered>
     );
   }
@@ -360,7 +372,7 @@ function ResultView({ state, outcome }: { state: PlayerSnapshot; outcome: NonNul
 
   return (
     <div
-      className="live-pop"
+      className={outcome === "incorrect" ? "live-shake" : "live-pop"}
       style={{ flex: 1, borderRadius: 24, background: look.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24, textAlign: "center" }}
     >
       <h1 style={{ ...title, fontSize: 40 }}>{look.title}</h1>

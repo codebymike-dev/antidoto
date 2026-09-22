@@ -5,6 +5,9 @@ import AnswerShape, { ANSWER_STYLES } from "../AnswerShape";
 import { calSans, game, liveButton, liveGhostButton } from "../game-theme";
 import { PromptCard } from "./HostQuestion";
 
+/** Segundo en que se marca la correcta: coincide con el acorde de useHostSound. */
+const REVEAL_AT = 1.1;
+
 interface Props {
   question: PublicQuestion;
   reveal: RevealData;
@@ -40,11 +43,16 @@ export default function HostReveal({ question, reveal, isLast, busy, onLeaderboa
                 key={i}
                 role="listitem"
                 aria-label={`${text}: ${count} ${count === 1 ? "voto" : "votos"}${correct ? ", correcta" : ""}`}
-                style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: 10, height: "100%", justifyContent: "flex-end", opacity: dim ? 0.4 : 1 }}
+                className={dim ? "live-dim" : undefined}
+                style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: 10, height: "100%", justifyContent: "flex-end", animationDelay: `${REVEAL_AT}s` }}
               >
-                <span style={{ ...calSans, textAlign: "center", fontSize: "clamp(26px, 3vw, 44px)" }}>{count}</span>
+                <span className="live-fade-in" style={{ ...calSans, textAlign: "center", fontSize: "clamp(26px, 3vw, 44px)", animationDelay: "0.9s" }}>
+                  {count}
+                </span>
                 <div
+                  className="live-grow"
                   style={{
+                    animationDelay: `${i * 0.08}s`,
                     // Hasta el 70% de la columna: el resto es para el número y la etiqueta.
                     height: `${Math.max(4, (count / max) * 70)}%`,
                     minHeight: 12,
@@ -58,7 +66,11 @@ export default function HostReveal({ question, reveal, isLast, busy, onLeaderboa
                     <AnswerShape index={i} size={22} />
                   </span>
                   <span style={{ fontWeight: 700, fontSize: "clamp(14px, 1.4vw, 20px)", overflow: "hidden", textOverflow: "ellipsis" }}>{text}</span>
-                  {correct && <span style={{ fontWeight: 900, fontSize: 26, color: "#2FA66A" }}>✓</span>}
+                  {correct && (
+                    <span className="live-pop" style={{ fontWeight: 900, fontSize: 26, color: "#2FA66A", animationDelay: `${REVEAL_AT}s` }}>
+                      ✓
+                    </span>
+                  )}
                 </div>
               </div>
             );

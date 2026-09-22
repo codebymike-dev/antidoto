@@ -24,6 +24,9 @@ export const QUESTION_TYPES: { type: LiveQuestionType; label: string }[] = [
   { type: "nube", label: "Nube de palabras" },
 ];
 
+/** Nombre de cada tipo. Vive aquí (no en un componente "use client") para usarlo también en el servidor. */
+export const TYPE_LABELS = Object.fromEntries(QUESTION_TYPES.map((t) => [t.type, t.label])) as Record<LiveQuestionType, string>;
+
 export const VF_LABELS = ["Verdadero", "Falso"] as const;
 
 export interface DraftOption {
