@@ -541,6 +541,69 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       },
     ],
   },
+  {
+    id: "desafio",
+    nombre: "Desafío a su ritmo (asíncrono)",
+    items: [
+      {
+        id: "RF-801",
+        titulo: "Asignar un juego como desafío con fecha de cierre",
+        descripcion:
+          "Además de la partida en vivo, el admin asigna el juego como desafío: elige fecha y hora de cierre (mínimo 5 minutos, máximo 60 días) y obtiene un PIN, un enlace y un QR para compartir.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "assignChallenge en src/lib/live-games-actions.ts, src/components/admin/live/PlayPanel.tsx, tabla live_challenges en db/schema.sql",
+        verificacion: "parseClosesAt cubierto en src/lib/live-challenge-engine.test.mts.",
+        notas:
+          "Es una fila más de live_matches (comparte PIN, jugadores, respuestas y reportes) marcada por live_challenges. La hora local del admin viaja en ISO con zona y se guarda en UTC.",
+        relacionados: ["RF-501", "RF-802"],
+      },
+      {
+        id: "RF-802",
+        titulo: "Compartir y cerrar el desafío",
+        descripcion:
+          "La página del desafío muestra el enlace con el PIN incluido, botón para copiarlo, QR y fecha de cierre, y permite cerrarlo antes de tiempo con doble confirmación.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "src/components/admin/live/ChallengeShare.tsx, closeChallenge en src/lib/live-challenge.ts",
+        notas: "Al vencer la fecha el desafío deja de aceptar jugadores y respuestas aunque la fila siga en 'lobby'; closeExpiredChallenges la pasa a 'finished' al crear otra partida.",
+        relacionados: ["RF-801", "RF-805"],
+      },
+      {
+        id: "RF-803",
+        titulo: "Jugar el desafío a su ritmo desde el celular",
+        descripcion:
+          "El jugador entra con el enlace o el PIN y su apodo, ve cada pregunta con sus opciones completas y avanza cuando quiere. Cada pregunta tiene su propio reloj y la entrada \"¡Prepárate!\", y tras responder ve si acertó y la respuesta correcta.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "src/components/live/player/ChallengeGame.tsx, advanceChallenge en src/lib/live-challenge.ts, POST /api/live/challenge/next",
+        verificacion: "advance y challengePhase cubiertos en src/lib/live-challenge-engine.test.mts; flujo completo probado por HTTP y en el navegador en local.",
+        notas: "Sin Ably: cada paso es un POST y una foto por /api/live/me. No se puede saltar una pregunta abierta y un doble toque no avanza dos veces (UPDATE condicionado).",
+        relacionados: ["RF-601", "RF-804"],
+      },
+      {
+        id: "RF-804",
+        titulo: "Puntaje, un intento por celular y resultado final",
+        descripcion:
+          "El puntaje por rapidez y racha es el mismo del modo en vivo. La cookie del jugador dura hasta una semana después del cierre, así que al volver ve su resultado en vez de empezar de nuevo. Al terminar ve sus puntos, aciertos, su puesto y el top 5 del momento.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "scoreAndSave en src/lib/live-match.ts, challengeSnapshot en src/lib/live-challenge.ts",
+        notas: "Un intento por celular, no por persona: borrando cookies se puede volver a entrar con otro apodo. Es el mismo límite que Kahoot con apodos.",
+        relacionados: ["RF-508"],
+      },
+      {
+        id: "RF-805",
+        titulo: "Reporte del desafío",
+        descripcion:
+          "El reporte del desafío usa la misma vista de las partidas: ranking (\"hasta ahora\" mientras está abierto), resultados por pregunta, cuántos terminaron y export CSV.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "getMatchReport en src/lib/live-reports.ts, src/components/admin/live/MatchHistory.tsx",
+        relacionados: ["RF-701", "RF-702"],
+      },
+    ],
+  },
 ];
 
 // --- Requerimientos no funcionales (categorías ISO/IEC 25010) ------------------

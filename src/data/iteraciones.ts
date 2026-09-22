@@ -567,6 +567,37 @@ export const ITERACIONES: Iteracion[] = [
     ],
   },
   {
+    id: "it-desafio",
+    fase: "Fase 3 · Módulo en vivo",
+    nombre: "Desafío a su ritmo",
+    rango: "2026-09-22",
+    ghSince: null,
+    ghUntil: null,
+    resumen:
+      "Segunda forma de jugar un juego, como el modo asignado de Kahoot: sin host ni proyector, cada persona juega desde su celular hasta una fecha de cierre. Pedido para el primer cliente (Juan Valdez, Semana de la Salud), con sedes y turnos distintos.",
+    historias: [
+      {
+        id: "AN-29",
+        titulo: "Como administrador, quiero asignar un juego como desafío con fecha de cierre y compartir un enlace para que cada empleado lo juegue cuando pueda",
+        tipo: "historia",
+        valor: "alto",
+        col: "aceptacion",
+        par: "IA",
+        fecha: "2026-09-22",
+        tags: ["desafío", "asíncrono"],
+        requisitos: ["RF-801", "RF-802", "RF-803", "RF-804", "RF-805"],
+        dod: [
+          ok("Tablas live_challenges y live_challenge_progress solo con CREATE IF NOT EXISTS (migración segura en producción)."),
+          ok("Reglas puras de avance, reloj por jugador y fecha de cierre con tests (live-challenge-engine.test.mts)."),
+          ok("Flujo por HTTP en local: intro, respuesta temprana rechazada, puntaje y racha, tiempo vencido, doble toque, final con ranking, un intento por celular y cierre por fecha."),
+          ok("Partida en vivo sin cambios de comportamiento (entrada y respuestas probadas)."),
+          pend("Revisión visual del panel de asignar y la página del desafío en el admin."),
+          pend("Prueba en celulares reales antes del primer uso con el cliente."),
+        ],
+      },
+    ],
+  },
+  {
     id: "it-backlog",
     fase: "Backlog",
     nombre: "Pendientes del portal y las misiones",
