@@ -160,6 +160,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_live_matches_open_pin ON live_matches(pin)
 CREATE INDEX IF NOT EXISTS idx_live_matches_game ON live_matches(game_id);
 CREATE INDEX IF NOT EXISTS idx_live_matches_company ON live_matches(company_id);
 
+-- Desafío asíncrono (el modo "asignado" de Kahoot): una partida sin host en la que cada
+-- jugador avanza a su ritmo hasta closes_at. Es una partida más de live_matches, así
+-- comparte PIN, jugadores, respuestas y reportes. Mientras está abierto queda en 'lobby'
+-- (su PIN sigue reservado) y al cerrar pasa a 'finished'.
+-- Tabla aparte y no columnas nuevas: el esquema solo usa CREATE IF NOT EXISTS.
+CREATE TABLE IF NOT EXISTS live_challenges (
+  match_id  INTEGER PRIMARY KEY REFERENCES live_matches(id) ON DELETE CASCADE,
+  -- "YYYY-MM-DD HH:MM:SS" en UTC, como datetime('now').
+  closes_at TEXT NOT NULL
+);
+
+-- Avance de cada jugador en un desafío: el reloj de la pregunta es de cada persona.
+CREATE TABLE IF NOT EXISTS live_challenge_progress (
+  player_id           TEXT PRIMARY KEY REFERENCES live_players(id) ON DELETE CASCADE,
+  -- Posición abierta (1..n); nula antes de empezar.
+  current_position    INTEGER,
+  -- Epoch en ms del servidor, igual que en live_matches.
+  question_started_at INTEGER,
+  question_ends_at    INTEGER,
+  finished_at         TEXT
+);
+
 -- El id es aleatorio, no secuencial: viaja en una cookie y no debe ser adivinable.
 CREATE TABLE IF NOT EXISTS live_players (
   id                 TEXT PRIMARY KEY,
