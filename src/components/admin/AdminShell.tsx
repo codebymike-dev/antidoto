@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions";
 import { colors, LOGO_SRC } from "@/lib/theme";
-import { GridIcon, GearIcon, LogoutIcon } from "@/components/icons";
+import { GridIcon, GearIcon, LogoutIcon, PlayIcon } from "@/components/icons";
 import NotificationsBell from "./NotificationsBell";
 
 interface Props {
@@ -17,7 +17,8 @@ interface Props {
 export default function AdminShell({ roleTitle, roleSubtitle, notifications, children }: Props) {
   const pathname = usePathname();
   const navConfigOn = pathname.startsWith("/admin/config");
-  const navActivitiesOn = !navConfigOn;
+  const navGamesOn = pathname.startsWith("/admin/juegos");
+  const navActivitiesOn = !navConfigOn && !navGamesOn;
   const roleInitial = roleSubtitle === "Acceso total" ? "S" : roleSubtitle.charAt(0).toUpperCase();
 
   function navStyle(active: boolean) {
@@ -117,6 +118,14 @@ export default function AdminShell({ roleTitle, roleSubtitle, notifications, chi
           >
             <GridIcon />
             Actividades
+          </Link>
+          <Link
+            href="/admin/juegos"
+            className={navGamesOn ? "btn-navlink-active" : "btn-navlink"}
+            style={navStyle(navGamesOn)}
+          >
+            <PlayIcon />
+            Juegos en vivo
           </Link>
           <Link
             href="/admin/config"

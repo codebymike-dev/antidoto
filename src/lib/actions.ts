@@ -5,24 +5,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { one, run } from "./db";
-import { currentUser, destroySession, login, type AdminUser } from "./auth";
+import { destroySession, login } from "./auth";
+import { audit, requireUser } from "./admin-guard";
 import { findByCode } from "./queries";
 import { PARTICIPATION_COOKIE } from "./participation";
 import { clientIp, rateLimit } from "./rate-limit";
-
-async function requireUser(): Promise<AdminUser> {
-  const user = await currentUser();
-  if (!user) redirect("/admin/login");
-  return user;
-}
-
-async function audit(text: string, user: AdminUser | null, companyId: number | null = null) {
-  await run("INSERT INTO audit_log (text, admin_user_id, company_id) VALUES (?, ?, ?)", [
-    text,
-    user?.id ?? null,
-    companyId,
-  ]);
-}
 
 // --- Participante ---------------------------------------------------------
 
