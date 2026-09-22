@@ -213,7 +213,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
             </span>
           )}
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           {inGame && (
             <button type="button" className="btn-live" style={{ ...liveGhostButton, height: 38, fontSize: 13 }} onClick={() => command(state.joinLocked ? "unlockJoin" : "lockJoin")} disabled={busy}>
               {state.joinLocked ? "Abrir la entrada" : "Cerrar la entrada"}
@@ -221,15 +221,6 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
           )}
           {soundReady ? (
             <>
-              <button
-                type="button"
-                className="btn-live"
-                aria-pressed={musicOn}
-                style={{ ...liveGhostButton, height: 38, fontSize: 13, opacity: musicOn ? 1 : 0.55 }}
-                onClick={() => sound.setPrefs({ music: !musicOn })}
-              >
-                Música {musicOn ? "sí" : "no"}
-              </button>
               <label style={{ display: "flex", alignItems: "center", gap: 8, color: game.muted, fontSize: 13, fontWeight: 600 }}>
                 Volumen
                 <input
@@ -243,6 +234,15 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
                   style={{ width: 96, accentColor: game.accent }}
                 />
               </label>
+              <button
+                type="button"
+                className="btn-live"
+                aria-pressed={musicOn}
+                style={{ ...liveGhostButton, height: 38, fontSize: 13, opacity: musicOn ? 1 : 0.55 }}
+                onClick={() => sound.setPrefs({ music: !musicOn })}
+              >
+                Música {musicOn ? "sí" : "no"}
+              </button>
               <button
                 type="button"
                 className="btn-live"
