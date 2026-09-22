@@ -18,6 +18,18 @@ interface Props {
 
 export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocked, busy, onStart, onToggleLock, onKick }: Props) {
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
+
+  // El portapapeles falla fuera de HTTPS o sin permiso: en ese caso se muestra el enlace para copiarlo a mano.
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(joinUrl);
+      setCopy("copied");
+      setTimeout(() => setCopy((c) => (c === "copied" ? "idle" : c)), 2500);
+    } catch {
+      setCopy("failed");
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28, alignItems: "center", width: "100%" }}>
@@ -49,6 +61,9 @@ export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocke
         <span style={{ ...calSans, fontSize: "clamp(22px, 2.4vw, 34px)" }} aria-live="polite">
           {nicknames.length === 1 ? "1 jugador" : `${nicknames.length} jugadores`}
         </span>
+        <button type="button" className="btn-live" style={liveGhostButton} onClick={copyLink} aria-live="polite">
+          {copy === "copied" ? "¡Enlace copiado!" : "Copiar enlace"}
+        </button>
         <button type="button" className="btn-live" style={liveGhostButton} onClick={onToggleLock} disabled={busy}>
           {joinLocked ? "Abrir la entrada" : "Cerrar la entrada"}
         </button>
@@ -62,6 +77,12 @@ export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocke
           Comenzar
         </button>
       </div>
+
+      {copy === "failed" && (
+        <p style={{ margin: 0, color: game.muted, fontSize: 15, userSelect: "all", wordBreak: "break-all", textAlign: "center" }}>
+          {joinUrl}
+        </p>
+      )}
 
       {joinLocked && (
         <p style={{ margin: 0, color: game.muted, fontSize: 15 }}>La entrada está cerrada: nadie más puede unirse.</p>
