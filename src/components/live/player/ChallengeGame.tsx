@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ChallengeSnapshot } from "@/lib/live-protocol";
+import { QUESTION_INTRO_MS, type ChallengeSnapshot } from "@/lib/live-protocol";
 import { encouragement, finalHeadline } from "@/lib/live-player-view";
 import { remainingMs } from "@/lib/live-client-state";
 import { formatDateTime } from "@/lib/live-report-format";
@@ -168,16 +168,20 @@ function QuestionView({
     return () => clearInterval(id);
   }, [timeUp, onTimeUp]);
 
+  // Entrada: la pregunta sola, para leerla antes de ver las opciones (aquí no hay proyector).
   if (introLeft === null || introLeft > 0) {
+    const left = introLeft ?? QUESTION_INTRO_MS;
     return (
       <Centered>
         <p style={subtitle}>
           Pregunta {q.position} de {q.total}
         </p>
-        <h1 className="live-pop" style={title}>¡Prepárate!</h1>
-        <span aria-live="polite" style={{ ...calSans, fontSize: 72, color: game.accent }}>
-          {introLeft === null ? "" : Math.ceil(introLeft / 1000)}
-        </span>
+        <h1 className="live-pop" style={{ ...title, fontSize: 28, maxWidth: 520, lineHeight: 1.3 }}>
+          {q.prompt}
+        </h1>
+        <div aria-hidden style={{ width: "min(320px, 80%)", height: 8, borderRadius: 999, background: game.surfaceStrong, overflow: "hidden", marginTop: 12 }}>
+          <div style={{ height: "100%", width: `${(left / QUESTION_INTRO_MS) * 100}%`, background: game.accent, transition: "width 0.25s linear" }} />
+        </div>
       </Centered>
     );
   }

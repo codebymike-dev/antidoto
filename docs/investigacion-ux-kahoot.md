@@ -320,7 +320,7 @@ adelante solo su puntaje. [oficial]
 3. **Intro de la pregunta**: la pregunta sola, grande, con el tipo arriba ("Quiz",
    "Verdadero o falso", "Encuesta", "Nube de palabras", "Puntos dobles") y una barra de
    carga que da tiempo de leer (~5 s) antes de mostrar las opciones. [código: existe
-   `QuestionIntroLoadingBar`; duración observada, no extraída]. Antídoto usa 4 s
+   `QuestionIntroLoadingBar`; duración observada, no extraída]. Antídoto usa 3 s
    (`QUESTION_INTRO_MS`), con la cuenta 3-2-1 al final.
 4. **Pregunta activa**: pregunta arriba, imagen al centro, timer a la izquierda, contador
    "N respuestas" a la derecha, y las 4 opciones abajo en grilla 2x2 con forma + texto.
@@ -468,7 +468,7 @@ ping en la nube, conteo de puntos y whoosh en el ranking, pasos y fanfarria en e
   "Y el primer lugar es…".
 - La música de pregunta es una sola pista sintetizada con capas, no una pista compuesta
   por cada duración.
-- La intro de la pregunta dura 4 s en vez de ~5 s.
+- La intro de la pregunta dura 3 s en vez de ~5 s (decisión del cliente, 2026-09-22).
 
 **Por verificar con parlantes reales**: los graves del gong y del pulso de la pregunta
 (98 a 110 Hz) casi no suenan en parlantes de notebook o proyector. Ya se reforzaron con
@@ -506,7 +506,7 @@ octava), pero conviene escucharlo en la sala antes del primer uso.
 - [x] Todo respetando `prefers-reduced-motion`.
 - [x] Respuesta inmediata al tocar en el celular (se deshace si el servidor la rechaza).
 - [x] Empates en el podio: cada columna toma color, altura y número del `rank` real.
-- [x] Durante la intro de 4 s solo suenan los pitidos 3-2-1; la música entra con las opciones.
+- [x] Durante la intro de 3 s solo suenan los pitidos 3-2-1; la música entra con las opciones.
 
 **Copy**
 - [x] Textos de resultado, ánimo, celebración y titulares finales con variantes.

@@ -10,10 +10,10 @@ import type { LeaderboardEntry } from "./live-engine";
 import type { LiveMatchStatus, LiveQuestionType } from "./types";
 
 /**
- * Entrada de cada pregunta ("¡Prepárate!"): la pregunta se ve sola y las respuestas
- * se habilitan en `startedAt`. Ver docs/investigacion-ux-kahoot.md 5.1.
+ * Entrada de cada pregunta, como en Kahoot: la pregunta se ve sola 3 s para leerla y
+ * las opciones aparecen en `startedAt`. Ver docs/investigacion-ux-kahoot.md 5.1.
  */
-export const QUESTION_INTRO_MS = 4000;
+export const QUESTION_INTRO_MS = 3000;
 
 /** Canal público: jugadores y proyector. */
 export const matchChannel = (matchId: number) => `live:${matchId}`;
