@@ -9,7 +9,7 @@ import { destroySession, login } from "./auth";
 import { audit, requireUser } from "./admin-guard";
 import { findByCode } from "./queries";
 import { PARTICIPATION_COOKIE } from "./participation";
-import { clientIp, rateLimit } from "./rate-limit";
+import { clientIp, isLimited, rateLimit, recordHit } from "./rate-limit";
 
 // --- Participante ---------------------------------------------------------
 
@@ -24,14 +24,19 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
   if (!code) return { error: "Ingresa el código de tu actividad." };
   if (!accepted) return { error: "Debes aceptar la política de tratamiento de datos." };
 
-  // Los códigos son cortos: sin límite, serían adivinables por fuerza bruta.
+  // Los códigos son cortos: sin límite, serían adivinables por fuerza bruta. Se cuentan
+  // solo los códigos inexistentes: un grupo entero entra desde la misma IP de la oficina.
   const ip = await clientIp();
-  if (!(await rateLimit(`join:${ip}`, 15, 60))) {
+  const failKey = `join-fail:${ip}`;
+  if (await isLimited(failKey, 15, 60)) {
     return { error: "Demasiados intentos. Espera un minuto y vuelve a intentarlo." };
   }
 
   const match = await findByCode(code);
-  if (!match) return { error: "Código no encontrado o inválido. Verifica con tu administrador." };
+  if (!match) {
+    await recordHit(failKey);
+    return { error: "Código no encontrado o inválido. Verifica con tu administrador." };
+  }
   if (match.estado === "vencido") {
     const fecha = match.expira
       ? new Date(match.expira).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })

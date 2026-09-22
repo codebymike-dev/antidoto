@@ -1,13 +1,14 @@
 import { joinMatch } from "@/lib/live-match";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, isLimited, recordHit } from "@/lib/rate-limit";
 import { fail, json, playerIdFromCookie, readJson, sameOrigin, setPlayerCookie } from "@/lib/live-http";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return fail("Origen no permitido.", 403);
 
-  // Los PIN son cortos: sin límite serían adivinables por fuerza bruta.
-  const ip = await clientIp();
-  if (!(await rateLimit(`live-join:${ip}`, 20, 60))) {
+  // Los PIN son cortos: sin límite serían adivinables por fuerza bruta. Se cuentan solo
+  // los PIN inexistentes: en un evento, todos los celulares salen por la misma IP.
+  const failKey = `live-join-fail:${await clientIp()}`;
+  if (await isLimited(failKey, 15, 60)) {
     return fail("Demasiados intentos. Espera un minuto y vuelve a intentarlo.", 429);
   }
 
@@ -18,7 +19,10 @@ export async function POST(request: Request) {
     acceptedPolicy: body.acceptedPolicy === true,
     currentPlayerId: await playerIdFromCookie(),
   });
-  if (!res.ok) return fail(res.error, res.status);
+  if (!res.ok) {
+    if (res.status === 404) await recordHit(failKey);
+    return fail(res.error, res.status);
+  }
 
   await setPlayerCookie(res.playerId);
   return json({ matchId: res.matchId, nickname: res.nickname });

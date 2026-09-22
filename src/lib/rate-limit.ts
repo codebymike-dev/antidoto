@@ -14,24 +14,38 @@ export async function clientIp(): Promise<string> {
 const GLOBAL_CLEANUP_CHANCE = 0.01;
 const GLOBAL_CLEANUP_AGE_SECONDS = 3600;
 
+/** Solo lectura: true si `key` ya acumuló `limit` intentos en los últimos `windowSeconds`. */
+export async function isLimited(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  // La ventana se calcula en SQLite y no con toISOString(): created_at se guarda como
+  // "YYYY-MM-DD HH:MM:SS" y, comparado como texto contra "YYYY-MM-DDTHH:MM:SSZ", el
+  // espacio siempre queda antes que la "T" (nunca contaba intentos y borraba todos).
+  const windowStart = `-${windowSeconds} seconds`;
+  await run("DELETE FROM rate_limit_hits WHERE key = ? AND created_at < datetime('now', ?)", [key, windowStart]);
+  const row = await one<{ hits: number }>(
+    "SELECT COUNT(*) AS hits FROM rate_limit_hits WHERE key = ? AND created_at >= datetime('now', ?)",
+    [key, windowStart]
+  );
+  return (row?.hits ?? 0) >= limit;
+}
+
+/** Registra un intento para `key`. */
+export async function recordHit(key: string): Promise<void> {
+  await run("INSERT INTO rate_limit_hits (key) VALUES (?)", [key]);
+  if (Math.random() < GLOBAL_CLEANUP_CHANCE) {
+    await run("DELETE FROM rate_limit_hits WHERE created_at < datetime('now', ?)", [
+      `-${GLOBAL_CLEANUP_AGE_SECONDS} seconds`,
+    ]);
+  }
+}
+
 /**
  * true si `key` no ha superado `limit` intentos en los últimos `windowSeconds`.
  * Cada llamada cuenta como un intento (se registra siempre, incluso si se niega).
+ * Donde muchas personas legítimas comparten IP (un evento en la oficina), mejor
+ * contar solo los fallos con isLimited + recordHit.
  */
 export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
-  const windowStart = new Date(Date.now() - windowSeconds * 1000).toISOString();
-
-  await run("DELETE FROM rate_limit_hits WHERE key = ? AND created_at < ?", [key, windowStart]);
-  const row = await one<{ hits: number }>(
-    "SELECT COUNT(*) AS hits FROM rate_limit_hits WHERE key = ? AND created_at >= ?",
-    [key, windowStart]
-  );
-  await run("INSERT INTO rate_limit_hits (key) VALUES (?)", [key]);
-
-  if (Math.random() < GLOBAL_CLEANUP_CHANCE) {
-    const staleBefore = new Date(Date.now() - GLOBAL_CLEANUP_AGE_SECONDS * 1000).toISOString();
-    await run("DELETE FROM rate_limit_hits WHERE created_at < ?", [staleBefore]);
-  }
-
-  return (row?.hits ?? 0) < limit;
+  const limited = await isLimited(key, limit, windowSeconds);
+  await recordHit(key);
+  return !limited;
 }
