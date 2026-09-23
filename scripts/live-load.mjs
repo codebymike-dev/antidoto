@@ -4,7 +4,11 @@
 //   node --env-file=.env.local scripts/live-load.mjs            (100 jugadores, juego 1)
 //   N=50 GAME=3 node --env-file=.env.local scripts/live-load.mjs
 //
-// Solo contra la base local (turso dev) y `npm run dev`: crea una sesión temporal del
+// Contra un preview de Vercel (base `antidoto-preview`, nunca la de producción):
+//   BASE=https://<preview>.vercel.app CHANNEL_ENV=preview VERCEL_BYPASS=<secreto> \
+//   TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... node scripts/live-load.mjs
+//
+// Solo contra la base local (turso dev) o la de preview: crea una sesión temporal del
 // primer superadmin y la borra al terminar, junto con la partida de prueba.
 // Consume mensajes reales de Ably: una corrida de 100 jugadores usa ~1.300 (plan gratis: 6 M/mes).
 
@@ -15,9 +19,13 @@ import { createClient } from "@libsql/client";
 const BASE = process.env.BASE ?? "http://localhost:3000";
 const N = Number(process.env.N ?? 100);
 const GAME_ID = Number(process.env.GAME ?? 1);
+// Mismo prefijo que matchChannel/hostChannel en src/lib/live-protocol.ts.
+const CHANNEL_ENV = process.env.CHANNEL_ENV ?? "local";
+// Secreto de "Protection Bypass for Automation" si el despliegue está protegido.
+const BYPASS = process.env.VERCEL_BYPASS;
 
-if (!process.env.TURSO_DATABASE_URL?.includes("127.0.0.1")) {
-  console.error("Solo se corre contra la base local (TURSO_DATABASE_URL en 127.0.0.1).");
+if (!/127\.0\.0\.1|antidoto-preview/.test(process.env.TURSO_DATABASE_URL ?? "")) {
+  console.error("Solo se corre contra la base local (127.0.0.1) o la de preview (antidoto-preview).");
   process.exit(1);
 }
 const db = createClient({ url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN });
@@ -31,6 +39,7 @@ const summary = (arr) => `p50 ${pct(arr, 0.5)} ms · p95 ${pct(arr, 0.95)} ms ·
 async function call(path, { cookie, body } = {}) {
   const headers = { "content-type": "application/json", origin: BASE };
   if (cookie) headers.cookie = cookie;
+  if (BYPASS) headers["x-vercel-protection-bypass"] = BYPASS;
   const t0 = Date.now();
   const res = await fetch(BASE + path, { method: body ? "POST" : "GET", headers, body: body ? JSON.stringify(body) : undefined });
   const data = await res.json().catch(() => null);
@@ -84,7 +93,7 @@ try {
       const rt = realtime(cookie);
       clients.push(rt);
       const p = { i, cookie, events: [], received: 0 };
-      await rt.channels.get(`live:${matchId}`).subscribe((m) => {
+      await rt.channels.get(`live:${CHANNEL_ENV}:${matchId}`).subscribe((m) => {
         p.received++;
         p.events.push({ name: m.name, data: m.data, at: Date.now() });
       });
@@ -96,8 +105,8 @@ try {
   const hostRt = realtime(host, `?match=${matchId}`);
   clients.push(hostRt);
   let hostMessages = 0;
-  await hostRt.channels.get(`live:${matchId}:host`).subscribe(() => hostMessages++);
-  await hostRt.channels.get(`live:${matchId}`).subscribe(() => hostMessages++);
+  await hostRt.channels.get(`live:${CHANNEL_ENV}:${matchId}:host`).subscribe(() => hostMessages++);
+  await hostRt.channels.get(`live:${CHANNEL_ENV}:${matchId}`).subscribe(() => hostMessages++);
 
   const cmd = (command) => call(`/api/live/host/${matchId}/command`, { cookie: host, body: { command } });
   const lastEvent = (p, name, position) => p.events.filter((e) => e.name === name && (position === undefined || e.data.position === position)).at(-1);

@@ -15,13 +15,20 @@ import type { LiveMatchStatus, LiveQuestionType } from "./types";
  */
 export const QUESTION_INTRO_MS = 3000;
 
+/**
+ * Entorno en el nombre del canal. Local, preview y producción comparten la app de Ably y
+ * cada base numera sus partidas desde 1: sin esto, la partida 1 de un entorno escucharía
+ * la de otro. Next incrusta NEXT_PUBLIC_* en servidor y navegador, así que coinciden.
+ */
+const CHANNEL_ENV = process.env.NEXT_PUBLIC_VERCEL_ENV ?? "local";
+
 /** Canal público: jugadores y proyector. */
-export const matchChannel = (matchId: number) => `live:${matchId}`;
+export const matchChannel = (matchId: number) => `live:${CHANNEL_ENV}:${matchId}`;
 /**
  * Canal del host. El contador de respuestas y la lista de jugadores cambian con cada
  * jugador: mandarlos a los 50 celulares multiplicaría los mensajes de Ably por 50.
  */
-export const hostChannel = (matchId: number) => `live:${matchId}:host`;
+export const hostChannel = (matchId: number) => `live:${CHANNEL_ENV}:${matchId}:host`;
 
 export interface PublicQuestion {
   position: number;
