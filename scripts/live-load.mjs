@@ -4,9 +4,11 @@
 //   node --env-file=.env.local scripts/live-load.mjs            (100 jugadores, juego 1)
 //   N=50 GAME=3 node --env-file=.env.local scripts/live-load.mjs
 //
-// Contra un preview de Vercel (base `antidoto-preview`, nunca la de producción):
-//   BASE=https://<preview>.vercel.app CHANNEL_ENV=preview VERCEL_BYPASS=<secreto> \
-//   TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... node scripts/live-load.mjs
+// Contra un preview de Vercel (base `antidoto-preview`, nunca la de producción). Primero
+// .env.local (trae el VERCEL_OIDC_TOKEN que deja `vercel link`) y después el de preview,
+// que pisa las credenciales de Turso:
+//   BASE=https://<preview>.vercel.app CHANNEL_ENV=preview \
+//   node --env-file=.env.local --env-file=<env de preview> scripts/live-load.mjs
 //
 // Solo contra la base local (turso dev) o la de preview: crea una sesión temporal del
 // primer superadmin y la borra al terminar, junto con la partida de prueba.
@@ -21,8 +23,9 @@ const N = Number(process.env.N ?? 100);
 const GAME_ID = Number(process.env.GAME ?? 1);
 // Mismo prefijo que matchChannel/hostChannel en src/lib/live-protocol.ts.
 const CHANNEL_ENV = process.env.CHANNEL_ENV ?? "local";
-// Secreto de "Protection Bypass for Automation" si el despliegue está protegido.
-const BYPASS = process.env.VERCEL_BYPASS;
+// Previews protegidos: el token OIDC de desarrollo del proyecto vinculado los abre sin
+// crear un secreto permanente. En local no hace falta.
+const OIDC = BASE.startsWith("http://localhost") ? undefined : process.env.VERCEL_OIDC_TOKEN;
 
 if (!/127\.0\.0\.1|antidoto-preview/.test(process.env.TURSO_DATABASE_URL ?? "")) {
   console.error("Solo se corre contra la base local (127.0.0.1) o la de preview (antidoto-preview).");
@@ -39,7 +42,7 @@ const summary = (arr) => `p50 ${pct(arr, 0.5)} ms · p95 ${pct(arr, 0.95)} ms ·
 async function call(path, { cookie, body } = {}) {
   const headers = { "content-type": "application/json", origin: BASE };
   if (cookie) headers.cookie = cookie;
-  if (BYPASS) headers["x-vercel-protection-bypass"] = BYPASS;
+  if (OIDC) headers["x-vercel-trusted-oidc-idp-token"] = OIDC;
   const t0 = Date.now();
   const res = await fetch(BASE + path, { method: body ? "POST" : "GET", headers, body: body ? JSON.stringify(body) : undefined });
   const data = await res.json().catch(() => null);

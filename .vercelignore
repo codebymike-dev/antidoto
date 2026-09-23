@@ -1,0 +1,9 @@
+# Lo que `vercel deploy` no debe subir. La CLI no lee .gitignore: sin esto sube la base
+# local de pruebas.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.env*
+!.env.example
+*.tsbuildinfo
