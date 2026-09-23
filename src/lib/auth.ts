@@ -104,6 +104,8 @@ export async function login(username: string, password: string): Promise<AdminUs
   if (!user || !(await verifyPassword(password, user.password_hash))) return null;
 
   await createSession(user.id);
+  // Sin esto la tabla crece para siempre. El login es raro, así que el costo no se nota.
+  await purgeExpiredSessions();
   return currentUser();
 }
 

@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { one } from "./db";
 import type { Estado } from "./types";
+import { isExpired } from "./expiry";
 
 export const PARTICIPATION_COOKIE = "antidoto_participacion";
 
@@ -43,7 +44,7 @@ export async function currentParticipation(): Promise<ParticipationView | null> 
   );
   if (!row) return null;
 
-  const vencido = row.expira && new Date(row.expira) < new Date();
+  const vencido = isExpired(row.expira);
   return {
     ...row,
     participantes: Number(row.participantes),

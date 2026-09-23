@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { getMission, listGroups } from "@/lib/queries";
-
-/** Escapa según RFC 4180: comillas dobladas y campo entrecomillado si lo necesita. */
-function csvCell(value: string | number): string {
-  const text = String(value);
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-}
+import { csvCell } from "@/lib/live-report-format";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await currentUser();
@@ -43,12 +38,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   // BOM para que Excel abra bien los acentos.
   const csv = "﻿" + lines.join("\r\n");
-  const filename = `${mission.title.replace(/\s+/g, "_")}.csv`;
+  const filename = `${mission.title.replace(/[^\p{L}\p{N}]+/gu, "_")}.csv`;
 
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      // filename* admite tildes; con comillas o emoji en el título el header plano fallaba.
+      "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
     },
   });
 }

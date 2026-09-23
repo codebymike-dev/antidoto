@@ -3,6 +3,7 @@ import { all, one } from "./db";
 import type { AdminUser } from "./auth";
 import type { Estado } from "./types";
 import { companyFilter } from "./scope";
+import { isExpired } from "./expiry";
 
 export interface GroupRow {
   id: number;
@@ -35,7 +36,7 @@ const GROUP_METRICS = `
 
 /** El estado 'vencido' se deriva de la fecha, nunca se guarda. */
 function resolveEstado(estado: string, expiresAt: string | null): Estado {
-  if (expiresAt && new Date(expiresAt) < new Date()) return "vencido";
+  if (isExpired(expiresAt)) return "vencido";
   return estado === "pausado" ? "pausado" : "activo";
 }
 

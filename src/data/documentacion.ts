@@ -80,7 +80,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         prioridad: "alta",
         estado: "parcial",
         origen: "joinActivity en src/lib/actions.ts, resolveEstado en src/lib/queries.ts",
-        verificacion: "Revisión manual con un código de expires_at en el pasado.",
+        verificacion: "src/lib/expiry.test.mts cubre el límite del día en hora de Colombia.",
         notas:
           "Un código en estado 'pausado' todavía deja entrar: /mision solo muestra un aviso. Falta decidir si la pausa debe bloquear la entrada.",
         relacionados: ["RF-301", "RNF-03"],
@@ -205,7 +205,8 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         prioridad: "media",
         estado: "implementado",
         origen: "src/app/admin/(portal)/actividades/[id]/export/route.ts",
-        notas: "El archivo lleva BOM UTF-8 para Excel y respeta el mismo filtro por empresa.",
+        notas:
+          "El archivo lleva BOM UTF-8 para Excel y respeta el mismo filtro por empresa. Usa el mismo csvCell que el export de partidas: neutraliza fórmulas (=, +, -, @) y el nombre va en filename* para admitir tildes.",
         relacionados: ["RF-103"],
       },
       {
@@ -251,7 +252,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         estado: "parcial",
         origen: "listAllCodes en src/lib/queries.ts",
         notas:
-          "El estado 'vencido' se deriva de expires_at. Falta poder pausar, reactivar o cambiar el vencimiento de un código ya creado.",
+          "El estado 'vencido' se deriva de expires_at (src/lib/expiry.ts): el día elegido sirve completo y vence al terminar ese día en hora de Colombia, no a medianoche UTC (antes vencía la tarde del día anterior). Falta poder pausar, reactivar o cambiar el vencimiento de un código ya creado.",
         relacionados: ["RNF-10"],
       },
       {
@@ -631,7 +632,7 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
         prioridad: "alta",
         estado: "implementado",
         origen: "createSession, currentUser en src/lib/auth.ts, tabla sessions",
-        notas: "Una fuga de la tabla sessions no permite suplantar a nadie.",
+        notas: "Una fuga de la tabla sessions no permite suplantar a nadie. Las sesiones vencidas se borran en cada login (purgeExpiredSessions).",
       },
       {
         id: "RNF-03",

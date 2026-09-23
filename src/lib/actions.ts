@@ -10,6 +10,7 @@ import { audit, requireUser } from "./admin-guard";
 import { findByCode } from "./queries";
 import { PARTICIPATION_COOKIE } from "./participation";
 import { clientIp, isLimited, rateLimit, recordHit } from "./rate-limit";
+import { formatExpiryDate, isDateOnly } from "./expiry";
 
 // --- Participante ---------------------------------------------------------
 
@@ -38,9 +39,7 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
     return { error: "Código no encontrado o inválido. Verifica con tu administrador." };
   }
   if (match.estado === "vencido") {
-    const fecha = match.expira
-      ? new Date(match.expira).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })
-      : "";
+    const fecha = match.expira ? formatExpiryDate(match.expira) : "";
     return { error: `Este código venció el ${fecha}. Contacta a tu administrador.` };
   }
 
@@ -130,6 +129,8 @@ export async function generateCode(formData: FormData) {
   const missionId = String(formData.get("missionId") ?? "");
   const estado = String(formData.get("estado") ?? "activo") === "pausado" ? "pausado" : "activo";
   const expira = String(formData.get("expira") ?? "").trim();
+  // Solo lo que envía <input type="date">: un texto libre nunca vencería.
+  if (expira && !isDateOnly(expira)) return;
 
   // Un admin de empresa solo puede generar códigos para la suya: el campo del form se ignora.
   const companyName =
