@@ -45,7 +45,11 @@ export interface Look {
   hair: Color;
   shoes: "chanclas" | "botas";
   /** Sombrero aguadeño (el de siempre) o gorra, para quien trabaja bajo techo. */
-  headwear?: "sombrero" | "gorra";
+  headwear?: "sombrero" | "gorra" | "ninguno" | "cofia";
+  /** Pelo corto (el de siempre), largo y suelto, o recogido en moño. */
+  hairStyle?: "corto" | "suelto" | "recogido";
+  /** Bigote; por defecto sí. */
+  mustache?: boolean;
   /** Protección auditiva de copa (orejeras). */
   earmuffs?: boolean;
   /** Tapabocas o respirador para polvo. */
@@ -302,6 +306,25 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
     const lx = wx * cos + wy * sin;
     const ly = -wx * sin + wy * cos;
 
+    const sombrero = !look.headwear || look.headwear === "sombrero";
+    const bare = look.headwear === "ninguno" || look.headwear === "cofia";
+    if (look.headwear === "cofia") {
+      // Cofia de malla: cubre todo el pelo, con puntitos de la malla.
+      if (lx * lx + (ly + 1) ** 2 <= 8.4 * 8.4 && ly < 3 && (ly < -3.2 || lx < -2.3)) {
+        return (Math.floor(lx * 1.5) + Math.floor(ly * 1.5)) % 3 === 0 ? hex("#9cc6dc") : hex("#dcedf5");
+      }
+    }
+    if (look.headwear === "ninguno") {
+      const style = look.hairStyle ?? "corto";
+      const inHead = lx * lx + ly * ly <= HEAD_R * HEAD_R;
+      const face = inHead && lx >= -2.2 && ly >= -3.3;
+      if (!face) {
+        if (lx * lx + ly * ly <= (HEAD_R + 1.2) ** 2 && (ly < -2.6 || lx < -2.4) && ly < 2.5) return look.hair;
+        if (style === "suelto" && lx < -1.6 && lx > -8.4 && ly >= -2 && ly < 10.5 && lx > -8.4 + (ly > 7 ? (ly - 7) * 0.8 : 0))
+          return Math.floor(ly * 1.4 + lx) % 4 === 0 ? look.hatDark : look.hair;
+        if (style === "recogido" && (lx + 7.4) ** 2 + (ly + 3.2) ** 2 <= 7.3) return look.hair;
+      }
+    }
     if (look.headwear === "gorra") {
       // Visera hacia adelante y copa redonda un poco más grande que la cabeza.
       if (ly >= -3.4 && ly < -1.8 && lx >= 2 && lx <= 10.5 - (ly + 3.4) * 0.6) return look.hatDark;
@@ -324,12 +347,12 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
     // Ala del sombrero aguadeño: ancha y plana.
     const bx = (lx - 0.5) / 10;
     const by = (ly + 3.6) / 2.1;
-    if (look.headwear !== "gorra" && bx * bx + by * by <= 1) {
+    if (sombrero && bx * bx + by * by <= 1) {
       if (ly > -3.1) return look.hatDark;
       return (Math.floor(lx) + Math.floor(ly)) % 3 === 0 ? look.hatDark : look.hat;
     }
     // Copa con la cinta negra y el pliegue de arriba.
-    if (look.headwear !== "gorra" && ly >= -11 && ly < -4.4) {
+    if (sombrero && ly >= -11 && ly < -4.4) {
       const half = 5.4 - (ly < -9 ? (-9 - ly) * 1.1 : 0);
       if (Math.abs(lx + 0.3) <= half) {
         if (ly >= -6.2) return look.band;
@@ -342,9 +365,9 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
     if ((lx - 6.6) ** 2 + (ly - 1.4) ** 2 <= 2.4) return look.skin;
     if (lx * lx + ly * ly > HEAD_R * HEAD_R) return CLEAR;
 
-    if (lx < -2.8 && ly < 3.2) return look.hair;
+    if (lx < -2.8 && ly < 3.2) return look.headwear === "cofia" ? hex("#dcedf5") : look.hair;
     if ((lx + 1) ** 2 + (ly - 0.8) ** 2 <= 2.3) return (lx + 1) ** 2 + (ly - 0.8) ** 2 <= 0.6 ? eye : look.skinDark;
-    if (ly < -0.6) return look.skinDark; // sombra bajo el ala
+    if (!bare && ly < -0.6) return look.skinDark; // sombra bajo el ala
 
     const eyeX = lx >= 3 && lx < 4;
     if (expression === "sueno" || expression === "bostezo") {
@@ -362,7 +385,7 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
     } else if (eyeX && ly >= -0.2 && ly < 1.8) {
       return eye;
     }
-    if (lx >= 3.6 && lx < 6.8 && ly >= 2.7 && ly < 3.8) return look.hair; // bigote
+    if (look.mustache !== false && lx >= 3.6 && lx < 6.8 && ly >= 2.7 && ly < 3.8) return look.hair; // bigote
     if (expression === "esfuerzo" && lx >= 4 && lx < 6 && ly >= 4.2 && ly < 5.4) return eye;
     if (expression === "feliz" && lx >= 3.4 && lx < 5.8 && ly >= 4.4 && ly < 5.2) return eye;
     if (lx < -1.5) return look.skinDark;

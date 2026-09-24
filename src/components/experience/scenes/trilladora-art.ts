@@ -209,7 +209,23 @@ export const DOOR = { j0: 3.9, j1: 6.3, h: 56 };
  * Fondo oscuro, paredes con ventanas altas, zócalo, puerta de cargue abierta a la luz del
  * día, extintor y piso de baldosas de concreto con su espesor.
  */
-export function drawRoom(buf: PixelBuffer) {
+export interface RoomOptions {
+  /** Puerta de cargue en la pared izquierda (la trilladora la tiene; la tostión no). */
+  door?: boolean;
+  wallLit?: Color;
+  wallShade?: Color;
+  zocalo?: Color;
+  zocaloDark?: Color;
+  /** Dónde va el extintor, sobre la pared derecha (en i). */
+  extinguisherI?: number;
+}
+
+export function drawRoom(buf: PixelBuffer, opts: RoomOptions = {}) {
+  const door = opts.door ?? true;
+  const wallLit = opts.wallLit ?? C.wallLit;
+  const wallShade = opts.wallShade ?? C.wallShade;
+  const zocalo = opts.zocalo ?? C.zocalo;
+  const zocaloDark = opts.zocaloDark ?? C.zocaloDark;
   const rnd = seeded(21);
   // Fondo: como en Habbo, la sala flota sobre un fondo oscuro (con el azul de la marca).
   for (let y = 0; y < H; y++) {
@@ -276,7 +292,7 @@ export function drawRoom(buf: PixelBuffer) {
   // Pared derecha (plano j = 0), en sombra.
   onFront(buf, 0, [0, ROOM_I, 0, WALL], (i, z) => {
     if (i < 0 || i > ROOM_I || z < 0 || z > WALL) return CLEAR;
-    if (z < 10) return z > 8.6 ? C.zocaloDark : C.zocalo;
+    if (z < 10) return z > 8.6 ? zocaloDark : zocalo;
     // Ventanas altas.
     for (const w0 of [0.8, 2.4]) {
       if (i > w0 && i < w0 + 1.1 && z > 50 && z < 70) {
@@ -284,25 +300,25 @@ export function drawRoom(buf: PixelBuffer) {
         return z > 64 || (i - w0) * 20 + (70 - z) < 8 ? C.glassLit : C.glass;
       }
     }
-    return Math.floor(z) % 16 === 0 ? mix(C.wallShade, C.wallLine, 0.3) : C.wallShade;
+    return Math.floor(z) % 16 === 0 ? mix(wallShade, C.wallLine, 0.3) : wallShade;
   });
   // Pared izquierda (plano i = 0), iluminada, con la puerta de cargue.
   onSide(buf, 0, [0, ROOM_J, 0, WALL], (j, z) => {
     if (j < 0 || j > ROOM_J || z < 0 || z > WALL) return CLEAR;
-    const inDoor = j > DOOR.j0 && j < DOOR.j1 && z < DOOR.h;
+    const inDoor = door && j > DOOR.j0 && j < DOOR.j1 && z < DOOR.h;
     if (inDoor) {
       // Afuera: patio iluminado y cielo, con la cortina metálica medio subida.
       if (z > DOOR.h - 12) return Math.floor(z) % 3 === 0 ? C.steelDark : C.steel;
       if (z < 14) return (Math.floor(j * 7) + Math.floor(z)) % 5 === 0 ? mix(C.grass, C.grassDark, 0.5) : C.grass;
       return z > 30 ? mix(C.glassLit, hex("#ffffff"), 0.3) : mix(hex("#bfe3f2"), C.glassLit, (z - 14) / 16);
     }
-    if (j > DOOR.j0 - 0.12 && j < DOOR.j1 + 0.12 && z < DOOR.h + 2) return C.yellowDark;
-    if (z < 10) return z > 8.6 ? C.zocaloDark : C.zocalo;
+    if (door && j > DOOR.j0 - 0.12 && j < DOOR.j1 + 0.12 && z < DOOR.h + 2) return C.yellowDark;
+    if (z < 10) return z > 8.6 ? zocaloDark : zocalo;
     if (j > 1.2 && j < 2.8 && z > 50 && z < 70) {
       if (j < 1.28 || j > 2.72 || z < 51.5 || z > 68.5 || Math.abs(j - 2) < 0.05) return C.frame;
       return z > 64 ? C.glassLit : C.glass;
     }
-    return Math.floor(z) % 16 === 0 ? mix(C.wallLit, C.wallLine, 0.25) : C.wallLit;
+    return Math.floor(z) % 16 === 0 ? mix(wallLit, C.wallLine, 0.25) : wallLit;
   });
   // Filo de arriba de las paredes.
   const top = (a: P3, b: P3) => edge(buf, a, b, C.wallTop);
@@ -310,10 +326,10 @@ export function drawRoom(buf: PixelBuffer) {
   top([0, 0, WALL], [0, ROOM_J, WALL]);
   edge(buf, [0, ROOM_J, 0], [0, ROOM_J, WALL], C.wallLine);
   edge(buf, [ROOM_I, 0, 0], [ROOM_I, 0, WALL], C.wallLine);
-  edge(buf, [0, 0, 0], [0, 0, WALL], mix(C.wallShade, C.wallLine, 0.5));
+  edge(buf, [0, 0, 0], [0, 0, WALL], mix(wallShade, C.wallLine, 0.5));
 
   // Extintor en la pared derecha, a la vista.
-  const ext = P(2.1, 0.02, 14);
+  const ext = P(opts.extinguisherI ?? 2.1, 0.02, 14);
   buf.rect(ext.x - 2, ext.y - 18, 5, 18, C.red);
   buf.rect(ext.x + 1, ext.y - 18, 2, 18, C.redDark);
   buf.rect(ext.x - 1, ext.y - 21, 3, 3, C.belt);

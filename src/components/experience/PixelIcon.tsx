@@ -125,6 +125,18 @@ const ICONS = {
     "..knmmmk..",
     "...kkkk...",
   ],
+  luz: [
+    "...kkkk...",
+    "..kzzzzk..",
+    ".kzzzzzzk.",
+    "kzzmmmmmzk",
+    "kznmmmmmzk",
+    "kznmmkmmzk",
+    "kznmmmmmzk",
+    "kznmmrmmzk",
+    "kz.knmmmk.",
+    "k...kkkk..",
+  ],
   insignia: [
     "kkkkkkkkkkkkkk",
     "kccccccccccCCk",

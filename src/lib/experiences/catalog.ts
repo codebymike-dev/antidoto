@@ -430,7 +430,146 @@ export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
   ],
 };
 
-export const EXPERIENCES: ExperienceDef[] = [RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA];
+// Fuentes: Resolución 2400 de 1979 (arts. 29, 32, 121, 125, 161, 177, 536 y 543) y las
+// evaluaciones de NIOSH en tostadoras de café. Detalle en docs/investigacion-ux-habbo.md.
+export const RUTA_CAFE_TOSTION: ExperienceDef = {
+  key: "ruta-cafe-tostion",
+  scene: "tostion",
+  tag: "SEMANA DE LA SALUD",
+  series: "Ruta del café",
+  station: 4,
+  title: "La tostión: al punto",
+  description:
+    "Luz, maestra tostadora, convierte el café verde en café tostado. Encuentra los riesgos de su planta: el gas, el fuego, el humo, el calor y lo que gira.",
+  character: "Luz",
+  enter: "Entrar a la tostión",
+  badge: "Tostadora segura",
+  minutes: "5 a 8 min",
+  risks: [
+    {
+      id: "gas",
+      category: "Tecnológico",
+      defaults: {
+        title: "Busca la fuga de gas con una llama",
+        prompt: "Mira lo que hace Luz con el cilindro de gas. ¿Qué está mal?",
+        options: [
+          "El cilindro es de color aluminio",
+          "Busca la fuga con el encendedor prendido, junto a la tostadora",
+          "Revisa la conexión antes de prender",
+        ],
+        correct: 1,
+        explanation:
+          "Si hay una fuga, la llama la enciende: un flamazo o una explosión. La Resolución 2400 de 1979 prohíbe usar llama para buscar fugas de gases inflamables (art. 543) y pide guardar los cilindros en un sitio ventilado, separados de la llama (art. 536).",
+        practice:
+          "Busca fugas con agua jabonosa: si salen burbujas, cierra la válvula y avisa. El cilindro va asegurado en su jaula, lejos del quemador.",
+      },
+    },
+    {
+      id: "cable",
+      category: "Eléctrico",
+      defaults: {
+        title: "Extensión regada por el piso",
+        prompt: "Sigue el cable que cruza la planta. ¿Qué riesgo ves?",
+        options: [
+          "El cable es negro",
+          "El molino está enchufado a la pared",
+          "Una extensión empalmada con cinta cruza el piso por donde se camina",
+        ],
+        correct: 2,
+        explanation:
+          "Un cable regado se pisa, se aplasta y se pela: el empalme con cinta puede dar corriente o hacer un cortocircuito, y además es un tropezón. La Resolución 2400 de 1979 pide evitar cables dispersos en el piso (art. 125) y aislamiento eficaz en los conductores (art. 121).",
+        practice: "Conecta cada equipo a un tomacorriente cercano, con el cable por canaleta o por la pared. Un cable pelado o empalmado se cambia, no se encinta.",
+      },
+    },
+    {
+      id: "cascarilla",
+      category: "Tecnológico",
+      defaults: {
+        title: "Cascarilla acumulada junto al fuego",
+        prompt: "Fíjate en el colector de cascarilla. ¿Cuál es el problema?",
+        options: [
+          "Está lleno y la cascarilla se riega junto al quemador: se puede prender",
+          "La cascarilla es de color dorado",
+          "El colector está junto a la pared",
+        ],
+        correct: 0,
+        explanation:
+          "La cascarilla que suelta el grano al tostarse es seca y liviana: arde con facilidad. Los incendios en tostadoras empiezan muchas veces en el colector o en la chimenea llenos de cascarilla. La Resolución 2400 de 1979 (art. 29) no permite la acumulación de polvo, basuras y desperdicios.",
+        practice: "Vacía el colector de cascarilla en cada jornada, limpia la chimenea con la frecuencia que indica el fabricante y ten el extintor a la mano.",
+      },
+    },
+    {
+      id: "humo",
+      category: "Químico",
+      defaults: {
+        title: "Humo de la tostión sin extracción",
+        prompt: "Mira el aire de la planta mientras Luz tuesta. ¿Qué pasa?",
+        options: [
+          "Huele muy rico a café",
+          "Hay mucha luz en la planta",
+          "El extractor está apagado y el humo se queda adentro",
+        ],
+        correct: 2,
+        explanation:
+          "Al tostar y moler salen monóxido de carbono y compuestos como el diacetilo. En tostadoras de café, NIOSH ha medido niveles de monóxido por encima de su límite y ha reportado enfermedad pulmonar grave en trabajadores. La Resolución 2400 de 1979 (art. 161) exige ventilación o extracción para humos y gases.",
+        practice: "Prende la extracción antes de tostar y no la apagues hasta terminar. Si te duele la cabeza o te mareas, sal al aire libre y avisa.",
+      },
+    },
+    {
+      id: "quemadura",
+      category: "Físico",
+      defaults: {
+        title: "Saca la muestra sin guantes",
+        prompt: "Luz saca una muestra del tambor. ¿Qué está mal?",
+        options: [
+          "Mira el color del grano",
+          "Agarra la cuchara y los granos a más de 200 °C con la mano desnuda",
+          "Lo hace mientras la tostadora está prendida",
+        ],
+        correct: 1,
+        explanation:
+          "El tambor, la cuchara de muestreo y los granos pasan de 200 °C al final de la tostión: una quemadura de segundo grado se hace en segundos. La Resolución 2400 de 1979 (art. 177) pide guantes, mitones y mangas resistentes al calor para manipular piezas calientes.",
+        practice: "Usa guantes para calor y manga larga, agarra la cuchara por el mango y deja los granos en una bandeja para mirarlos.",
+      },
+    },
+    {
+      id: "pelo",
+      category: "Mecánico",
+      defaults: {
+        title: "Pelo suelto sobre las aspas",
+        prompt: "Luz se inclina sobre la bandeja de enfriamiento. ¿Qué riesgo ves?",
+        options: [
+          "Tiene el pelo suelto sobre las aspas que giran",
+          "Revisa que el grano se enfríe parejo",
+          "La bandeja es redonda",
+        ],
+        correct: 0,
+        explanation:
+          "Las aspas de la bandeja giran sin parar: si agarran un mechón de pelo, jalan la cabeza contra la máquina. La Resolución 2400 de 1979 pide cofias para quien tenga el pelo largo y trabaje cerca de maquinaria (art. 177) y prohíbe ropa suelta, cadenas o pulseras cerca de piezas en movimiento (art. 171).",
+        practice: "Pelo recogido y cofia, nada colgando, y las manos y la cabeza por fuera de la bandeja mientras las aspas giran.",
+      },
+    },
+    {
+      id: "granos",
+      category: "Locativo",
+      defaults: {
+        title: "Granos regados en el piso",
+        prompt: "Mira el piso alrededor de la bandeja. ¿Qué pasa?",
+        options: [
+          "El piso es de baldosa",
+          "Hay una caneca cerca",
+          "Hay granos regados: se pisan como canicas y se resbala",
+        ],
+        correct: 2,
+        explanation:
+          "Los granos tostados son redondos y duros: pisarlos es como pisar canicas, y una caída junto a una máquina caliente es doblemente grave. La Resolución 2400 de 1979 (art. 32) pide mantener los pisos libres de desperdicios y de lo que los haga resbaladizos.",
+        practice: "Barre o aspira los granos regados apenas caigan, antes de seguir trabajando, y usa calzado antideslizante.",
+      },
+    },
+  ],
+};
+
+export const EXPERIENCES: ExperienceDef[] = [RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA, RUTA_CAFE_TOSTION];
 
 export function getExperience(key: string): ExperienceDef | null {
   return EXPERIENCES.find((e) => e.key === key) ?? null;

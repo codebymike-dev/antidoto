@@ -5,9 +5,10 @@ import { LIMITS, parseStoredTexts, publicExperience, riskResult, score, validate
 import { FINCA_MAP } from "../components/experience/scenes/finca-map.ts";
 import { TRANSPORTE_MAP } from "../components/experience/scenes/transporte-map.ts";
 import { TRILLADORA_MAP } from "../components/experience/scenes/trilladora-map.ts";
+import { TOSTION_MAP } from "../components/experience/scenes/tostion-map.ts";
 import type { SceneMap } from "../components/experience/scenes/types.ts";
 
-const MAPS: Record<string, SceneMap> = { finca: FINCA_MAP, transporte: TRANSPORTE_MAP, trilladora: TRILLADORA_MAP };
+const MAPS: Record<string, SceneMap> = { finca: FINCA_MAP, transporte: TRANSPORTE_MAP, trilladora: TRILLADORA_MAP, tostion: TOSTION_MAP };
 
 describe("catálogo", () => {
   test("los textos de fábrica pasan la misma validación que el editor", () => {
