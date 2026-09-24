@@ -231,7 +231,7 @@ function QuestionView({
 }) {
   const q = state.question!;
   const [word, setWord] = useState("");
-  const [showText, setShowText] = useState(false);
+  const [showOptionText, setShowOptionText] = useState(false);
   const serverNow = useServerNow(offset, 250);
   const timeUp = serverNow !== null && remainingMs(q, offset, serverNow - offset) === 0;
   const introLeft = serverNow === null ? null : q.startedAt - serverNow;
@@ -251,7 +251,7 @@ function QuestionView({
         <p style={subtitle}>
           Pregunta {q.position} de {q.total}
         </p>
-        <h1 className="live-pop" style={title}>¡Prepárate!</h1>
+        <h1 className="live-rise" style={{ ...title, fontSize: 28 }}>{q.prompt}</h1>
         <span aria-live="polite" style={{ ...calSans, fontSize: 72, color: game.accent }}>
           {introLeft === null ? "" : Math.ceil(introLeft / 1000)}
         </span>
@@ -289,14 +289,14 @@ function QuestionView({
         <CountdownRing question={q} offsetMs={offset} size={64} />
         <button
           type="button"
-          onClick={() => setShowText((v) => !v)}
-          aria-pressed={showText}
+          onClick={() => setShowOptionText((v) => !v)}
+          aria-pressed={showOptionText}
           style={{ background: "none", border: "none", color: game.muted, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}
         >
-          {showText ? "Ocultar la pregunta" : "Ver la pregunta aquí"}
+          {showOptionText ? "Ocultar las respuestas" : "Ver las respuestas aquí"}
         </button>
       </div>
-      {showText && <p style={{ margin: 0, fontWeight: 600, fontSize: 18, lineHeight: 1.35 }}>{q.prompt}</p>}
+      <p style={{ margin: 0, fontWeight: 600, fontSize: 18, lineHeight: 1.35 }}>{q.prompt}</p>
 
       {q.type === "nube" ? (
         <form
@@ -357,7 +357,7 @@ function QuestionView({
               }}
             >
               <AnswerShape index={i} size={56} />
-              {showText && <span style={{ fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{text}</span>}
+              {showOptionText && <span style={{ fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{text}</span>}
             </button>
           ))}
         </div>
