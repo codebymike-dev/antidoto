@@ -104,8 +104,8 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         estado: "parcial",
         origen: "completeMission en src/lib/actions.ts, src/app/mision/completada/page.tsx",
         notas:
-          "Hoy completar deja avance 100 y un puntaje fijo de 8.0: la misión todavía no tiene contenido propio (retos, preguntas) que produzca un puntaje real.",
-        relacionados: ["RF-206"],
+          "En una misión común completar deja avance 100 y un puntaje fijo de 8.0: no tiene contenido propio que produzca un puntaje real. Las actividades de la biblioteca (RF-903) sí calculan el puntaje.",
+        relacionados: ["RF-206", "RF-904"],
       },
       {
         id: "RF-007",
@@ -602,6 +602,93 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         estado: "implementado",
         origen: "getMatchReport en src/lib/live-reports.ts, src/components/admin/live/MatchHistory.tsx",
         relacionados: ["RF-701", "RF-702"],
+      },
+    ],
+  },
+  {
+    id: "experiencias",
+    nombre: "Biblioteca de experiencias interactivas",
+    items: [
+      {
+        id: "RF-901",
+        titulo: "Biblioteca de experiencias",
+        descripcion:
+          "El portal tiene una biblioteca (como el catálogo de plantillas de Genially) con las escenas interactivas listas para usar, agrupadas por serie, con miniatura, número de riesgos, duración y participantes.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "src/app/admin/(portal)/biblioteca/page.tsx, src/lib/experiences/catalog.ts, listLibrary en src/lib/experience-data.ts",
+        notas:
+          "Las escenas se programan (arte, animación y dónde está cada riesgo); la base guarda qué misión usa cada una. Decisión del usuario (2026-09-23): escenas en código con textos editables, sin editor visual por ahora.",
+        relacionados: ["RF-902", "RF-903"],
+      },
+      {
+        id: "RF-902",
+        titulo: "Usar una experiencia con una empresa",
+        descripcion:
+          "El superadmin convierte la experiencia en actividad y genera el código para una empresa. La experiencia reutiliza códigos, participaciones, avance, puntaje y exportación de las misiones.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "adoptExperience en src/lib/experience-actions.ts, tabla mission_experiences en db/schema.sql",
+        notas: "La misión de cada experiencia tiene id fijo (exp-<clave>): crearla dos veces no duplica nada.",
+        relacionados: ["RF-301", "RF-001"],
+      },
+      {
+        id: "RF-903",
+        titulo: "Escena de la finca: encontrar los riesgos de la forma de trabajar",
+        descripcion:
+          "El participante entra con su código y ve a Ramiro, recolector, subir un bulto de café con malas prácticas en una finca de ladera en pixel art estilo Habbo. En tres momentos (agarrar, subir, llevar) toca donde ve un error y elige qué está mal entre 3 opciones; recibe la explicación y la buena práctica. Al final ve la forma correcta animada, una insignia y su resumen.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "src/components/experience/ExperiencePlayer.tsx, src/components/experience/scenes/finca.ts, src/components/experience/scenes/finca-art.ts, src/app/mision/page.tsx",
+        verificacion:
+          "Flujo completo probado en Chromium headless (escritorio y celular): código, intro, respuestas buenas y malas, pista, rendirse, final y cierre; respuestas y puntaje verificados en la base. Capturas del arte con scripts/escena-png.mts.",
+        notas:
+          "Diseño y contenido en docs/investigacion-ux-habbo.md. Arte, fuente (Tiny5, OFL) y sonidos propios: nada de Habbo ni de Juan Valdez. Siete riesgos con respaldo: Resolución 2400 de 1979 art. 392, ecuación de NIOSH y estudios en recolectores colombianos.",
+        relacionados: ["RF-904", "RF-905", "RNF-17"],
+      },
+      {
+        id: "RF-904",
+        titulo: "Calificación en el servidor y reanudación",
+        descripcion:
+          "El navegador recibe las preguntas sin la respuesta; el servidor califica, guarda cada riesgo una sola vez y actualiza avance y puntaje (0 a 10 por aciertos a la primera). Al volver, el participante sigue donde iba. Rendirse revela los que faltan como no encontrados.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "answerExperienceRisk y revealExperienceRisks en src/lib/experience-actions.ts, tabla experience_answers en db/schema.sql",
+        verificacion: "Proyección pública sin respuestas, calificación y validación cubiertas en src/lib/experiences.test.mts.",
+        notas: "Se copia el texto de la opción elegida: si luego se editan los textos, el reporte no cambia.",
+        relacionados: ["RF-006", "RF-906"],
+      },
+      {
+        id: "RF-905",
+        titulo: "Editar los textos de cada riesgo",
+        descripcion:
+          "El superadmin edita título, pregunta, las 3 opciones, cuál es la correcta, la explicación y la buena práctica de cada riesgo, y puede restaurar el texto original. El admin de empresa los ve en solo lectura.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "src/app/admin/(portal)/biblioteca/[key]/page.tsx, src/components/admin/RiskTextsEditor.tsx, tabla experience_risk_texts en db/schema.sql",
+        verificacion: "validateRiskTexts cubierto en src/lib/experiences.test.mts; guardar, rechazar opciones repetidas y restaurar probados en el navegador.",
+        relacionados: ["RF-901"],
+      },
+      {
+        id: "RF-906",
+        titulo: "Reporte por riesgo y vista previa",
+        descripcion:
+          "La actividad de una escena muestra, por riesgo, qué porcentaje lo encontró, cuántos acertaron a la primera y el error más común. El admin prueba cualquier escena a pantalla completa sin guardar respuestas.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "experienceRiskStats en src/lib/experience-data.ts, src/app/admin/(portal)/actividades/[id]/page.tsx, src/app/admin/escena/[key]/page.tsx",
+        notas: "El admin de empresa solo ve las respuestas de su empresa (companyFilter).",
+        relacionados: ["RF-202", "RF-904"],
+      },
+      {
+        id: "RF-907",
+        titulo: "Estación 2 de la ruta del café: transporte y conducción",
+        descripcion: "Siguiente escena de la serie: los riesgos de transportar el café y de conducir.",
+        prioridad: "media",
+        estado: "planeado",
+        notas: "En la biblioteca aparece como tarjeta \"En construcción\". El avatar posable ya permite la postura sentada al volante.",
+        relacionados: ["RF-903"],
       },
     ],
   },
