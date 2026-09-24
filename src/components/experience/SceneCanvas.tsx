@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { PixelBuffer } from "./pixel/buffer";
-import { FincaScene } from "./scenes/finca";
+import { createScene, type SceneKey } from "./scenes";
+import type { PlayScene } from "./scenes/types";
 
 // Lienzo de la escena: corre el bucle de animación a ~30 cuadros por segundo (el ritmo de
 // Habbo, y ahorra batería) y traduce los toques a píxeles del lienzo interno de 400x250.
@@ -11,7 +12,9 @@ import { FincaScene } from "./scenes/finca";
 const FRAME = 1 / 30;
 
 interface Props {
-  onScene: (scene: FincaScene) => void;
+  /** Qué escena dibujar; se crea una sola vez por montaje. */
+  sceneKey: SceneKey;
+  onScene: (scene: PlayScene) => void;
   onSay: (text: string) => void;
   onTap: (x: number, y: number, touch: boolean) => void;
   /** Alto máximo disponible en px (para que la escena quepa sin scroll en escritorio). */
@@ -21,12 +24,12 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export default function SceneCanvas({ onScene, onSay, onTap, maxHeight, label, children }: Props) {
+export default function SceneCanvas({ sceneKey, onScene, onSay, onTap, maxHeight, label, children }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sayRef = useRef(onSay);
-  const sceneRef = useRef<FincaScene | null>(null);
+  const sceneRef = useRef<PlayScene | null>(null);
 
   useEffect(() => {
     sayRef.current = onSay;
@@ -34,7 +37,7 @@ export default function SceneCanvas({ onScene, onSay, onTap, maxHeight, label, c
 
   useEffect(() => {
     const canvas = canvasRef.current!;
-    const scene = new FincaScene({ say: (t) => sayRef.current(t) });
+    const scene = createScene(sceneKey, { say: (t) => sayRef.current(t) });
     sceneRef.current = scene;
     onScene(scene);
 

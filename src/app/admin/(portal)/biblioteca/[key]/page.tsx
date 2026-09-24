@@ -51,7 +51,7 @@ export default async function ExperienciaPage({ params }: { params: Promise<{ ke
           >
             Probar la escena
           </Link>
-          {isSuper && (
+          {isSuper && def.station === 1 && (
             <form action={adoptExperience}>
               <input type="hidden" name="experience" value={def.key} />
               <button type="submit" className="btn-filled" style={filledButton}>

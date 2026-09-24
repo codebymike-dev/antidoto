@@ -46,7 +46,7 @@ export default async function BibliotecaPage() {
                     aria-label={`Probar ${def.title}`}
                     style={{ position: "relative", display: "block" }}
                   >
-                    <SceneThumb label={`Escena de ${def.title}`} />
+                    <SceneThumb scene={def.scene} label={`Escena de ${def.title}`} />
                     <span style={thumbChip}>
                       <PlayIcon />
                       Escena interactiva
@@ -107,7 +107,12 @@ export default async function BibliotecaPage() {
                           Resultados
                         </Link>
                       )}
-                      {isSuper && (
+                      {isSuper && def.station > 1 && (
+                        <span style={{ fontSize: 12, color: colors.muted, maxWidth: 150, lineHeight: 1.35 }}>
+                          Se juega con el código de la estación 1, al terminarla.
+                        </span>
+                      )}
+                      {isSuper && def.station === 1 && (
                         <form action={adoptExperience}>
                           <input type="hidden" name="experience" value={def.key} />
                           <button
@@ -137,9 +142,11 @@ export default async function BibliotecaPage() {
               }}
             >
               <span style={{ ...tagChip, background: "#F1F5F7", color: colors.muted }}>EN CONSTRUCCIÓN</span>
-              <h3 style={{ ...calSans, fontSize: 18, margin: 0, color: colors.inkSoft }}>Estación 2 · Transporte y conducción</h3>
+              <h3 style={{ ...calSans, fontSize: 18, margin: 0, color: colors.inkSoft }}>
+                Estación {items.filter((i) => i.def.series === name).length + 1} · Próxima parada
+              </h3>
               <p style={{ fontSize: 13, margin: 0, lineHeight: 1.5 }}>
-                La siguiente parada de la ruta: los riesgos de transportar el café y de conducir.
+                La ruta sigue por la cadena del café hasta la taza. Cada estación nueva se juega con el mismo código.
               </p>
             </article>
           </div>

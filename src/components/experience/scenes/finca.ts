@@ -4,7 +4,7 @@
 // y cierra con la versión correcta.
 
 import { PixelBuffer, hex, mix, type Color } from "../pixel/buffer.ts";
-import { drawAvatar, poseRig, STAND, type Look, type Pose, type Rig, type Point } from "../pixel/avatar.ts";
+import { STAND, type Look, type Pose, type Rig, type Point } from "../pixel/avatar.ts";
 import { Timeline, act, actorPose, poseTo, wait, walkTo, type Actor } from "../pixel/actor.ts";
 import * as art from "./finca-art.ts";
 import { drawAvatarLayers, drawDissolve, drawRipples, drawSparkle, drawWarning, nearestZone } from "./common.ts";

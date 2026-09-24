@@ -138,3 +138,43 @@ cada riesgo en la escena queda en código porque depende del dibujo.
 - Riesgos disergonómicos en recolectores de café: https://revistas.udec.cl/index.php/Ergonomia_Investigacion/article/view/8487
 - Condiciones de trabajo y desórdenes musculoesqueléticos en recolectores (Andes, Antioquia): https://scielo.isciii.es/scielo.php?script=sci_abstract&pid=S3020-11602017000200127
 - Recolectora de café más ergonómica, Agencia UNAL: https://agenciadenoticias.unal.edu.co/detalle/recolectora-de-cafe-mas-ergonomica
+
+## 8. Estación 2: transporte y conducción
+
+Investigado el 2026-09-24. Decisiones del usuario: un **Willys (yipao)**, el campero que saca
+el café de las fincas del Eje Cafetero; conducción **animada**, sin minijuego de manejo; y
+**Ramiro al volante**, el mismo recolector de la estación 1. La estación se juega con el
+mismo código de la finca y se desbloquea al terminarla.
+
+### Escenario
+
+- Carretera destapada de montaña que baja en diagonal: talud sembrado de café y plátano a
+  un lado, barranco sin defensa al otro y el valle de cafetales abajo.
+- El yipao baja de frente hacia la izquierda, así se ve el lado del conductor. Proyección
+  isométrica con pendiente: lo que se dibuja sobre la vía queda inclinado como ella.
+- La vía, el talud y el barranco se pintan píxel a píxel con coordenadas del mundo: al
+  manejar, la vía corre por debajo y el yipao queda quieto en pantalla (se puede tocar con
+  calma). La vía se repite cada 520 unidades para correr sin fin.
+- Tres momentos: **salir** (en la finca, con la carga ya montada), **manejar** (la cámara se
+  acerca 2x a la cabina para que se lean la cara, el celular y el pecho de Ramiro) y
+  **descargar** (frente a la cooperativa, con el yipao rodándose en la bajada).
+- Toño, el ayudante, viaja sentado encima de los bultos mirando hacia atrás.
+- Final correcto: revisa la llanta en cuclillas, carga baja y amarrada, Toño en la cabina,
+  cinturón, celular guardado, pausa si hay sueño, y freno de mano, cambio y tacos al llegar.
+
+### Riesgos
+
+| Riesgo | Tipo (GTC 45) | Respaldo |
+| --- | --- | --- |
+| Carga por encima de la carrocería y sin amarrar | Tránsito | Ley 769 de 2002, art. 131, C.21: no asegurar la carga. |
+| Un pasajero encima de la carga | Tránsito | Ley 769, art. 83 (nada de pasajeros fuera de la cabina ni en estribos) y art. 131, C.37. |
+| Llanta lisa y desinflada | Tránsito | Ley 769, art. 28 (llantas en buen estado); inspección preoperacional del PESV, Resolución 40595 de 2022. |
+| Celular al volante | Tránsito | Ley 769, art. 131, C.38: solo con manos libres. |
+| Sin cinturón de seguridad | Tránsito | Ley 769, art. 82 (obligatorio para conductor y pasajeros de adelante) y art. 131, C.6. |
+| Maneja con sueño | Psicosocial | Resolución 40595 de 2022: controlar horas de conducción, descansos y pausas. |
+| En bajada sin freno de mano ni tacos | Tránsito | Ley 769, art. 30: todo vehículo lleva dos tacos para bloquearlo. |
+
+### Fuentes
+
+- Ley 769 de 2002, Código Nacional de Tránsito (Función Pública): https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=5557
+- Resolución 40595 de 2022, metodología del PESV: https://normograma.mincultura.gov.co/mincultura/compilacion/docs/resolucion_mintransporte_40595_2022.htm

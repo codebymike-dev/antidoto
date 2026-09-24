@@ -1,8 +1,12 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { EXPERIENCES, RUTA_CAFE_FINCA } from "./experiences/catalog.ts";
+import { EXPERIENCES, RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, seriesEntry, seriesFrom } from "./experiences/catalog.ts";
 import { LIMITS, parseStoredTexts, publicExperience, riskResult, score, validateRiskTexts } from "./experiences/texts.ts";
-import { FINCA_OK, FINCA_RISK_ZONES, FINCA_ZONE_LABELS } from "../components/experience/scenes/finca-map.ts";
+import { FINCA_MAP } from "../components/experience/scenes/finca-map.ts";
+import { TRANSPORTE_MAP } from "../components/experience/scenes/transporte-map.ts";
+import type { SceneMap } from "../components/experience/scenes/types.ts";
+
+const MAPS: Record<string, SceneMap> = { finca: FINCA_MAP, transporte: TRANSPORTE_MAP };
 
 describe("catálogo", () => {
   test("los textos de fábrica pasan la misma validación que el editor", () => {
@@ -14,23 +18,57 @@ describe("catálogo", () => {
     }
   });
 
-  test("ids de riesgo únicos", () => {
-    const ids = RUTA_CAFE_FINCA.risks.map((r) => r.id);
-    assert.equal(new Set(ids).size, ids.length);
+  test("ids de riesgo únicos en toda la serie (comparten la participación)", () => {
+    for (const def of EXPERIENCES) {
+      const ids = seriesFrom(seriesEntry(def)).flatMap((d) => d.risks.map((r) => r.id));
+      assert.equal(new Set(ids).size, ids.length, def.series);
+    }
   });
 
   test("la respuesta correcta no cae siempre en el mismo botón", () => {
-    const positions = new Set(RUTA_CAFE_FINCA.risks.map((r) => r.defaults.correct));
-    assert.equal(positions.size, 3);
+    for (const def of EXPERIENCES) {
+      const positions = new Set(def.risks.map((r) => r.defaults.correct));
+      assert.equal(positions.size, 3, def.key);
+    }
   });
 
-  test("cada riesgo de la finca se puede encontrar en la escena y cada zona tiene nombre", () => {
-    const reachable = new Set(Object.values(FINCA_RISK_ZONES).flatMap((z) => Object.values(z)));
-    for (const risk of RUTA_CAFE_FINCA.risks) assert.ok(reachable.has(risk.id), `falta zona para ${risk.id}`);
-    const known = new Set(RUTA_CAFE_FINCA.risks.map((r) => r.id));
-    for (const riskId of reachable) assert.ok(known.has(riskId), `zona apunta a un riesgo inexistente: ${riskId}`);
-    const zones = [...Object.values(FINCA_RISK_ZONES).flatMap((z) => Object.keys(z)), ...Object.keys(FINCA_OK)];
-    for (const z of zones) assert.ok(FINCA_ZONE_LABELS[z], `zona sin nombre: ${z}`);
+  test("cada riesgo se puede encontrar en su escena y cada zona tiene nombre", () => {
+    for (const def of EXPERIENCES) {
+      const map = MAPS[def.scene];
+      const reachable = new Set(Object.values(map.riskZones).flatMap((z) => Object.values(z)));
+      for (const risk of def.risks) assert.ok(reachable.has(risk.id), `${def.key}: falta zona para ${risk.id}`);
+      const known = new Set(def.risks.map((r) => r.id));
+      for (const riskId of reachable) assert.ok(known.has(riskId), `${def.key}: zona apunta a un riesgo inexistente: ${riskId}`);
+      const zones = [...Object.values(map.riskZones).flatMap((z) => Object.keys(z)), ...Object.keys(map.ok)];
+      for (const z of zones) assert.ok(map.zoneLabels[z], `${def.key}: zona sin nombre: ${z}`);
+    }
+  });
+});
+
+describe("serie", () => {
+  test("la ruta del café va de la finca al transporte", () => {
+    assert.deepEqual(
+      seriesFrom(RUTA_CAFE_FINCA).map((d) => d.key),
+      [RUTA_CAFE_FINCA.key, RUTA_CAFE_TRANSPORTE.key],
+    );
+    assert.deepEqual(
+      seriesFrom(RUTA_CAFE_TRANSPORTE).map((d) => d.key),
+      [RUTA_CAFE_TRANSPORTE.key],
+    );
+  });
+
+  test("una estación siguiente se asigna con el código de la primera", () => {
+    assert.equal(seriesEntry(RUTA_CAFE_TRANSPORTE).key, RUTA_CAFE_FINCA.key);
+    assert.equal(seriesEntry(RUTA_CAFE_FINCA).key, RUTA_CAFE_FINCA.key);
+  });
+
+  test("el puntaje de la serie cuenta los riesgos de todas las estaciones", () => {
+    const stations = seriesFrom(RUTA_CAFE_FINCA);
+    const total = stations.reduce((acc, d) => acc + d.risks.length, 0);
+    const rows = RUTA_CAFE_FINCA.risks.map((r) => ({ risk_id: r.id, option_index: r.defaults.correct, is_correct: 1 }));
+    const s = score(rows, total);
+    assert.equal(s.avance, 50);
+    assert.equal(s.puntaje, 5);
   });
 });
 

@@ -33,8 +33,11 @@ const pose = (p: Partial<Pose>): Pose => ({ ...STAND, ...p });
 
 /** Sentado al volante con las dos manos en el timón. */
 const DRIVE = pose({ lean: -6, thighN: 86, shinN: -2, thighF: 82, shinF: 6, armN: 12, foreN: 82, armF: 18, foreF: 86 });
-/** Una mano en el timón y la otra con el celular en la oreja; la cabeza se le va. */
-const DRIVE_PHONE = pose({ ...DRIVE, armN: 140, foreN: 250, headTilt: 4 });
+/**
+ * La mano de este lado en el timón y la del otro con el celular en la oreja (se asoma
+ * detrás de la cabeza): así la cara, con el sueño, queda a la vista.
+ */
+const DRIVE_PHONE = pose({ ...DRIVE, armF: 150, foreF: 250, headTilt: 4 });
 /** Toño sentado encima de los bultos, agarrado de la carga. */
 const ON_LOAD = pose({ lean: 6, thighN: 80, shinN: 36, thighF: 72, shinF: 26, armN: 20, foreN: 46, armF: 30, foreF: 60 });
 /** Toño en la silla del copiloto. */
@@ -89,6 +92,15 @@ const PLANTAINS: [number, number][] = [
 ];
 const SIGN_AT = 300;
 const DELINEATORS = [30, 160, 290, 420];
+
+/** Cámara: abierta, o de cerca sobre la cabina mientras Ramiro maneja. */
+interface Camera {
+  zoom: number;
+  cx: number;
+  cy: number;
+}
+const WIDE: Camera = { zoom: 1, cx: art.W / 2, cy: art.H / 2 };
+const CLOSE: Camera = { zoom: 2, cx: 212, cy: 126 };
 
 type Load = "alta" | "amarrada";
 
@@ -152,6 +164,9 @@ export class TransporteScene implements PlayScene {
 
   private rigR: Rig | null = null;
   private rigT: Rig | null = null;
+  private worldBuf = new PixelBuffer(art.W, art.H);
+  private cam: Camera = { ...WIDE };
+  private camTarget: Camera = WIDE;
   private time = 0;
   private particles: Particle[] = [];
   private nextPuff = 0;
@@ -196,22 +211,30 @@ export class TransporteScene implements PlayScene {
     Object.assign(this.ramiro, { facing: -1, walking: false, walkPhase: 0, carrying: false });
     if (m === 1) {
       this.setRoad(0, 0, false);
+      this.setCamera(WIDE, true);
       this.coopAt = null;
       this.ramiroAt = "fuera";
       this.place(this.ramiro, BESIDE);
       Object.assign(this.ramiro, { pose: POINT, expr: "feliz" });
     } else if (m === 2) {
       this.setRoad(LOOP_FROM + 80, CRUISE, true);
+      this.setCamera(CLOSE, true);
       this.coopAt = null;
       this.ramiroAt = "volante";
       Object.assign(this.ramiro, { pose: DRIVE_PHONE, expr: "sueno" });
     } else {
       this.setRoad(PARK_AT, 0, false);
+      this.setCamera(WIDE, true);
       this.coopAt = PARK_AT;
       this.ramiroAt = "fuera";
       this.place(this.ramiro, DOOR);
       Object.assign(this.ramiro, { pose: WAVE, expr: "feliz", facing: 1 });
     }
+  }
+
+  private setCamera(c: Camera, snap = false) {
+    this.camTarget = c;
+    if (snap) this.cam = { ...c };
   }
 
   private setRoad(scroll: number, speed: number, looping: boolean) {
@@ -307,6 +330,7 @@ export class TransporteScene implements PlayScene {
       act(() => {
         this.looping = true;
         this.cruise = CRUISE;
+        this.setCamera(CLOSE);
       }),
       wait(story ? 0.6 : 1.4),
     );
@@ -325,16 +349,26 @@ export class TransporteScene implements PlayScene {
         this.place(r, CAB);
         Object.assign(r, { pose: STAND, expr: "normal", facing: -1 });
       }),
-      walkTo(r, art.P(AROUND.i, AROUND.j).x, art.P(AROUND.i, AROUND.j).y, 34),
-      walkTo(r, art.P(DOOR.i, DOOR.j).x, art.P(DOOR.i, DOOR.j).y, 34),
+    );
+    if (story) {
+      this.timeline.push(
+        walkTo(r, art.P(AROUND.i, AROUND.j).x, art.P(AROUND.i, AROUND.j).y, 40),
+        walkTo(r, art.P(DOOR.i, DOOR.j).x, art.P(DOOR.i, DOOR.j).y, 40),
+      );
+    } else {
+      // Al cambiar de momento no se hace esperar: Ramiro ya está en la puerta.
+      this.timeline.push(act(() => this.place(r, DOOR)));
+    }
+    this.timeline.push(
       act(() => (r.facing = 1)),
       poseTo(r, WAVE, 0.3, "feliz"),
-      wait(story ? 0.2 : 0.4),
+      wait(0.2),
     );
   }
 
   private brakeToCoop() {
     this.looping = false;
+    this.setCamera(WIDE);
     const d = this.speed > 1 ? Math.max(BRAKE_DIST, (this.speed * this.speed) / 70) : BRAKE_DIST;
     this.stopAt = this.scroll + d;
     this.coopAt = this.stopAt;
@@ -442,6 +476,7 @@ export class TransporteScene implements PlayScene {
         act(() => {
           this.looping = true;
           this.cruise = CRUISE * 0.7;
+          this.setCamera(CLOSE);
         }),
         this.say("5. Descansé bien. Si me da sueño, paro y hago una pausa."),
         wait(2.6),
@@ -482,6 +517,11 @@ export class TransporteScene implements PlayScene {
     }
 
     this.drive(dt);
+    const k = 1 - Math.exp(-dt * 3.5);
+    for (const key of ["zoom", "cx", "cy"] as const) {
+      this.cam[key] += (this.camTarget[key] - this.cam[key]) * k;
+      if (Math.abs(this.camTarget[key] - this.cam[key]) < 0.01) this.cam[key] = this.camTarget[key];
+    }
 
     // Polvo detrás de las llantas mientras la vía corre.
     if (this.speed > 20 && this.time > this.nextPuff) {
@@ -569,7 +609,36 @@ export class TransporteScene implements PlayScene {
     return CAR_J + this.creep;
   }
 
-  render(out: PixelBuffer) {
+  render(screen: PixelBuffer) {
+    const zoomed = this.cam.zoom > 1.001;
+    const out = zoomed ? this.worldBuf : screen;
+    this.renderWorld(out);
+    if (zoomed) this.project(out, screen);
+    this.drawOverlay(screen);
+    if (this.dissolve) drawDissolve(screen, this.dissolve.t);
+  }
+
+  /** Amplía la parte del mundo que encuadra la cámara, píxel por píxel (sin suavizado). */
+  private project(world: PixelBuffer, screen: PixelBuffer) {
+    const { zoom, cx, cy } = this.cam;
+    const W = art.W;
+    const H = art.H;
+    for (let y = 0; y < H; y++) {
+      const sy = Math.min(H - 1, Math.max(0, Math.floor(cy + (y + 0.5 - H / 2) / zoom)));
+      for (let x = 0; x < W; x++) {
+        const sx = Math.min(W - 1, Math.max(0, Math.floor(cx + (x + 0.5 - W / 2) / zoom)));
+        screen.data[y * W + x] = world.data[sy * W + sx];
+      }
+    }
+  }
+
+  /** De píxeles del mundo a píxeles de la pantalla, según la cámara. */
+  private toScreen(p: Point): Point {
+    const { zoom, cx, cy } = this.cam;
+    return { x: (p.x - cx) * zoom + art.W / 2, y: (p.y - cy) * zoom + art.H / 2 };
+  }
+
+  private renderWorld(out: PixelBuffer) {
     out.data.set(this.background.data);
     const starts = [40, 190, 300];
     this.clouds.forEach((c, k) => {
@@ -639,7 +708,6 @@ export class TransporteScene implements PlayScene {
     }
 
     this.drawEffects(out);
-    if (this.dissolve) drawDissolve(out, this.dissolve.t);
   }
 
   /** En la cooperativa Ramiro está al otro lado de la vía, detrás del yipao. */
@@ -750,7 +818,7 @@ export class TransporteScene implements PlayScene {
         if (this.belt && this.ramiroAt === "volante") drawBelt(out, rig);
       },
       front: (rig) => {
-        if (this.phone && this.ramiroAt === "volante") drawPhone(out, rig, this.time);
+        if (this.phone && this.ramiroAt === "volante") drawPhone(out, rig, this.time, this.look.skin);
       },
     });
   }
@@ -783,6 +851,10 @@ export class TransporteScene implements PlayScene {
       const p = art.P(CAR_I + art.CAR.width + 2, this.carJ + art.CAR.rearWheel - 16, 6);
       for (let k = 0; k < 3; k++) out.span(p.y + k * 3, p.x + k, p.x + 6 + k, hex("#ffffff"));
     }
+  }
+
+  /** Lo que va encima de la cámara: señales de riesgo, la pista y el toque. */
+  private drawOverlay(out: PixelBuffer) {
     if (this.mode === "juego" && !this.busy) {
       const zones = this.zones();
       for (const id of this.found) {
@@ -804,7 +876,11 @@ export class TransporteScene implements PlayScene {
     const m = this.moment;
     const I = (ci: number) => CAR_I + ci;
     const J = (cj: number) => this.carJ + cj;
-    const at = (id: string, p: Point, r: number, dy = 0) => zones.push({ id, x: p.x, y: p.y + dy, r });
+    const zoom = this.cam.zoom;
+    const at = (id: string, p: Point, r: number, dy = 0) => {
+      const q = this.toScreen({ x: p.x, y: p.y + dy });
+      zones.push({ id, x: q.x, y: q.y, r: r * zoom });
+    };
 
     const loadTop = this.load === "alta" ? 36 : 24;
     at("carga", art.P(I(21), J(16), loadTop), 13);
@@ -816,7 +892,7 @@ export class TransporteScene implements PlayScene {
     if (m === 1 && rig) at("ramiro", { x: (rig.hip.x + rig.neck.x) / 2, y: (rig.hip.y + rig.neck.y) / 2 }, 9);
     if (m === 2 && rig) {
       at("cara", rig.head, 6, 1);
-      at("celular", rig.handN, 5);
+      at("celular", phoneAt(rig), 5);
       at("pecho", { x: (rig.shoulder.x + rig.hip.x) / 2, y: (rig.shoulder.y + rig.hip.y) / 2 }, 6);
       const signJ = art.displayJ(SIGN_AT, this.scroll);
       const sign = art.P(-5, signJ, art.groundZ(-5) + 32);
@@ -837,10 +913,11 @@ export class TransporteScene implements PlayScene {
         const j = art.displayJ(jw, this.scroll);
         const p = art.P(i, j, art.groundZ(i));
         const sprite = this.bushSprites[k];
-        if (p.x > 0 && p.x < art.W && p.y > 0 && p.y < art.H) zones.push({ id: "cafetal", x: p.x, y: p.y - sprite.h / 2, r: 10 });
+        if (p.x > 0 && p.x < art.W && p.y > 0 && p.y < art.H) at("cafetal", p, 10, -sprite.h / 2);
       });
     }
-    return zones;
+    // Solo lo que queda dentro del encuadre.
+    return zones.filter((z) => z.x > 2 && z.x < art.W - 2 && z.y > 2 && z.y < art.H - 2);
   }
 
   hitTest(x: number, y: number, tolerance = 2): Zone | null {
@@ -848,7 +925,8 @@ export class TransporteScene implements PlayScene {
   }
 
   speaker(): Point {
-    return this.rigR ? { x: this.rigR.head.x, y: this.rigR.head.y - 12 } : { x: this.ramiro.x, y: this.ramiro.y - 60 };
+    const p = this.rigR ? { x: this.rigR.head.x, y: this.rigR.head.y - 12 } : { x: this.ramiro.x, y: this.ramiro.y - 60 };
+    return this.toScreen(p);
   }
 }
 
@@ -862,19 +940,32 @@ function drawBelt(out: PixelBuffer, rig: Rig) {
   out.rect(b.x - 1, b.y - 1, 3, 2, hex("#c9cfd4"));
 }
 
-/** Celular en la mano, pegado a la oreja, timbrando. */
-function drawPhone(out: PixelBuffer, rig: Rig, t: number) {
-  const h = rig.handN;
-  out.rect(h.x - 1.5, h.y - 5, 3, 6, hex("#1e2226"));
-  out.px(h.x - 0.5, h.y - 4, hex("#8fe0ff"));
-  out.px(h.x - 0.5, h.y - 3, hex("#8fe0ff"));
+/** Dónde queda el celular: pegado a la oreja, en la mitad de atrás de la cabeza. */
+function phoneAt(rig: Rig): Point {
+  return { x: rig.head.x - rig.facingUpper * 3, y: rig.head.y + 2 };
+}
+
+/** Celular pegado a la oreja, timbrando. */
+function drawPhone(out: PixelBuffer, rig: Rig, t: number, skin: Color) {
+  const h = phoneAt(rig);
+  // La mano que lo sostiene, debajo.
+  out.rect(h.x - 2.5, h.y + 2, 5, 4, hex("#2a1e17"));
+  out.rect(h.x - 1.5, h.y + 2, 3, 3, skin);
+  out.rect(h.x - 1.5, h.y - 4, 4, 7, hex("#2a1e17"));
+  out.rect(h.x - 0.5, h.y - 3, 2, 5, hex("#1e2226"));
+  out.px(h.x, h.y - 2, hex("#8fe0ff"));
+  out.px(h.x, h.y - 1, hex("#8fe0ff"));
   if (Math.floor(t * 4) % 2 === 0) {
+    // Ondas del timbre hacia atrás.
     const c = hex("#ffffff");
     const x = h.x - rig.facingUpper * 5;
-    out.px(x, h.y - 6, c);
-    out.px(x - rig.facingUpper, h.y - 5, c);
+    out.px(x, h.y - 5, c);
     out.px(x - rig.facingUpper, h.y - 4, c);
-    out.px(x, h.y - 3, c);
+    out.px(x - rig.facingUpper, h.y - 3, c);
+    out.px(x, h.y - 2, c);
+    out.px(x - rig.facingUpper * 3, h.y - 6, c);
+    out.px(x - rig.facingUpper * 4, h.y - 4, c);
+    out.px(x - rig.facingUpper * 3, h.y - 2, c);
   }
 }
 

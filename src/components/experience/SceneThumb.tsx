@@ -2,21 +2,21 @@
 
 import { useEffect, useRef } from "react";
 import { PixelBuffer } from "./pixel/buffer";
-import { FincaScene } from "./scenes/finca";
+import { createScene, type SceneKey } from "./scenes";
 
 /** Miniatura de una escena para la biblioteca: un cuadro quieto del momento 1. */
-export default function SceneThumb({ label }: { label: string }) {
+export default function SceneThumb({ scene: key, label }: { scene: SceneKey; label: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const scene = new FincaScene();
+    const scene = createScene(key);
     const buf = new PixelBuffer(scene.width, scene.height);
     scene.update(0.5);
     scene.render(buf);
     ref
       .current!.getContext("2d")!
       .putImageData(new ImageData(new Uint8ClampedArray(buf.data.buffer as ArrayBuffer), scene.width, scene.height), 0, 0);
-  }, []);
+  }, [key]);
 
   return (
     <canvas

@@ -7,8 +7,8 @@ import styles from "./player.module.css";
 import SceneCanvas from "./SceneCanvas";
 import PixelIcon from "./PixelIcon";
 import { sceneSound } from "./sound";
-import type { FincaScene, Moment, Zone } from "./scenes/finca";
-import { FINCA_MOMENTS, FINCA_OK, FINCA_RISK_ZONES, FINCA_ZONE_LABELS, risksInMoment } from "./scenes/finca-map";
+import { SCENE_MAPS } from "./scenes";
+import { risksInMoment, type Moment, type PlayScene, type Zone } from "./scenes/types";
 import type { PublicExperience, RiskResult, RiskTexts } from "@/lib/experiences/types";
 import { GRAINS_CORRECT, GRAINS_FOUND } from "@/lib/experiences/texts";
 import { answerExperienceRisk, finishExperience, revealExperienceRisks } from "@/lib/experience-actions";
@@ -35,7 +35,8 @@ interface Toast {
 }
 
 interface Props {
-  experience: PublicExperience;
+  /** Las estaciones de la serie que se juegan con el código, en orden. */
+  stations: PublicExperience[];
   participant: string;
   initialResults: RiskResult[];
   mode: "play" | "preview";
@@ -49,26 +50,65 @@ interface Props {
 
 const OPTION_KEYS = ["A", "B", "C"];
 
-/** Estaciones de la ruta del café: la 1 está lista y las siguientes se irán sumando. */
-const STATIONS = [
-  { n: 1, label: "La finca" },
-  { n: 2, label: "Transporte" },
-];
+type Results = Map<string, RiskResult>;
 
-export default function ExperiencePlayer({
+/**
+ * La serie se juega estación por estación: arranca en la primera que tenga riesgos por
+ * resolver y, al terminarla, se desbloquea la siguiente. Las respuestas de todas las
+ * estaciones viven aquí; cada estación monta su propia escena.
+ */
+export default function ExperiencePlayer(props: Props) {
+  const { stations, initialResults } = props;
+  const [results, setResults] = useState<Results>(() => new Map(initialResults.map((r) => [r.id, r])));
+  const [index, setIndex] = useState(() => {
+    const done = new Set(initialResults.map((r) => r.id));
+    const k = stations.findIndex((st) => st.risks.some((r) => !done.has(r.id)));
+    return k === -1 ? stations.length - 1 : k;
+  });
+  const experience = stations[index];
+  return (
+    <StationPlayer
+      key={experience.key}
+      {...props}
+      experience={experience}
+      results={results}
+      setResults={setResults}
+      onNext={index + 1 < stations.length ? () => setIndex(index + 1) : undefined}
+      onRestart={() => {
+        setResults(new Map());
+        setIndex(0);
+      }}
+    />
+  );
+}
+
+interface StationProps extends Props {
+  experience: PublicExperience;
+  results: Results;
+  setResults: React.Dispatch<React.SetStateAction<Results>>;
+  /** Pasa a la siguiente estación de la serie; indefinido en la última. */
+  onNext?: () => void;
+  onRestart: () => void;
+}
+
+function StationPlayer({
+  stations,
   experience,
   participant,
-  initialResults,
   mode,
   previewTexts,
   paused,
   exitAction,
   exitHref,
-}: Props) {
-  const [scene, setScene] = useState<FincaScene | null>(null);
+  results,
+  setResults,
+  onNext,
+  onRestart,
+}: StationProps) {
+  const map = SCENE_MAPS[experience.scene];
+  const [scene, setScene] = useState<PlayScene | null>(null);
   const [phase, setPhase] = useState<Phase>("portada");
   const [moment, setMoment] = useState<Moment>(1);
-  const [results, setResults] = useState<Map<string, RiskResult>>(() => new Map(initialResults.map((r) => [r.id, r])));
   const [ask, setAsk] = useState<{ riskId: string; side: "left" | "right"; zone: string } | null>(null);
   const [outcome, setOutcome] = useState<RiskResult | null>(null);
   const [pending, setPending] = useState(false);
@@ -87,11 +127,16 @@ export default function ExperiencePlayer({
 
   const total = experience.risks.length;
   const riskById = useMemo(() => new Map(experience.risks.map((r) => [r.id, r])), [experience.risks]);
-  const found = results.size;
-  const correct = [...results.values()].filter((r) => r.correct).length;
-  const spotted = [...results.values()].filter((r) => r.chosen !== null).length;
-  const grains = correct * GRAINS_CORRECT + (spotted - correct) * GRAINS_FOUND;
+  // Contadores de esta estación; los granos se acumulan en toda la ruta.
+  const mine = experience.risks.map((r) => results.get(r.id)).filter((r): r is RiskResult => !!r);
+  const found = mine.length;
+  const correct = mine.filter((r) => r.correct).length;
+  const spotted = mine.filter((r) => r.chosen !== null).length;
+  const all = [...results.values()];
+  const allCorrect = all.filter((r) => r.correct).length;
+  const grains = allCorrect * GRAINS_CORRECT + (all.filter((r) => r.chosen !== null).length - allCorrect) * GRAINS_FOUND;
   const allDone = found >= total;
+  const next = onNext ? stations[stations.indexOf(experience) + 1] : null;
 
   useEffect(() => {
     const fit = () => setMaxHeight(Math.max(260, window.innerHeight - 150));
@@ -105,13 +150,13 @@ export default function ExperiencePlayer({
     if (!scene) return;
     const marks: string[] = [];
     const seen = new Set<string>();
-    for (const [zone, riskId] of Object.entries(FINCA_RISK_ZONES[moment])) {
+    for (const [zone, riskId] of Object.entries(map.riskZones[moment])) {
       if (!results.has(riskId) || seen.has(riskId)) continue;
       seen.add(riskId);
       marks.push(zone);
     }
     scene.setFound(marks);
-  }, [scene, moment, results]);
+  }, [scene, moment, results, map]);
 
   useEffect(
     () => () => {
@@ -154,7 +199,7 @@ export default function ExperiencePlayer({
     setMoment(1);
     scene.playIntro(() => {
       setPhase("juego");
-      showToast("Toca donde veas un error. Cambia de momento en la barra de abajo.");
+      showToast(map.start);
     });
   }
 
@@ -188,7 +233,7 @@ export default function ExperiencePlayer({
   }
 
   function openZone(zone: Zone) {
-    const riskId = FINCA_RISK_ZONES[moment][zone.id];
+    const riskId = map.riskZones[moment][zone.id];
     const side = zone.x < 200 ? "right" : "left";
     if (riskId) {
       const done = results.get(riskId);
@@ -198,7 +243,7 @@ export default function ExperiencePlayer({
       return;
     }
     sfx("ok");
-    showToast(FINCA_OK[zone.id] ?? "Aquí todo está bien. Sigue buscando.");
+    showToast(map.ok[zone.id] ?? "Aquí todo está bien. Sigue buscando.");
   }
 
   function onTap(x: number, y: number, touch: boolean) {
@@ -207,7 +252,7 @@ export default function ExperiencePlayer({
     const zone = scene.hitTest(x, y, touch ? 6 : 2);
     if (!zone) {
       sfx("tap");
-      showToast("Aquí no hay nada raro. Mira a Ramiro, lo que carga y lo que lo rodea.");
+      showToast(map.miss);
       return;
     }
     openZone(zone);
@@ -255,7 +300,7 @@ export default function ExperiencePlayer({
 
   function closeOutcome() {
     setOutcome(null);
-    if (results.size >= total && phase === "juego") {
+    if (found >= total && phase === "juego") {
       setPhase("completo");
       sfx("badge");
     }
@@ -263,14 +308,14 @@ export default function ExperiencePlayer({
 
   function hint() {
     if (!scene || phase !== "juego") return;
-    const here = [...risksInMoment(moment)].filter((id) => !results.has(id));
+    const here = [...risksInMoment(map, moment)].filter((id) => !results.has(id));
     if (here.length === 0) {
-      const other = FINCA_MOMENTS.find((m) => [...risksInMoment(m.id)].some((id) => !results.has(id)));
+      const other = map.moments.find((m) => [...risksInMoment(map, m.id)].some((id) => !results.has(id)));
       if (other) showToast(`En este momento ya encontraste todo. Prueba en "${other.id}. ${other.label}".`);
       return;
     }
     const riskId = here[Math.floor(Math.random() * here.length)];
-    const zone = Object.entries(FINCA_RISK_ZONES[moment]).find(([, r]) => r === riskId)![0];
+    const zone = Object.entries(map.riskZones[moment]).find(([, r]) => r === riskId)![0];
     scene.setHint(zone);
     sfx("ok");
     showToast("Mira donde brilla la estrella.");
@@ -308,7 +353,7 @@ export default function ExperiencePlayer({
         return next;
       });
     } else {
-      const out = await revealExperienceRisks();
+      const out = await revealExperienceRisks(experience.key);
       if (!out.ok) {
         showToast(out.error);
         return;
@@ -331,7 +376,7 @@ export default function ExperiencePlayer({
 
   function restartPreview() {
     if (!scene) return;
-    setResults(new Map());
+    onRestart();
     setMoment(1);
     setBubbles([]);
     scene.reset();
@@ -359,8 +404,8 @@ export default function ExperiencePlayer({
 
   const askRisk = ask ? riskById.get(ask.riskId) : null;
   const windowOpen = !!(ask || outcome || zoneList || confirmReveal);
-  const momentInfo = FINCA_MOMENTS.find((m) => m.id === moment)!;
-  const sceneLabel = `Escena en pixel art: ${experience.character} en una finca cafetera de ladera. ${momentInfo.hint}`;
+  const momentInfo = map.moments.find((m) => m.id === moment)!;
+  const sceneLabel = `Escena en pixel art: ${map.place} ${momentInfo.hint}`;
 
   return (
     <div className={`${styles.root} ${pixel.variable}`}>
@@ -416,7 +461,7 @@ export default function ExperiencePlayer({
       <main className={styles.main}>
         <div className={styles.stageCol}>
           <div className={styles.stageFrame}>
-            <SceneCanvas onScene={setScene} onSay={onSay} onTap={onTap} maxHeight={maxHeight} label={sceneLabel}>
+            <SceneCanvas sceneKey={experience.scene} onScene={setScene} onSay={onSay} onTap={onTap} maxHeight={maxHeight} label={sceneLabel}>
               <div className={styles.overlay}>
                 {bubbles.map((b, i) => (
                   // Como en Habbo: la burbuja nueva aparece sobre el que habla y empuja
@@ -479,13 +524,17 @@ export default function ExperiencePlayer({
                           </li>
                         </ol>
                         <div className={styles.stations} aria-label="Estaciones de la ruta">
-                          {STATIONS.map((s) => (
+                          {stations.map((s) => (
                             <span
-                              key={s.n}
-                              className={`${styles.station} ${s.n === experience.station ? styles.stationOn : styles.stationOff}`}
+                              key={s.key}
+                              className={`${styles.station} ${s.station === experience.station ? styles.stationOn : styles.stationOff}`}
                             >
-                              {s.n !== experience.station && <PixelIcon name="candado" size={11} />}
-                              {s.n}. {s.label}
+                              {s.station < experience.station ? (
+                                <PixelIcon name="check" size={11} />
+                              ) : (
+                                s.station !== experience.station && <PixelIcon name="candado" size={11} />
+                              )}
+                              {s.station}. {s.title.split(":")[0]}
                             </span>
                           ))}
                           <span className={`${styles.station} ${styles.stationOff}`}>y más...</span>
@@ -504,7 +553,7 @@ export default function ExperiencePlayer({
                               ? "Ver cómo se hace bien"
                               : found > 0
                                 ? `Continuar (${found}/${total})`
-                                : "Entrar a la finca"}
+                                : experience.enter}
                           </button>
                         )}
                       </div>
@@ -521,7 +570,7 @@ export default function ExperiencePlayer({
                   >
                     <div className={styles.winHead}>
                       <span className={styles.winTitle} id="xp-ask-title">
-                        {FINCA_ZONE_LABELS[ask.zone] ?? "¿Qué ves?"}
+                        {map.zoneLabels[ask.zone] ?? "¿Qué ves?"}
                       </span>
                       <button type="button" className={styles.close} onClick={() => setAsk(null)} aria-label="Cerrar">
                         ✕
@@ -577,7 +626,7 @@ export default function ExperiencePlayer({
                         </span>
                       </div>
                       <button type="button" autoFocus className={`${styles.button} ${styles.primary}`} onClick={closeOutcome}>
-                        {results.size >= total && phase === "juego" ? "Terminar la búsqueda" : "Seguir buscando"}
+                        {found >= total && phase === "juego" ? "Terminar la búsqueda" : "Seguir buscando"}
                       </button>
                     </div>
                   </section>
@@ -610,7 +659,7 @@ export default function ExperiencePlayer({
                                 openZone(z);
                               }}
                             >
-                              {FINCA_ZONE_LABELS[z.id] ?? z.id}
+                              {map.zoneLabels[z.id] ?? z.id}
                             </button>
                           ))}
                         </div>
@@ -698,9 +747,9 @@ export default function ExperiencePlayer({
                       </div>
                       <div className={styles.winBody}>
                         <div className={styles.badgeBig}>
-                          <PixelIcon name="insignia" size={72} title="Insignia Recolector seguro" />
+                          <PixelIcon name="insignia" size={72} title={`Insignia ${experience.badge}`} />
                         </div>
-                        <p style={{ textAlign: "center", fontWeight: 700 }}>Insignia: Recolector seguro</p>
+                        <p style={{ textAlign: "center", fontWeight: 700 }}>Insignia: {experience.badge}</p>
                         <div className={styles.stats}>
                           <div className={styles.stat}>
                             <div className={styles.statValue}>
@@ -718,9 +767,25 @@ export default function ExperiencePlayer({
                           </div>
                         </div>
                         <p className={styles.muted}>
-                          Próxima estación de la ruta: <b>transporte y conducción</b>. Muy pronto.
+                          {next ? (
+                            <>
+                              Desbloqueaste la estación {next.station}: <b>{next.title}</b>.
+                            </>
+                          ) : (
+                            "Completaste la ruta hasta aquí. Muy pronto, nuevas estaciones."
+                          )}
                         </p>
-                        {mode === "play" ? (
+                        {next ? (
+                          <button
+                            type="button"
+                            autoFocus
+                            className={`${styles.button} ${styles.go}`}
+                            style={{ width: "100%" }}
+                            onClick={onNext}
+                          >
+                            Seguir a la estación {next.station}
+                          </button>
+                        ) : mode === "play" ? (
                           <form action={finishExperience}>
                             <button type="submit" autoFocus className={`${styles.button} ${styles.go}`} style={{ width: "100%" }}>
                               Terminar
@@ -770,7 +835,7 @@ export default function ExperiencePlayer({
                   <PixelIcon name="repetir" size={16} />
                 </button>
                 <div className={styles.moments} role="group" aria-label="Momentos de la escena">
-                  {FINCA_MOMENTS.map((m) => (
+                  {map.moments.map((m) => (
                     <button
                       key={m.id}
                       type="button"

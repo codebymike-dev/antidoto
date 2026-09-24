@@ -480,6 +480,8 @@ export function drawWillys(buf: PixelBuffer, s: CarState, layers: CarLayers = {}
 
   layers.cargo?.();
   layers.driver?.();
+  // Tablero: tapa las piernas del conductor bajo el parabrisas.
+  isoBox(buf, I(3), J(hoodFrom - 5), floor + b, width - 6, 5, 34 - floor, INSIDE);
   layers.dash?.();
 
   // Costado del conductor con el recorte de la puerta (el yipao no tiene puertas).

@@ -684,11 +684,32 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       {
         id: "RF-907",
         titulo: "Estación 2 de la ruta del café: transporte y conducción",
-        descripcion: "Siguiente escena de la serie: los riesgos de transportar el café y de conducir.",
-        prioridad: "media",
-        estado: "planeado",
-        notas: "En la biblioteca aparece como tarjeta \"En construcción\". El avatar posable ya permite la postura sentada al volante.",
-        relacionados: ["RF-903"],
+        descripcion:
+          "Ramiro lleva el café pergamino en su yipao por una carretera destapada de montaña hasta la cooperativa. En tres momentos (salir, manejar, descargar) el participante encuentra siete riesgos de tránsito y de fatiga: carga alta y suelta, un pasajero encima de la carga, llanta lisa, celular al volante, sin cinturón, sueño y el yipao en bajada sin freno ni tacos. Mientras maneja, la vía corre por debajo y la cámara se acerca a la cabina. Al final ve el viaje hecho bien y gana la insignia Conductor seguro.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "src/components/experience/scenes/transporte.ts, src/components/experience/scenes/transporte-art.ts, src/components/experience/scenes/transporte-map.ts, RUTA_CAFE_TRANSPORTE en src/lib/experiences/catalog.ts",
+        verificacion:
+          "Siete riesgos respondidos en la vista previa y flujo del participante con código en Chromium headless; capturas de momentos, historia y final con node scripts/escena-png.mts <carpeta> 2 --escena=transporte --zonas.",
+        notas:
+          "Decisiones del usuario (2026-09-24): Willys (yipao), conducción animada sin minijuego y Ramiro al volante. Respaldo: Ley 769 de 2002 (arts. 28, 30, 82, 83 y 131 C.21, C.37, C.38) y Resolución 40595 de 2022 (PESV). Detalle en docs/investigacion-ux-habbo.md, sección 8.",
+        relacionados: ["RF-903", "RF-908"],
+      },
+      {
+        id: "RF-908",
+        titulo: "Serie encadenada: la ruta se juega con un solo código",
+        descripcion:
+          "Las estaciones de una serie se juegan en orden con el código de la primera: al terminar una se desbloquea la siguiente y, al volver, el participante sigue en la primera estación con riesgos pendientes. El avance y el puntaje se calculan sobre todos los riesgos de la ruta y solo se termina la actividad al cerrar la última estación.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "seriesFrom y seriesEntry en src/lib/experiences/catalog.ts, missionStations en src/lib/experience-data.ts, ExperiencePlayer en src/components/experience/ExperiencePlayer.tsx",
+        verificacion:
+          "Tests de serie en src/lib/experiences.test.mts (ids únicos en toda la ruta, orden, puntaje sobre 14 riesgos); en el navegador, finca a transporte con recarga a mitad de ruta y cierre, con 14 respuestas y puntaje verificados en la base.",
+        notas:
+          "Sin cambios de base de datos: los ids de riesgo son únicos en toda la serie, así las respuestas de todas las estaciones caben en la misma participación. Las estaciones siguientes no se asignan solas a una empresa; el reporte de la actividad agrupa los riesgos por estación.",
+        relacionados: ["RF-902", "RF-904", "RF-906"],
       },
     ],
   },
