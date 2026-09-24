@@ -148,7 +148,7 @@ export async function resetRiskTexts(formData: FormData) {
 }
 
 /** Crea la actividad de la experiencia (si falta) y lleva a generar un código. */
-export async function useExperience(formData: FormData) {
+export async function adoptExperience(formData: FormData) {
   const user = await requireUser();
   if (user.role !== "super") return;
   const def = getExperience(String(formData.get("experience") ?? ""));

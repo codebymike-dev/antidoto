@@ -109,7 +109,8 @@ export function validateRiskTexts(input: {
   const options = input.options.map(clean);
   const explanation = clean(input.explanation);
   const practice = clean(input.practice);
-  const correct = Number(input.correct);
+  // Sin opción marcada el formulario manda null, y Number(null) sería 0.
+  const correct = input.correct === null || input.correct === undefined || input.correct === "" ? NaN : Number(input.correct);
 
   if (!title || !prompt || !explanation || !practice) return { ok: false, error: "Todos los campos son obligatorios." };
   if (options.length !== 3 || options.some((o) => !o)) return { ok: false, error: "Escribe las tres opciones." };
