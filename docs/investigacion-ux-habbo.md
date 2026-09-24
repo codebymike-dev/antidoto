@@ -253,3 +253,41 @@ que sale de la trilladora se tuesta.
 - Resolución 2400 de 1979 (ARL SURA): https://www.arlsura.com/files/resolucion_2400_1979.pdf
 - NIOSH, exposiciones en tostadoras de café y cafés (diacetilo, 2,3-pentanodiona y otros): https://pmc.ncbi.nlm.nih.gov/articles/PMC7531227/
 - NIOSH, evaluación de una tostadora de café (monóxido de carbono): https://www.cdc.gov/niosh/hhe/reports/pdfs/2018-0071-3342.pdf
+
+## 11. Estación 5: la tienda (cierre de la ruta)
+
+Investigado el 2026-09-24. Última de las cinco estaciones: el café llega a la taza.
+
+### Escenario
+
+- La misma sala de Habbo, con la puerta abierta a la calle, paredes claras y zócalo de
+  madera. Al fondo, el mesón con el lavaplatos (agua con espuma) y la regleta; arriba, el
+  tablero del menú y el estante de vasos. Adelante, la barra con la caja, la vitrina de
+  postres, el molino y la máquina de espresso con su lanceta de vapor.
+- Protagonista nueva: **Sara**, barista. En la hora pico llega una fila de cuatro clientes;
+  el primero grita (burbuja roja) y Sara suda. En la versión correcta la acompaña un
+  compañero en la caja.
+- Momentos: **abrir** (trapea del lado de los clientes, así se le ven los pies), **preparar**
+  (cámara sobre la máquina y el lavaplatos) y **atender** (fila y butaco alto al final de
+  la barra, a la vista).
+- El resumen de la última estación dice que se completó la ruta y la biblioteca ya no
+  muestra la tarjeta de estación en construcción.
+
+### Riesgos
+
+| Riesgo | Tipo (GTC 45) | Respaldo |
+| --- | --- | --- |
+| Chanclas para trapear | Locativo | Res. 2400 de 1979, art. 176 (protección según el riesgo); OSHA: resbalones y quemaduras entre las lesiones más comunes en restaurantes. |
+| Piso mojado sin aviso | Locativo | Res. 2400, art. 32 (piso no encharcado ni resbaladizo); OSHA: señalizar las zonas de piso mojado. |
+| Regleta mojada junto al lavaplatos | Eléctrico | Res. 2400, art. 121; OSHA: no conectar equipos con las manos mojadas ni sobre superficies húmedas. |
+| La mano bajo el vapor | Físico | OSHA: las máquinas de café y espresso causan quemaduras; Res. 2400, art. 177 (protección contra quemaduras). |
+| Cuchillo escondido en el lavaplatos | Mecánico | OSHA: no dejar cuchillos en el lavaplatos; Res. 2400, art. 365 (fundas para guardarlos). |
+| Se sube a un butaco | Locativo | Res. 2400, arts. 642 y 643 (escaleras portátiles en buen estado y con bases antirresbaladizas). |
+| Sola en la hora pico | Psicosocial | Res. 2646 de 2008: identificar y prevenir factores psicosociales como la carga de trabajo, la jornada y las condiciones de la tarea. |
+
+### Fuentes
+
+- Resolución 2400 de 1979 (ARL SURA): https://www.arlsura.com/files/resolucion_2400_1979.pdf
+- Resolución 2646 de 2008 (compilación ICBF): https://www.icbf.gov.co/cargues/avance/compilacion/docs/resolucion_minproteccion_2646_2008.htm
+- OSHA, Young Worker Safety in Restaurants, limpieza: https://www.osha.gov/etools/young-workers-restaurant-safety/clean-up
+- OSHA, Young Worker Safety in Restaurants, cocina: https://www.osha.gov/etools/young-workers-restaurant-safety/cooking

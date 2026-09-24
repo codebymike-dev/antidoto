@@ -741,6 +741,21 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "Respaldo: Resolución 2400 de 1979 (arts. 29, 32, 121, 125, 161, 171, 177, 536 y 543) y evaluaciones de NIOSH en tostadoras (monóxido de carbono y diacetilo). El avatar ganó pelo largo, moño, cofia y la opción sin bigote. La sala de la trilladora quedó parametrizada (con o sin puerta, colores). Detalle en docs/investigacion-ux-habbo.md, sección 10.",
         relacionados: ["RF-908", "RF-909"],
       },
+      {
+        id: "RF-911",
+        titulo: "Estación 5 de la ruta del café: la tienda (cierre de la ruta)",
+        descripcion:
+          "Sara, barista, abre la tienda, prepara bebidas y atiende la hora pico en una sala de Habbo con barra, vitrina, caja, máquina de espresso, lavaplatos, estante alto y una fila de clientes. En tres momentos (abrir, preparar, atender) el participante encuentra siete riesgos: chanclas para trapear, piso mojado sin aviso, regleta mojada junto al lavaplatos, la mano bajo el vapor de la lanceta, un cuchillo escondido en el lavaplatos, subirse a un butaco y atender sola la hora pico con un cliente agresivo. Al final ve el trabajo bien hecho, gana la insignia Barista segura y cierra la Ruta del café.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "src/components/experience/scenes/tienda.ts, src/components/experience/scenes/tienda-art.ts, src/components/experience/scenes/tienda-map.ts, RUTA_CAFE_TIENDA en src/lib/experiences/catalog.ts",
+        verificacion:
+          "Siete riesgos respondidos en la vista previa y ruta completa de participante (cinco estaciones) con código en Chromium headless: 35 respuestas distintas y cierre verificados en la base. El test de ids únicos en la serie detectó un choque (calzado en la finca y en la tienda) y se corrigió antes de publicar.",
+        notas:
+          "Respaldo: Resolución 2400 de 1979 (arts. 32, 121, 176, 177, 365, 642 y 643), Resolución 2646 de 2008 (riesgo psicosocial) y la guía de OSHA para trabajo en restaurantes. El resumen de la última estación celebra la ruta completa y la biblioteca ya no muestra la tarjeta de estación en construcción. Detalle en docs/investigacion-ux-habbo.md, sección 11.",
+        relacionados: ["RF-908", "RF-910"],
+      },
     ],
   },
 ];
