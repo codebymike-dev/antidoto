@@ -27,8 +27,26 @@
   flex-direction: column;
 }
 
-.pixel {
-  font-family: var(--font-pixel), "Pixelify Sans", monospace;
+/* Fuente pixel (Tiny5, la más cercana a Volter) solo en títulos, botones y cifras, a
+   16 px o más: en párrafos se lee mal. El texto corrido va en Poppins, como el cliente
+   moderno de Habbo, que usa una sans para el chat y las ventanas. */
+.px,
+.roomName,
+.purseItem,
+.iconButton,
+.moment,
+.winHead,
+.tag,
+.coverKicker,
+.coverTitle,
+.station,
+.statValue,
+.optionKey {
+  font-family: var(--font-pixel), monospace;
+  font-weight: 400;
+  font-synthesis: none;
+  font-variant-ligatures: none;
+  letter-spacing: 0.4px;
 }
 
 /* --- Barra superior ------------------------------------------------------------- */
@@ -68,8 +86,7 @@
 }
 
 .roomName {
-  font-weight: 700;
-  font-size: 15px;
+  font-size: 18px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -101,7 +118,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .purseBump {
@@ -134,14 +151,20 @@
   background: linear-gradient(#34454e, #1f2c33);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
   color: #fff;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
   cursor: pointer;
+  text-decoration: none;
 }
 
-.iconButton:hover {
+.iconButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.iconButton:hover:not(:disabled) {
   background: linear-gradient(#41555f, #26353d);
+  color: #fff;
+  text-decoration: none;
 }
 
 .iconButton:active {
@@ -218,9 +241,7 @@
   border: none;
   background: transparent;
   color: #cfe0e6;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -243,7 +264,7 @@
   height: 18px;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.35);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .toolbarHint {
@@ -273,11 +294,11 @@
   background: #fff;
   border: 1px solid #000;
   color: var(--ink);
-  font-size: 14px;
-  line-height: 1.25;
+  font-size: 13.5px;
+  line-height: 1.3;
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
   transition:
-    top 0.35s ease,
+    transform 0.35s ease,
     opacity 0.6s ease;
   animation: bubbleIn 0.2s ease-out;
 }
@@ -302,7 +323,6 @@
 @keyframes bubbleIn {
   from {
     opacity: 0;
-    transform: translate(-50%, -80%);
   }
 }
 
@@ -379,8 +399,7 @@
   background: linear-gradient(var(--head-a), var(--head-b));
   border-bottom: 1px solid #000;
   color: #fff;
-  font-weight: 700;
-  font-size: 15px;
+  font-size: 18px;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
 }
 
@@ -420,8 +439,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: 14.5px;
+  line-height: 1.5;
 }
 
 .winBody p {
@@ -445,8 +464,8 @@
   box-shadow: inset 0 1px 0 #fff, 0 2px 0 rgba(0, 0, 0, 0.3);
   color: var(--ink);
   font: inherit;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14.5px;
+  font-weight: 600;
   cursor: pointer;
   text-align: left;
   text-decoration: none;
@@ -508,7 +527,7 @@
   border-radius: 5px;
   background: var(--ink);
   color: #fff;
-  font-size: 13px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -526,9 +545,7 @@
   border-radius: 5px;
   background: var(--ink);
   color: var(--gold);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  font-size: 16px;
 }
 
 .practice {
@@ -591,16 +608,14 @@
 /* --- Portada -------------------------------------------------------------------- */
 
 .coverKicker {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 16px;
   color: var(--head-a);
 }
 
 .coverTitle {
   margin: 0;
-  font-size: 24px;
-  line-height: 1.15;
+  font-size: 32px;
+  line-height: 1.1;
 }
 
 .steps {
@@ -632,8 +647,7 @@
   border-radius: 6px;
   border: 1px solid var(--win-line);
   background: #fff;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 16px;
 }
 
 .stationOn {
@@ -768,8 +782,7 @@
 }
 
 .statValue {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 28px;
 }
 
 .statLabel {
@@ -793,5 +806,51 @@
   .badgeBig,
   .purseBump {
     animation: none;
+  }
+}
+
+/* Celular: barra superior en dos filas y herramientas que bajan de línea. Va al final
+   para ganarle a las reglas de arriba. */
+@media (max-width: 720px) {
+  .topbar {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .logo,
+  .roomSub,
+  .exitLabel {
+    display: none;
+  }
+
+  .roomInfo {
+    flex: 1 1 100%;
+    order: -1;
+  }
+
+  .roomName {
+    font-size: 16px;
+  }
+
+  .spacer {
+    display: none;
+  }
+
+  .purse {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .toolbarHint {
+    display: none;
+  }
+
+  .main {
+    padding: 0 8px 12px;
+    gap: 12px;
   }
 }
