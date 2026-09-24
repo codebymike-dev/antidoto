@@ -589,24 +589,17 @@ function drawChock(buf: PixelBuffer, i: number, j: number) {
   );
 }
 
-/** Bulto de café pergamino acostado: una caja de fique con las esquinas redondas. */
+/**
+ * Bulto de café pergamino acostado, ocupando la caja (i, j, z) de di x dj x dz. Se dibuja
+ * como el costal de la finca: redondo, de fique, con el contorno oscuro.
+ */
 export function drawBag(buf: PixelBuffer, i: number, j: number, z: number, di = 18, dj = 14, dz = 8) {
-  const c: BoxColors = { top: C.burlapLight, front: C.burlap, side: C.burlapDark };
-  isoBox(buf, i, j, z, di, dj, dz, c);
-  // Costuras y la boca amarrada.
-  edge(buf, [i + 3, j + dj, z + dz * 0.55], [i + di - 3, j + dj, z + dz * 0.55], C.burlapDark);
-  const tie = P(i + di, j + dj / 2, z + dz * 0.6);
-  buf.px(tie.x, tie.y, C.rope);
-  buf.px(tie.x + 1, tie.y, C.rope);
-  // Contorno redondeado: el borde de arriba se "come" en las esquinas.
-  const outline = C.outline;
-  edge(buf, [i + 1, j, z + dz], [i + di - 1, j, z + dz], outline);
-  edge(buf, [i, j + 1, z + dz], [i, j + dj - 1, z + dz], outline);
-  edge(buf, [i + di, j, z + dz - 1], [i + di, j, z + 1], outline);
-  edge(buf, [i, j + dj, z + dz - 1], [i, j + dj, z + 1], outline);
-  edge(buf, [i + di, j + 1, z], [i + di, j + dj - 1, z], outline);
-  edge(buf, [i + 1, j + dj, z], [i + di - 1, j + dj, z], outline);
-  edge(buf, [i + di, j + dj, z + 1], [i + di, j + dj, z + dz - 1], mix(outline, C.burlapDark, 0.4));
+  const c = P(i + di / 2, j + dj / 2, z);
+  // El costal de la finca acostado mide unos 20x12 px: se ajusta al tamaño de la caja.
+  const size = Math.min(1.15, (di + dj) / 32);
+  finca.drawSack(buf, c.x, c.y + 1, 0.95 * size, true);
+  // Costura de la boca, del lado del conductor.
+  buf.px(c.x + 5 * size, c.y - dz * 0.6, C.rope);
 }
 
 /** Timón visto de lado, con la barra hacia el tablero. */

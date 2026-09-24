@@ -34,7 +34,7 @@ const pose = (p: Partial<Pose>): Pose => ({ ...STAND, ...p });
 /** Sentado al volante con las dos manos en el timón. */
 const DRIVE = pose({ lean: -6, thighN: 86, shinN: -2, thighF: 82, shinF: 6, armN: 12, foreN: 82, armF: 18, foreF: 86 });
 /** Una mano en el timón y la otra con el celular en la oreja; la cabeza se le va. */
-const DRIVE_PHONE = pose({ ...DRIVE, armN: 140, foreN: 250, headTilt: 10 });
+const DRIVE_PHONE = pose({ ...DRIVE, armN: 140, foreN: 250, headTilt: 4 });
 /** Toño sentado encima de los bultos, agarrado de la carga. */
 const ON_LOAD = pose({ lean: 6, thighN: 80, shinN: 36, thighF: 72, shinF: 26, armN: 20, foreN: 46, armF: 30, foreF: 60 });
 /** Toño en la silla del copiloto. */
@@ -704,11 +704,14 @@ export class TransporteScene implements PlayScene {
     const b = this.bump;
     if (this.tonoAt === "carga") {
       const top = art.CAR.floor + 4 * 8 + b;
-      const seat = art.P(CAR_I + 20, this.carJ + 18, top);
-      this.seatActor(t, seat);
+      // Sentado atrás, mirando hacia la cola, con las piernas colgando por detrás.
+      const seat = art.P(CAR_I + 20, this.carJ + 12, top);
       t.pose = ON_LOAD;
+      t.facing = 1;
+      this.seatActor(t, seat);
     } else if (this.tonoAt === "cabina") {
       const floor = art.P(CAR_I + 11, this.carJ + art.CAR.driverJ, art.CAR.floor + b);
+      t.facing = -1;
       t.x = floor.x;
       t.y = floor.y;
     }
@@ -741,7 +744,7 @@ export class TransporteScene implements PlayScene {
       out.shadow(r.x + r.facing * 3, r.y, 11, 3, finca.C.shadow, 0.32);
     }
     const p = actorPose(r);
-    const nod = this.sleepy && this.ramiroAt === "volante" ? Math.max(0, Math.sin(this.time * 1.5)) * 10 : 0;
+    const nod = this.sleepy && this.ramiroAt === "volante" ? Math.max(0, Math.sin(this.time * 1.5)) * 6 : 0;
     this.rigR = drawAvatarLayers(out, { ...p, headTilt: p.headTilt + nod }, this.look, r, {
       held: (rig) => {
         if (this.belt && this.ramiroAt === "volante") drawBelt(out, rig);
