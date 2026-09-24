@@ -220,3 +220,44 @@ CREATE TABLE IF NOT EXISTS rate_limit_hits (
 );
 
 CREATE INDEX IF NOT EXISTS idx_rate_limit_hits_key ON rate_limit_hits(key, created_at);
+
+-- --- Experiencias interactivas (biblioteca tipo Genially) -----------------------
+-- La escena (arte, animación y dónde está cada riesgo) vive en el código, en
+-- src/lib/experiences/catalog.ts. La base guarda qué misión usa cada escena, los textos
+-- editados y las respuestas. Así una experiencia reutiliza los códigos de actividad,
+-- las participaciones y los reportes de las misiones.
+
+CREATE TABLE IF NOT EXISTS mission_experiences (
+  mission_id     TEXT PRIMARY KEY REFERENCES missions(id) ON DELETE CASCADE,
+  experience_key TEXT NOT NULL
+);
+
+-- Textos editados desde la biblioteca (solo superadmin). Sin fila = los del código.
+CREATE TABLE IF NOT EXISTS experience_risk_texts (
+  experience_key TEXT NOT NULL,
+  risk_id        TEXT NOT NULL,
+  title          TEXT NOT NULL,
+  prompt         TEXT NOT NULL,
+  -- JSON con exactamente 3 opciones.
+  options        TEXT NOT NULL,
+  correct        INTEGER NOT NULL CHECK (correct BETWEEN 0 AND 2),
+  explanation    TEXT NOT NULL,
+  practice       TEXT NOT NULL,
+  updated_by     INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
+  updated_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (experience_key, risk_id)
+);
+
+-- Un riesgo resuelto por participante: el UNIQUE frena dobles envíos.
+-- option_index nulo = el participante se rindió y el riesgo se le reveló.
+-- Se copia el texto elegido: si luego se editan los textos, el reporte no cambia.
+CREATE TABLE IF NOT EXISTS experience_answers (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  participation_id TEXT NOT NULL REFERENCES participations(id) ON DELETE CASCADE,
+  risk_id          TEXT NOT NULL,
+  option_index     INTEGER CHECK (option_index IS NULL OR option_index BETWEEN 0 AND 2),
+  option_text      TEXT,
+  is_correct       INTEGER NOT NULL CHECK (is_correct IN (0, 1)),
+  answered_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (participation_id, risk_id)
+);
