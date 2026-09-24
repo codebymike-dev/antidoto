@@ -104,8 +104,11 @@ export function lerpPose(a: Pose, b: Pose, t: number): Pose {
   return out;
 }
 
-/** Ciclo de caminar de 4 tiempos a partir de una pose base; phase en vueltas (0..1). */
-export function walkPose(base: Pose, phase: number, stride = 1): Pose {
+/**
+ * Ciclo de caminar a partir de una pose base; phase en vueltas (0..1). Con `swingArms`
+ * en falso los brazos no se mueven (van cargando algo).
+ */
+export function walkPose(base: Pose, phase: number, stride = 1, swingArms = true): Pose {
   const s = Math.sin(phase * Math.PI * 2);
   const c = Math.cos(phase * Math.PI * 2);
   const lift = (v: number) => Math.max(0, v);
@@ -115,10 +118,10 @@ export function walkPose(base: Pose, phase: number, stride = 1): Pose {
     shinN: base.shinN + (24 * s - 30 * lift(c)) * stride,
     thighF: base.thighF - 24 * s * stride,
     shinF: base.shinF + (-24 * s - 30 * lift(-c)) * stride,
-    armN: base.armN - 18 * s * stride,
-    foreN: base.foreN - 10 * s * stride,
-    armF: base.armF + 18 * s * stride,
-    foreF: base.foreF + 10 * s * stride,
+    armN: base.armN - (swingArms ? 18 * s * stride : 0),
+    foreN: base.foreN - (swingArms ? 10 * s * stride : 0),
+    armF: base.armF + (swingArms ? 18 * s * stride : 0),
+    foreF: base.foreF + (swingArms ? 10 * s * stride : 0),
     bob: base.bob + Math.abs(c) * stride,
   };
 }
@@ -185,7 +188,9 @@ export function poseRig(pose: Pose, x: number, groundY: number, facing: 1 | -1):
 export interface AvatarLayers {
   /** Detrás de todo (por ejemplo, un bulto en la espalda). */
   back?: () => void;
-  /** Después del torso y antes de la cabeza y el brazo cercano (un bulto en los brazos). */
+  /** Entre el torso y la pierna cercana (un bulto entre las rodillas). */
+  afterTorso?: () => void;
+  /** Después de las piernas y antes de la cabeza y el brazo cercano (un bulto en los brazos). */
   held?: () => void;
   /** Encima de todo. */
   front?: () => void;
@@ -209,7 +214,8 @@ export function drawAvatar(
 
   drawLeg(buf, rig.hip, rig.kneeF, rig.footF, fl, look, true);
   drawArm(buf, add(rig.shoulder, { x: -fu, y: 0 }, 1), rig.elbowF, rig.handF, look, true);
-  drawTorso(buf, rig, pose, look);
+  drawTorso(buf, rig, look);
+  layers.afterTorso?.();
   drawLeg(buf, rig.hip, rig.kneeN, rig.footN, fl, look, false);
   layers.held?.();
   buf.capsule(rig.neck.x, rig.neck.y, rig.head.x, rig.head.y, 2, 2, look.skinDark, OUTLINE);
@@ -247,11 +253,10 @@ function drawArm(buf: PixelBuffer, shoulder: Point, elbow: Point, hand: Point, l
   const sleeve = far ? look.shirtDark : look.shirt;
   buf.capsule(shoulder.x, shoulder.y, elbow.x, elbow.y, 2.5, 2.3, sleeve, OUTLINE);
   buf.capsule(elbow.x, elbow.y, hand.x, hand.y, 2.3, 2.1, sleeve, OUTLINE);
-  buf.disc(hand.x, hand.y, 0, CLEAR);
   buf.capsule(hand.x, hand.y, hand.x, hand.y, 2, 2, far ? look.skinDark : look.skin, OUTLINE);
 }
 
-function drawTorso(buf: PixelBuffer, rig: Rig, pose: Pose, look: Look) {
+function drawTorso(buf: PixelBuffer, rig: Rig, look: Look) {
   const { hip, neck } = rig;
   const fu = rig.facingUpper;
   const ax = neck.x - hip.x;
@@ -276,7 +281,6 @@ function drawTorso(buf: PixelBuffer, rig: Rig, pose: Pose, look: Look) {
     return look.shirt;
   };
   buf.capsule(hip.x, hip.y, rig.shoulder.x, rig.shoulder.y, 4.4, 5.3, shader, OUTLINE);
-  void pose;
 }
 
 function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Look, expression: Expression) {
