@@ -72,11 +72,13 @@ export interface Rig {
 
 export const OUTLINE = hex("#2a1e17");
 
-const THIGH = 11;
-const SHIN = 11;
-const UPPER_ARM = 9.5;
-const FOREARM = 8.5;
-const TORSO = 16;
+/** Escala del avatar: 1 = unos 58 px de alto. */
+const S = 1.2;
+const THIGH = 11 * S;
+const SHIN = 11 * S;
+const UPPER_ARM = 9.5 * S;
+const FOREARM = 8.5 * S;
+const TORSO = 16 * S;
 const HEAD_R = 7;
 const SOLE = 2;
 
@@ -154,15 +156,15 @@ export function poseRig(pose: Pose, x: number, groundY: number, facing: 1 | -1):
   const at = (p: Point) => ({ x: p.x + offset.x, y: p.y + offset.y });
 
   const hip = at(hip0);
-  const lumbar = add(hip, up(pose.lean, fu), 5);
-  const shoulder = add(hip, up(pose.lean, fu), TORSO - 2.5);
+  const lumbar = add(hip, up(pose.lean, fu), 5 * S);
+  const shoulder = add(hip, up(pose.lean, fu), TORSO - 2.5 * S);
   const neck = add(hip, up(pose.lean, fu), TORSO);
   // La cabeza no sigue del todo al torso: con la espalda doblada mira hacia adelante.
-  const head = add(add(neck, up(pose.lean * 0.55, fu), 1.5 + HEAD_R), { x: fu, y: 0 }, pose.headPush);
+  const head = add(add(neck, up(pose.lean * 0.55, fu), (1.5 + HEAD_R) * S), { x: fu, y: 0 }, pose.headPush);
 
   const elbowN = add(shoulder, down(pose.armN, fu), UPPER_ARM);
   const handN = add(elbowN, down(pose.foreN, fu), FOREARM);
-  const shoulderF = add(shoulder, { x: -fu, y: 0 }, 1);
+  const shoulderF = add(shoulder, { x: -fu, y: 0 }, S);
   const elbowF = add(shoulderF, down(pose.armF, fu), UPPER_ARM);
   const handF = add(elbowF, down(pose.foreF, fu), FOREARM);
 
@@ -213,12 +215,12 @@ export function drawAvatar(
   layers.back?.();
 
   drawLeg(buf, rig.hip, rig.kneeF, rig.footF, fl, look, true);
-  drawArm(buf, add(rig.shoulder, { x: -fu, y: 0 }, 1), rig.elbowF, rig.handF, look, true);
+  drawArm(buf, add(rig.shoulder, { x: -fu, y: 0 }, S), rig.elbowF, rig.handF, look, true);
   drawTorso(buf, rig, look);
   layers.afterTorso?.();
   drawLeg(buf, rig.hip, rig.kneeN, rig.footN, fl, look, false);
   layers.held?.();
-  buf.capsule(rig.neck.x, rig.neck.y, rig.head.x, rig.head.y, 2, 2, look.skinDark, OUTLINE);
+  buf.capsule(rig.neck.x, rig.neck.y, rig.head.x, rig.head.y, 2 * S, 2 * S, look.skinDark, OUTLINE);
   drawHead(buf, rig.head, fu, pose.headTilt, look, expression);
   drawArm(buf, rig.shoulder, rig.elbowN, rig.handN, look, false);
   layers.front?.();
@@ -228,32 +230,33 @@ export function drawAvatar(
 
 function drawLeg(buf: PixelBuffer, hip: Point, knee: Point, ankle: Point, f: number, look: Look, far: boolean) {
   const pants = far ? look.pantsDark : look.pants;
-  buf.capsule(hip.x, hip.y, knee.x, knee.y, 3, 2.8, pants, OUTLINE);
+  buf.capsule(hip.x, hip.y, knee.x, knee.y, 3 * S, 2.8 * S, pants, OUTLINE);
   if (look.shoes === "botas") {
     // Bota de caucho: cubre media pantorrilla.
     const shinDir = { x: knee.x - ankle.x, y: knee.y - ankle.y };
     const len = Math.hypot(shinDir.x, shinDir.y) || 1;
-    const top = add(ankle, { x: shinDir.x / len, y: shinDir.y / len }, 6);
-    buf.capsule(knee.x, knee.y, top.x, top.y, 2.8, 2.6, pants, OUTLINE);
+    const top = add(ankle, { x: shinDir.x / len, y: shinDir.y / len }, 6 * S);
+    buf.capsule(knee.x, knee.y, top.x, top.y, 2.8 * S, 2.6 * S, pants, OUTLINE);
     const boot = far ? hex("#1d1f22") : hex("#2b2e33");
-    buf.capsule(top.x, top.y, ankle.x, ankle.y, 3, 2.8, boot, OUTLINE);
-    buf.capsule(ankle.x - f * 0.5, ankle.y + 0.6, ankle.x + f * 4.5, ankle.y + 0.8, 2.1, 1.8, boot, OUTLINE);
+    buf.capsule(top.x, top.y, ankle.x, ankle.y, 3 * S, 2.8 * S, boot, OUTLINE);
+    buf.capsule(ankle.x - f * 0.5, ankle.y + 0.6, ankle.x + f * 4.5 * S, ankle.y + 0.8, 2.1 * S, 1.8 * S, boot, OUTLINE);
     if (!far) buf.px(top.x - f * 1, top.y + 2, hex("#5a616b"));
   } else {
-    buf.capsule(knee.x, knee.y, ankle.x, ankle.y, 2.8, 2.4, pants, OUTLINE);
+    buf.capsule(knee.x, knee.y, ankle.x, ankle.y, 2.8 * S, 2.4 * S, pants, OUTLINE);
     // Chancla: suela roja y el pie descubierto encima.
     const sole = far ? hex("#a82c22") : hex("#d8402f");
-    buf.capsule(ankle.x - f * 1.5, ankle.y + 1.6, ankle.x + f * 5, ankle.y + 1.6, 1, 1, sole, OUTLINE);
-    buf.capsule(ankle.x, ankle.y, ankle.x + f * 4, ankle.y + 0.4, 1.5, 1.2, far ? look.skinDark : look.skin, CLEAR);
+    buf.capsule(ankle.x - f * 1.5, ankle.y + 1.6, ankle.x + f * 5.5 * S, ankle.y + 1.6, 1, 1, sole, OUTLINE);
+    buf.capsule(ankle.x, ankle.y, ankle.x + f * 4.5 * S, ankle.y + 0.4, 1.6, 1.3, far ? look.skinDark : look.skin, CLEAR);
     buf.px(ankle.x + f * 2, ankle.y + 0.5, sole);
+    buf.px(ankle.x + f * 3, ankle.y + 0.5, sole);
   }
 }
 
 function drawArm(buf: PixelBuffer, shoulder: Point, elbow: Point, hand: Point, look: Look, far: boolean) {
   const sleeve = far ? look.shirtDark : look.shirt;
-  buf.capsule(shoulder.x, shoulder.y, elbow.x, elbow.y, 2.5, 2.3, sleeve, OUTLINE);
-  buf.capsule(elbow.x, elbow.y, hand.x, hand.y, 2.3, 2.1, sleeve, OUTLINE);
-  buf.capsule(hand.x, hand.y, hand.x, hand.y, 2, 2, far ? look.skinDark : look.skin, OUTLINE);
+  buf.capsule(shoulder.x, shoulder.y, elbow.x, elbow.y, 2.5 * S, 2.3 * S, sleeve, OUTLINE);
+  buf.capsule(elbow.x, elbow.y, hand.x, hand.y, 2.3 * S, 2.1 * S, sleeve, OUTLINE);
+  buf.capsule(hand.x, hand.y, hand.x, hand.y, 2 * S, 2 * S, far ? look.skinDark : look.skin, OUTLINE);
 }
 
 function drawTorso(buf: PixelBuffer, rig: Rig, look: Look) {
@@ -270,8 +273,8 @@ function drawTorso(buf: PixelBuffer, rig: Rig, look: Look) {
   const shader = (x: number, y: number): Color => {
     const rx = x - hip.x;
     const ry = y - hip.y;
-    const u = rx * ux + ry * uy;
-    const v = rx * bx + ry * by;
+    const u = (rx * ux + ry * uy) / S;
+    const v = (rx * bx + ry * by) / S;
     if (u < 1.2) return hex("#5b3a22"); // cinturón
     const stripeU = Math.floor(u + 0.5) % 5 === 0;
     const stripeV = Math.floor(v + 20.5) % 5 === 0;
@@ -280,7 +283,7 @@ function drawTorso(buf: PixelBuffer, rig: Rig, look: Look) {
     if (v > 3.2) return look.shirtDark;
     return look.shirt;
   };
-  buf.capsule(hip.x, hip.y, rig.shoulder.x, rig.shoulder.y, 4.4, 5.3, shader, OUTLINE);
+  buf.capsule(hip.x, hip.y, rig.shoulder.x, rig.shoulder.y, 4.4 * S, 5.3 * S, shader, OUTLINE);
 }
 
 function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Look, expression: Expression) {
@@ -288,8 +291,8 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
   const sin = Math.sin(tilt * RAD);
   const eye = hex("#241812");
   const shader = (x: number, y: number): Color => {
-    const wx = (x - c.x) * f;
-    const wy = y - c.y;
+    const wx = ((x - c.x) * f) / S;
+    const wy = (y - c.y) / S;
     const lx = wx * cos + wy * sin;
     const ly = -wx * sin + wy * cos;
 
@@ -334,5 +337,5 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
     if (lx < -1.5) return look.skinDark;
     return look.skin;
   };
-  buf.implicit(c.x - 12, c.y - 13, c.x + 12, c.y + 9, shader, OUTLINE);
+  buf.implicit(c.x - 12 * S, c.y - 13 * S, c.x + 12 * S, c.y + 9 * S, shader, OUTLINE);
 }
