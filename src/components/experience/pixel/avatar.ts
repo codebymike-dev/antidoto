@@ -29,7 +29,7 @@ export interface Pose {
   bob: number;
 }
 
-export type Expression = "normal" | "esfuerzo" | "feliz";
+export type Expression = "normal" | "esfuerzo" | "feliz" | "sueno" | "bostezo";
 
 export interface Look {
   shirt: Color;
@@ -322,7 +322,13 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
     if (ly < -0.6) return look.skinDark; // sombra bajo el ala
 
     const eyeX = lx >= 3 && lx < 4;
-    if (expression === "esfuerzo") {
+    if (expression === "sueno" || expression === "bostezo") {
+      // Párpados caídos y ojeras; al bostezar los ojos se cierran y la boca se abre.
+      if (eyeX && ly >= 0.8 && ly < 1.8) return eye;
+      if (expression === "sueno" && lx >= 2.6 && lx < 4.4 && ly >= 0.1 && ly < 0.8) return look.skinDark;
+      if (lx >= 2.4 && lx < 4.4 && ly >= 2 && ly < 2.7) return look.skinDark;
+      if (expression === "bostezo" && (lx - 4.9) ** 2 / 1.7 + (ly - 4.6) ** 2 / 2.6 <= 1) return hex("#5a1f1a");
+    } else if (expression === "esfuerzo") {
       if (eyeX && ly >= 0.5 && ly < 1.5) return eye;
       if (lx >= 2.4 && lx < 3.2 && ly >= 0 && ly < 1) return eye;
     } else if (expression === "feliz") {
