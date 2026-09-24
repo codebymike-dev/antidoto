@@ -2,7 +2,7 @@
 // está bien, un mensaje (como en las imágenes interactivas de Genially, todo clic
 // responde). Los ids de riesgo son los de src/lib/experiences/catalog.ts.
 
-import type { Moment } from "./finca";
+import type { Moment, SceneMap } from "./types.ts";
 
 export const FINCA_MOMENTS: { id: Moment; label: string; hint: string }[] = [
   { id: 1, label: "Agarrar", hint: "Ramiro se agacha a agarrar el bulto." },
@@ -42,7 +42,12 @@ export const FINCA_ZONE_LABELS: Record<string, string> = {
   casa: "Casa",
 };
 
-/** Riesgos que se pueden encontrar en un momento. */
-export function risksInMoment(m: Moment): Set<string> {
-  return new Set(Object.values(FINCA_RISK_ZONES[m]));
-}
+export const FINCA_MAP: SceneMap = {
+  moments: FINCA_MOMENTS,
+  riskZones: FINCA_RISK_ZONES,
+  ok: FINCA_OK,
+  zoneLabels: FINCA_ZONE_LABELS,
+  miss: "Aquí no hay nada raro. Mira a Ramiro, lo que carga y lo que lo rodea.",
+  start: "Toca donde veas un error. Cambia de momento en la barra de abajo.",
+  place: "Ramiro en una finca cafetera de ladera.",
+};

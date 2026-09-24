@@ -8,18 +8,9 @@ import { drawAvatar, poseRig, STAND, type Look, type Pose, type Rig, type Point 
 import { Timeline, act, actorPose, poseTo, wait, walkTo, type Actor } from "../pixel/actor.ts";
 import * as art from "./finca-art.ts";
 
-export type Moment = 1 | 2 | 3;
+import type { Moment, PlayScene, SceneEvents, Zone } from "./types.ts";
 
-export interface Zone {
-  id: string;
-  x: number;
-  y: number;
-  r: number;
-}
-
-export interface SceneEvents {
-  say?: (text: string) => void;
-}
+export type { Moment, SceneEvents, Zone };
 
 const RAMIRO: Look = {
   shirt: hex("#3f7fc0"),
@@ -129,7 +120,7 @@ interface Particle {
   color: Color;
 }
 
-export class FincaScene {
+export class FincaScene implements PlayScene {
   readonly width = art.W;
   readonly height = art.H;
 
