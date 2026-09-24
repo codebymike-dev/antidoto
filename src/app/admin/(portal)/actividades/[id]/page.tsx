@@ -164,7 +164,7 @@ export default async function DetallePage({
                         <div style={{ position: "absolute", inset: 0, width: `${correctPct}%`, background: colors.accentDark, borderRadius: 999 }} />
                       </div>
                       <div style={{ fontSize: 12, color: colors.muted }}>
-                        {correctPct}% a la primera · {foundPct}% lo encontró{r.revealed > 0 && ` · ${r.revealed} se rindieron`}
+                        {correctPct}% a la primera · {foundPct}% lo encontró{r.revealed > 0 && ` · ${r.revealed} no ${r.revealed === 1 ? "lo vio" : "lo vieron"}`}
                       </div>
                     </div>
                   </div>

@@ -6,8 +6,7 @@ import { FincaScene } from "./scenes/finca";
 
 // Lienzo de la escena: corre el bucle de animación a ~30 cuadros por segundo (el ritmo de
 // Habbo, y ahorra batería) y traduce los toques a píxeles del lienzo interno de 400x250.
-// El escalado es sin suavizado; a partir de 2x se ajusta a múltiplos enteros para que
-// cada píxel del arte mida lo mismo.
+// Llena el ancho disponible sin pasar del alto; el escalado es sin suavizado desde 1,5x.
 
 const FRAME = 1 / 30;
 
@@ -63,14 +62,15 @@ export default function SceneCanvas({ onScene, onSay, onTap, maxHeight, label, c
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Tamaño: todo el ancho disponible, sin pasar del alto; múltiplo entero desde 2x.
+  // Tamaño: todo el ancho disponible, sin pasar del alto. Se probó ajustar a múltiplos
+  // enteros, pero dejaba franjas negras a los lados: con escala fraccionaria algunos
+  // píxeles miden uno más que otros y no se nota.
   useEffect(() => {
     const wrap = wrapRef.current!;
     const box = boxRef.current!;
     const canvas = canvasRef.current!;
     const fit = () => {
-      const k0 = Math.min(wrap.clientWidth / 400, maxHeight / 250);
-      const k = k0 >= 2 ? Math.floor(k0) : k0;
+      const k = Math.min(wrap.clientWidth / 400, maxHeight / 250);
       box.style.width = `${Math.round(400 * k)}px`;
       box.style.height = `${Math.round(250 * k)}px`;
       // Por debajo de 1,5x el escalado sin suavizado se come líneas de 1 px.
@@ -85,21 +85,21 @@ export default function SceneCanvas({ onScene, onSay, onTap, maxHeight, label, c
   return (
     <div ref={wrapRef} style={{ width: "100%", display: "flex", justifyContent: "center" }}>
       <div ref={boxRef} style={{ position: "relative", width: "100%", aspectRatio: "400 / 250", maxWidth: "100%" }}>
-      <canvas
-        ref={canvasRef}
-        width={400}
-        height={250}
-        role="img"
-        aria-label={label}
-        onPointerDown={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = ((e.clientX - rect.left) / rect.width) * 400;
-          const y = ((e.clientY - rect.top) / rect.height) * 250;
-          onTap(x, y, e.pointerType === "touch");
-        }}
-        style={{ display: "block", width: "100%", height: "100%", cursor: "zoom-in", touchAction: "manipulation" }}
-      />
-      {children}
+        <canvas
+          ref={canvasRef}
+          width={400}
+          height={250}
+          role="img"
+          aria-label={label}
+          onPointerDown={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 400;
+            const y = ((e.clientY - rect.top) / rect.height) * 250;
+            onTap(x, y, e.pointerType === "touch");
+          }}
+          style={{ display: "block", width: "100%", height: "100%", cursor: "zoom-in", touchAction: "manipulation" }}
+        />
+        {children}
       </div>
     </div>
   );

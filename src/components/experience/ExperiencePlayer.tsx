@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Pixelify_Sans } from "next/font/google";
+import { Tiny5 } from "next/font/google";
 import styles from "./player.module.css";
 import SceneCanvas from "./SceneCanvas";
 import PixelIcon from "./PixelIcon";
@@ -14,9 +14,10 @@ import { GRAINS_CORRECT, GRAINS_FOUND } from "@/lib/experiences/texts";
 import { answerExperienceRisk, finishExperience, revealExperienceRisks } from "@/lib/experience-actions";
 import { LOGO_SRC } from "@/lib/theme";
 
-// Fuente pixel libre (OFL) en lugar de Volter, que es de Sulake. Se sirve desde el propio
-// dominio con next/font y solo se descarga en las páginas que usan el jugador.
-const pixel = Pixelify_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-pixel" });
+// Fuente pixel libre (OFL) en lugar de Volter, que es de Sulake: Tiny5 es la más parecida
+// y se lee nítida desde 16 px. Se sirve desde el propio dominio con next/font y solo se
+// descarga en las páginas que usan el jugador.
+const pixel = Tiny5({ subsets: ["latin"], weight: "400", variable: "--font-pixel" });
 
 type Phase = "portada" | "intro" | "juego" | "completo" | "final" | "resumen";
 
@@ -155,12 +156,14 @@ export default function ExperiencePlayer({
   }
 
   function skipIntro() {
+    setBubbles([]);
     scene?.skipIntro(() => setPhase("juego"));
   }
 
   function replay() {
     if (!scene || phase !== "juego") return;
     closeWindows();
+    setBubbles([]);
     setPhase("intro");
     setMoment(1);
     scene.playIntro(() => setPhase("juego"));
@@ -316,6 +319,7 @@ export default function ExperiencePlayer({
     if (!scene) return;
     setPhase("final");
     closeWindows();
+    setBubbles([]);
     scene.playGoodPractice(() => {
       setPhase("resumen");
       sfx("badge");
@@ -356,7 +360,7 @@ export default function ExperiencePlayer({
   const sceneLabel = `Escena en pixel art: ${experience.character} en una finca cafetera de ladera. ${momentInfo.hint}`;
 
   return (
-    <div className={`${styles.root} ${styles.pixel} ${pixel.variable}`}>
+    <div className={`${styles.root} ${pixel.variable}`}>
       <header className={styles.topbar}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={LOGO_SRC} alt="Antídoto" className={styles.logo} />
@@ -389,13 +393,13 @@ export default function ExperiencePlayer({
         </button>
         {exitAction ? (
           <form action={exitAction}>
-            <button type="submit" className={styles.iconButton}>
-              <PixelIcon name="puerta" size={14} /> Salir
+            <button type="submit" className={styles.iconButton} aria-label="Salir">
+              <PixelIcon name="puerta" size={14} /> <span className={styles.exitLabel}>Salir</span>
             </button>
           </form>
         ) : exitHref ? (
-          <Link href={exitHref} className={styles.iconButton}>
-            <PixelIcon name="puerta" size={14} /> Salir
+          <Link href={exitHref} className={styles.iconButton} aria-label="Salir">
+            <PixelIcon name="puerta" size={14} /> <span className={styles.exitLabel}>Salir</span>
           </Link>
         ) : null}
       </header>
@@ -406,13 +410,16 @@ export default function ExperiencePlayer({
             <SceneCanvas onScene={setScene} onSay={onSay} onTap={onTap} maxHeight={maxHeight} label={sceneLabel}>
               <div className={styles.overlay}>
                 {bubbles.map((b, i) => (
+                  // Como en Habbo: la burbuja nueva aparece sobre el que habla y empuja
+                  // hacia arriba a las anteriores, que se van apagando.
                   <div
                     key={b.id}
                     className={`${styles.bubble} ${i > 0 ? styles.bubbleOld : ""}`}
                     style={{
-                      left: `${Math.min(80, Math.max(20, (b.x / 400) * 100))}%`,
-                      top: `calc(${Math.max(14, (b.y / 250) * 100)}% - ${i * 36}px)`,
-                      opacity: i === 0 ? 1 : 0.75 - i * 0.2,
+                      left: `${Math.min(78, Math.max(22, (bubbles[0].x / 400) * 100))}%`,
+                      top: `${Math.max(16, (bubbles[0].y / 250) * 100)}%`,
+                      transform: `translate(-50%, calc(-100% - ${i * 40}px))`,
+                      opacity: i === 0 ? 1 : 0.8 - i * 0.25,
                     }}
                   >
                     <span className={styles.bubbleHead}>
@@ -704,6 +711,10 @@ export default function ExperiencePlayer({
                 </button>
                 <span className={styles.toolbarHint}>Mira lo que hace {experience.character}...</span>
               </>
+            ) : phase === "final" || phase === "resumen" || phase === "completo" ? (
+              <span className={`${styles.toolbarHint} ${styles.px}`} style={{ display: "inline", fontSize: 16, color: "#fff" }}>
+                <PixelIcon name="check" size={14} /> Así sí se hace: mira a {experience.character} paso a paso.
+              </span>
             ) : (
               <>
                 <button
