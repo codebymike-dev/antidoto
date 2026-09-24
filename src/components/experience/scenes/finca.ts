@@ -4,7 +4,7 @@
 // y cierra con la versión correcta.
 
 import { PixelBuffer, hex, mix, type Color } from "../pixel/buffer.ts";
-import { drawAvatar, STAND, type Look, type Pose, type Rig, type Point } from "../pixel/avatar.ts";
+import { drawAvatar, poseRig, STAND, type Look, type Pose, type Rig, type Point } from "../pixel/avatar.ts";
 import { Timeline, act, actorPose, poseTo, wait, walkTo, type Actor } from "../pixel/actor.ts";
 import * as art from "./finca-art.ts";
 
@@ -424,7 +424,7 @@ export class FincaScene {
         art.drawSack(out, c.x, c.y + 7, sack.fill);
       }
     };
-    const rigPre = drawAvatarLayers(out, pose, this.look, a, {
+    this.rig = drawAvatarLayers(out, pose, this.look, a, {
       back: (rig) => {
         if (sack.mode === "nape") {
           const c = { x: rig.neck.x - rig.facingUpper * 3, y: rig.neck.y - 5 };
@@ -439,7 +439,6 @@ export class FincaScene {
         if (sack.mode === "chest" || sack.mode === "twist") hold(rig);
       },
     });
-    this.rig = rigPre;
 
     // Arcos de movimiento del tirón (momento 2) y salpicadura de barro (momento 3).
     if (this.mode !== "final" && sack.mode === "twist" && !this.timeline.busy) {
@@ -561,7 +560,7 @@ export class FincaScene {
   }
 }
 
-/** drawAvatar con capas que reciben el rig ya calculado. */
+/** drawAvatar con capas que reciben el rig (calculado antes, para saber dónde están las manos). */
 function drawAvatarLayers(
   out: PixelBuffer,
   pose: Pose,
@@ -569,22 +568,14 @@ function drawAvatarLayers(
   a: Actor,
   layers: { back?: (r: Rig) => void; afterTorso?: (r: Rig) => void; held?: (r: Rig) => void },
 ): Rig {
-  // El rig se calcula antes para que las capas sepan dónde están las manos.
-  let rig: Rig | null = null;
-  const withRig = (fn?: (r: Rig) => void) => (fn ? () => rig && fn(rig) : undefined);
-  const pre = drawAvatarRig(pose, a);
-  rig = pre;
+  const rig = poseRig(pose, a.x, a.y, a.facing);
+  const withRig = (fn?: (r: Rig) => void) => (fn ? () => fn(rig) : undefined);
   drawAvatar(out, pose, look, a.x, a.y, a.facing, a.expr, {
     back: withRig(layers.back),
     afterTorso: withRig(layers.afterTorso),
     held: withRig(layers.held),
   });
-  return pre;
-}
-
-import { poseRig } from "../pixel/avatar.ts";
-function drawAvatarRig(pose: Pose, a: Actor): Rig {
-  return poseRig(pose, a.x, a.y, a.facing);
+  return rig;
 }
 
 /** Señal de peligro amarilla sobre un riesgo ya encontrado. */
