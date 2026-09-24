@@ -569,7 +569,153 @@ export const RUTA_CAFE_TOSTION: ExperienceDef = {
   ],
 };
 
-export const EXPERIENCES: ExperienceDef[] = [RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA, RUTA_CAFE_TOSTION];
+// Fuentes: Resolución 2400 de 1979 (arts. 32, 121, 177, 365, 642 y 643), Resolución 2646
+// de 2008 (riesgo psicosocial) y la guía de OSHA para trabajo en restaurantes. Detalle en
+// docs/investigacion-ux-habbo.md.
+export const RUTA_CAFE_TIENDA: ExperienceDef = {
+  key: "ruta-cafe-tienda",
+  scene: "tienda",
+  tag: "SEMANA DE LA SALUD",
+  series: "Ruta del café",
+  station: 5,
+  title: "La tienda: la taza",
+  description:
+    "Sara, barista, abre la tienda, prepara las bebidas y atiende la hora pico. Es la última parada de la ruta: el café llega a la taza. Encuentra los riesgos de la barra.",
+  character: "Sara",
+  enter: "Entrar a la tienda",
+  badge: "Barista segura",
+  minutes: "5 a 8 min",
+  risks: [
+    {
+      id: "calzado",
+      category: "Locativo",
+      defaults: {
+        title: "Chanclas para trapear",
+        prompt: "Mira los pies de Sara mientras trapea. ¿Qué está mal?",
+        options: [
+          "Trapea en chanclas: se le resbala el pie y no la protegen de líquidos calientes",
+          "Trapea de adelante hacia atrás",
+          "Usa un trapero de tela",
+        ],
+        correct: 0,
+        explanation:
+          "En una barra el piso se moja todo el día y caen líquidos calientes: las chanclas no agarran ni protegen el pie. OSHA pone los resbalones y las quemaduras entre las lesiones más comunes en restaurantes, y la Resolución 2400 de 1979 (art. 176) obliga a dar la protección que pida cada riesgo.",
+        practice: "Usa zapatos cerrados, con suela antideslizante, durante todo el turno: también para trapear y lavar.",
+      },
+    },
+    {
+      id: "piso",
+      category: "Locativo",
+      defaults: {
+        title: "Piso mojado sin aviso",
+        prompt: "Fíjate en el piso donde entran los clientes. ¿Qué riesgo ves?",
+        options: [
+          "El piso es de baldosa clara",
+          "Está recién trapeado, mojado y sin ningún aviso",
+          "La puerta está abierta",
+        ],
+        correct: 1,
+        explanation:
+          "Un piso mojado sin señal es una caída segura para quien entra distraído, y también para el equipo. La Resolución 2400 de 1979 (art. 32) pide que el piso no quede encharcado ni resbaladizo, y OSHA pide señalizar las zonas de piso mojado.",
+        practice: "Pon el aviso de piso mojado antes de trapear, trapea por partes para dejar un paso seco y retíralo solo cuando el piso esté seco.",
+      },
+    },
+    {
+      id: "enchufe",
+      category: "Eléctrico",
+      defaults: {
+        title: "Regleta mojada junto al lavaplatos",
+        prompt: "Mira la regleta al lado del lavaplatos. ¿Cuál es el problema?",
+        options: [
+          "Es blanca",
+          "Tiene tres enchufes conectados",
+          "Está en el mesón mojado, pegada al lavaplatos: el agua y la corriente no se juntan",
+        ],
+        correct: 2,
+        explanation:
+          "El agua conduce la corriente: una regleta mojada puede dar una descarga a quien la toque con las manos húmedas o hacer un cortocircuito. La Resolución 2400 de 1979 (art. 121) exige instalaciones eléctricas aisladas y protegidas, y OSHA recomienda no conectar equipos con las manos mojadas ni sobre superficies húmedas.",
+        practice: "Mantén regletas y enchufes lejos del agua, en la pared y en alto; sécate las manos antes de conectar y reporta cualquier cable mojado o dañado.",
+      },
+    },
+    {
+      id: "vapor",
+      category: "Físico",
+      defaults: {
+        title: "La mano bajo el vapor",
+        prompt: "Sara purga la lanceta de vapor. ¿Qué hace mal?",
+        options: [
+          "Pone la mano justo debajo del chorro de vapor",
+          "Usa una jarra de metal",
+          "Purga la lanceta antes de espumar la leche",
+        ],
+        correct: 0,
+        explanation:
+          "El vapor de la lanceta sale a más de 100 °C: quema en un instante, y la jarra y la lanceta también queman. OSHA señala las máquinas de café y espresso como fuente frecuente de quemaduras en trabajadores jóvenes, y la Resolución 2400 de 1979 (art. 177) pide protección contra quemaduras.",
+        practice: "Purga la lanceta apuntando a la bandeja o envuelta en un trapo, con la mano lejos de la boquilla, y agarra la jarra por el mango.",
+      },
+    },
+    {
+      id: "cuchillo",
+      category: "Mecánico",
+      defaults: {
+        title: "Cuchillo escondido en el lavaplatos",
+        prompt: "Mira dentro del lavaplatos. ¿Qué peligro hay?",
+        options: [
+          "El agua tiene jabón",
+          "Hay un cuchillo sumergido en el agua espumosa, donde nadie lo ve",
+          "El lavaplatos es de acero",
+        ],
+        correct: 1,
+        explanation:
+          "Bajo la espuma el cuchillo no se ve: quien meta la mano para lavar se corta. OSHA pide no dejar cuchillos ni objetos cortantes en el lavaplatos, y la Resolución 2400 de 1979 (art. 365) pide fundas o estuches para guardarlos cuando no se usan.",
+        practice: "Lava el cuchillo apenas lo uses, sécalo y guárdalo en su sitio. Nunca lo dejes en el agua ni lo agarres si se cae.",
+      },
+    },
+    {
+      id: "silla",
+      category: "Locativo",
+      defaults: {
+        title: "Se sube a una silla",
+        prompt: "Se acabaron los vasos. ¿Qué hace mal Sara para alcanzarlos?",
+        options: [
+          "Busca vasos del mismo tamaño",
+          "Se para en una silla para llegar al estante alto",
+          "Guarda los vasos boca abajo",
+        ],
+        correct: 1,
+        explanation:
+          "Una silla se voltea, se desliza o se quiebra: no está hecha para subirse. Con prisa y las manos llenas, la caída es casi segura. La Resolución 2400 de 1979 pide escaleras portátiles en buen estado y con bases antirresbaladizas (arts. 642 y 643).",
+        practice: "Usa una escalera de tijera en buen estado, abierta del todo y con alguien que la sostenga. Mejor aún: lo que se usa mucho, abajo y a la mano.",
+      },
+    },
+    {
+      id: "estres",
+      category: "Psicosocial",
+      defaults: {
+        title: "Sola en la hora pico",
+        prompt: "Mira la fila y a Sara. ¿Qué pasa?",
+        options: [
+          "Hay mucha gente porque el café es rico",
+          "El cliente paga con tarjeta",
+          "Atiende sola una fila larga, sin pausa, con un cliente gritándole",
+        ],
+        correct: 2,
+        explanation:
+          "Mucha demanda, poco control, sin pausas y con clientes agresivos: así se acumula el estrés, se cometen errores y aparecen los accidentes. La Resolución 2646 de 2008 obliga a identificar y prevenir los factores de riesgo psicosocial, como la carga de trabajo, la jornada y las condiciones de la tarea.",
+        practice:
+          "Pide refuerzo en hora pico, toma tus pausas y, si un cliente se pone agresivo, no respondas igual: llama a tu líder. Tu empresa debe tener un protocolo para eso.",
+      },
+    },
+  ],
+};
+
+export const EXPERIENCES: ExperienceDef[] = [
+  RUTA_CAFE_FINCA,
+  RUTA_CAFE_TRANSPORTE,
+  RUTA_CAFE_TRILLADORA,
+  RUTA_CAFE_TOSTION,
+  RUTA_CAFE_TIENDA,
+];
 
 export function getExperience(key: string): ExperienceDef | null {
   return EXPERIENCES.find((e) => e.key === key) ?? null;

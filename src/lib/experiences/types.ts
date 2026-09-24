@@ -23,7 +23,7 @@ export interface RiskDef {
 export interface ExperienceDef {
   key: string;
   /** Qué escena dibuja el cliente (src/components/experience/scenes). */
-  scene: "finca" | "transporte" | "trilladora" | "tostion";
+  scene: "finca" | "transporte" | "trilladora" | "tostion" | "tienda";
   tag: string;
   series: string;
   station: number;
