@@ -137,6 +137,18 @@ const ICONS = {
     "kz.knmmmk.",
     "k...kkkk..",
   ],
+  sara: [
+    ".kkkk.....",
+    "kzzzzkkk..",
+    "kzzzzzzzk.",
+    ".kzmmmmmzk",
+    ".knmmmmmzk",
+    ".knmmkmmk.",
+    ".knmmmmmk.",
+    ".knmmrmmk.",
+    "..knmmmk..",
+    "...kkkk...",
+  ],
   insignia: [
     "kkkkkkkkkkkkkk",
     "kccccccccccCCk",

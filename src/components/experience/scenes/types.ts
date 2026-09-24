@@ -56,7 +56,7 @@ export interface SceneMap {
   /** Descripción de la escena para lectores de pantalla. */
   place: string;
   /** Cabecita del que habla en las burbujas de chat (un icono de PixelIcon). */
-  speaker: "ramiro" | "fabio" | "luz";
+  speaker: "ramiro" | "fabio" | "luz" | "sara";
 }
 
 /** Riesgos que se pueden encontrar en un momento. */

@@ -1,6 +1,6 @@
 // Renderiza una escena a PNG desde Node, para revisar el pixel art sin abrir el
 // navegador. Uso:
-//   node scripts/escena-png.mts [carpeta] [escala] [--escena=finca|transporte|trilladora|tostion] [--zonas]
+//   node scripts/escena-png.mts [carpeta] [escala] [--escena=finca|transporte|trilladora|tostion|tienda] [--zonas]
 // Deja momento-1.png, momento-2.png, momento-3.png, intro-*.png y final-*.png.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -10,6 +10,7 @@ import { FincaScene } from "../src/components/experience/scenes/finca.ts";
 import { TransporteScene } from "../src/components/experience/scenes/transporte.ts";
 import { TrilladoraScene } from "../src/components/experience/scenes/trilladora.ts";
 import { TostionScene } from "../src/components/experience/scenes/tostion.ts";
+import { TiendaScene } from "../src/components/experience/scenes/tienda.ts";
 import type { Moment, PlayScene, SceneEvents } from "../src/components/experience/scenes/types.ts";
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
@@ -23,7 +24,9 @@ const create = (events?: SceneEvents): PlayScene =>
       ? new TrilladoraScene(events)
       : which === "tostion"
         ? new TostionScene(events)
-        : new FincaScene(events);
+        : which === "tienda"
+          ? new TiendaScene(events)
+          : new FincaScene(events);
 // Cuánto dura cada tramo entre momentos y las pausas para las capturas de la historia.
 const long = which !== "finca";
 mkdirSync(outDir, { recursive: true });
