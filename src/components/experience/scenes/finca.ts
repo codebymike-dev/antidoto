@@ -169,9 +169,9 @@ export class FincaScene {
   }
 
   /** Cambia de momento: hacia adelante se anima, hacia atrás se disuelve. */
-  setMoment(m: Moment) {
-    if (this.mode !== "juego" || this.dissolve) return;
-    if (m === this.moment) return;
+  setMoment(m: Moment): boolean {
+    if (this.mode !== "juego" || this.dissolve || this.timeline.busy) return false;
+    if (m === this.moment) return true;
     this.timeline.clear();
     if (m === this.moment + 1) {
       this.moment = m;
@@ -180,6 +180,35 @@ export class FincaScene {
     } else {
       this.startDissolve(() => this.applyMoment(m));
     }
+    return true;
+  }
+
+  setFound(zoneIds: Iterable<string>) {
+    this.found = new Set(zoneIds);
+  }
+
+  setHint(zoneId: string | null) {
+    this.hint = zoneId;
+  }
+
+  /** Salta la historia inicial y deja la escena lista para buscar. */
+  skipIntro(onDone: () => void) {
+    if (this.mode !== "intro") return;
+    this.timeline.clear();
+    this.startDissolve(() => {
+      this.mode = "juego";
+      this.applyMoment(1);
+      onDone();
+    });
+  }
+
+  /** Vuelve al momento 1 en modo juego (para empezar de nuevo en la vista previa). */
+  reset() {
+    this.timeline.clear();
+    this.mode = "juego";
+    this.hint = null;
+    this.found = new Set();
+    this.startDissolve(() => this.applyMoment(1));
   }
 
   private pushLift() {
