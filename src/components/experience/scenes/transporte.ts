@@ -48,14 +48,14 @@ const CHECK = pose({ lean: 22, thighN: 80, shinN: -14, thighF: 62, shinF: -28, a
 
 const CAR_I = 8;
 const CAR_J = 100;
-const BESIDE = { i: 60, j: 146 };
+const BESIDE = { i: 62, j: 198 };
 const ENTER = { i: 64, j: 96 };
 const CAB = { i: 54, j: 146 };
 const AROUND = { i: 58, j: 204 };
-const DOOR = { i: -2, j: 214 };
+const DOOR = { i: 0, j: 240 };
 /** Dónde se ve la finca cuando la vía está en 0. */
 const FARM_HOUSE = { i: -38, j: 150 };
-const FARM_GATE = { i: -3, j0: 60, j1: 150 };
+const FARM_GATE = { i: -3, j0: 196, j1: 290 };
 /** La cooperativa, relativa al punto donde para el yipao. */
 const COOP = { i: -40, j: 155 };
 
@@ -210,7 +210,7 @@ export class TransporteScene implements PlayScene {
       this.coopAt = PARK_AT;
       this.ramiroAt = "fuera";
       this.place(this.ramiro, DOOR);
-      Object.assign(this.ramiro, { pose: WAVE, expr: "feliz", facing: -1 });
+      Object.assign(this.ramiro, { pose: WAVE, expr: "feliz", facing: 1 });
     }
   }
 
@@ -327,7 +327,7 @@ export class TransporteScene implements PlayScene {
       }),
       walkTo(r, art.P(AROUND.i, AROUND.j).x, art.P(AROUND.i, AROUND.j).y, 34),
       walkTo(r, art.P(DOOR.i, DOOR.j).x, art.P(DOOR.i, DOOR.j).y, 34),
-      act(() => (r.facing = -1)),
+      act(() => (r.facing = 1)),
       poseTo(r, WAVE, 0.3, "feliz"),
       wait(story ? 0.2 : 0.4),
     );
@@ -623,7 +623,7 @@ export class TransporteScene implements PlayScene {
     }
     if (this.coopAt !== null) {
       const coopJ = COOP.j + this.coopAt - s;
-      if (coopJ < 420) back.push({ depth: -1000, draw: () => art.drawCoop(out, COOP.i, coopJ) });
+      if (coopJ < 420) back.push({ depth: 1000, draw: () => art.drawCoop(out, COOP.i, coopJ) });
     }
     back.sort((a, b) => a.depth - b.depth);
     for (const d of back) d.draw();
@@ -775,7 +775,7 @@ export class TransporteScene implements PlayScene {
       for (let k = 0; k < 3; k++) {
         const t = (this.time * 0.6 + k / 3) % 1;
         const size = 3 + Math.round(t * 2);
-        drawZOutlined(out, h.x + 6 + t * 10, h.y - 14 - t * 16, size);
+        drawZOutlined(out, h.x - 10 - t * 8, h.y - 14 - t * 16, size);
       }
     }
     // En la bajada sin freno: rayitas de movimiento detrás de la llanta de atrás.
