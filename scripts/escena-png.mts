@@ -1,15 +1,23 @@
-// Renderiza la escena de la finca a PNG desde Node, para revisar el pixel art sin abrir
-// el navegador. Uso:
-//   node scripts/escena-png.mts [carpeta] [escala]
+// Renderiza una escena a PNG desde Node, para revisar el pixel art sin abrir el
+// navegador. Uso:
+//   node scripts/escena-png.mts [carpeta] [escala] [--escena=finca|transporte] [--zonas]
 // Deja momento-1.png, momento-2.png, momento-3.png, intro-*.png y final-*.png.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { deflateSync } from "node:zlib";
 import { PixelBuffer } from "../src/components/experience/pixel/buffer.ts";
-import { FincaScene, type Moment } from "../src/components/experience/scenes/finca.ts";
+import { FincaScene } from "../src/components/experience/scenes/finca.ts";
+import { TransporteScene } from "../src/components/experience/scenes/transporte.ts";
+import type { Moment, PlayScene, SceneEvents } from "../src/components/experience/scenes/types.ts";
 
-const outDir = process.argv[2] ?? "escena-png";
-const scale = Number(process.argv[3] ?? 3);
+const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const outDir = args[0] ?? "escena-png";
+const scale = Number(args[1] ?? 3);
+const which = process.argv.find((a) => a.startsWith("--escena="))?.slice(9) ?? "finca";
+const create = (events?: SceneEvents): PlayScene =>
+  which === "transporte" ? new TransporteScene(events) : new FincaScene(events);
+// Cuánto dura cada tramo entre momentos y las pausas para las capturas de la historia.
+const long = which === "transporte";
 mkdirSync(outDir, { recursive: true });
 
 function crc32(buf: Uint8Array) {
@@ -59,11 +67,11 @@ function png(buf: PixelBuffer, k: number) {
 }
 
 const frame = new PixelBuffer(400, 250);
-const save = (scene: FincaScene, name: string) => {
+const save = (scene: PlayScene, name: string) => {
   scene.render(frame);
   writeFileSync(join(outDir, `${name}.png`), png(frame, scale));
 };
-const run = (scene: FincaScene, seconds: number) => {
+const run = (scene: PlayScene, seconds: number) => {
   for (let t = 0; t < seconds; t += 1 / 30) {
     scene.update(1 / 30);
     scene.render(frame);
@@ -71,14 +79,14 @@ const run = (scene: FincaScene, seconds: number) => {
 };
 
 for (const m of [1, 2, 3] as Moment[]) {
-  const scene = new FincaScene();
+  const scene = create();
   scene.render(frame);
   if (m !== 1) {
-    scene.setMoment(m === 2 ? 2 : 2);
-    run(scene, 1);
+    scene.setMoment(2);
+    run(scene, long ? 4 : 1);
     if (m === 3) {
       scene.setMoment(3);
-      run(scene, 4);
+      run(scene, long ? 10 : 4);
     }
   }
   run(scene, 0.2);
@@ -94,28 +102,49 @@ for (const m of [1, 2, 3] as Moment[]) {
 }
 
 const said: string[] = [];
-const intro = new FincaScene({ say: (t) => said.push(t) });
+const intro = create({ say: (t) => said.push(t) });
 intro.playIntro(() => said.push("(fin de la intro)"));
-for (const [k, secs] of [
-  [1, 1.2],
-  [2, 2.6],
-  [3, 2.2],
-  [4, 2.4],
-] as const) {
+const introShots = long
+  ? [
+      [1, 1.5],
+      [2, 3.5],
+      [3, 5],
+      [4, 4],
+      [5, 6],
+      [6, 4],
+    ]
+  : [
+      [1, 1.2],
+      [2, 2.6],
+      [3, 2.2],
+      [4, 2.4],
+    ];
+for (const [k, secs] of introShots) {
   run(intro, secs);
   save(intro, `intro-${k}`);
 }
 
-const good = new FincaScene({ say: (t) => said.push(t) });
+const good = create({ say: (t) => said.push(t) });
 good.playGoodPractice(() => said.push("(fin del final)"));
-for (const [k, secs] of [
-  [1, 2.2],
-  [2, 3.2],
-  [3, 2.6],
-  [4, 3.4],
-  [5, 4],
-  [6, 3],
-] as const) {
+const goodShots = long
+  ? [
+      [1, 2.2],
+      [2, 3],
+      [3, 3],
+      [4, 4],
+      [5, 4],
+      [6, 7],
+      [7, 5],
+    ]
+  : [
+      [1, 2.2],
+      [2, 3.2],
+      [3, 2.6],
+      [4, 3.4],
+      [5, 4],
+      [6, 3],
+    ];
+for (const [k, secs] of goodShots) {
   run(good, secs);
   save(good, `final-${k}`);
 }

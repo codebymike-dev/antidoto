@@ -807,7 +807,7 @@ export class TransporteScene implements PlayScene {
     at("carga", art.P(I(21), J(16), loadTop), 13);
     if (this.rigT && this.tonoAt === "carga") at("tono", this.rigT.shoulder, 8, 2);
     at("llanta", art.P(I(art.CAR.width + 1), J(art.CAR.frontWheel), 9), 9);
-    at(m === 3 ? "yipao" : "yipao", art.P(I(21), J(72), 34), 11);
+    at("yipao", art.P(I(21), J(72), 34), 11);
 
     const rig = this.rigR;
     if (m === 1 && rig) at("ramiro", { x: (rig.hip.x + rig.neck.x) / 2, y: (rig.hip.y + rig.neck.y) / 2 }, 9);
