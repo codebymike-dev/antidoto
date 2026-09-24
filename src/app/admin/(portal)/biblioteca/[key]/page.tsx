@@ -26,7 +26,16 @@ export default async function ExperienciaPage({ params }: { params: Promise<{ ke
       <Link href="/admin/biblioteca" style={{ fontSize: 13, color: colors.accentDark, fontWeight: 600 }}>
         ‹ Biblioteca
       </Link>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap", margin: "14px 0 22px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 20,
+          flexWrap: "wrap",
+          margin: "14px 0 22px",
+        }}
+      >
         <div style={{ maxWidth: 620 }}>
           <span style={{ fontSize: 11.5, fontWeight: 700, color: colors.accent, letterSpacing: 1 }}>
             {def.series.toUpperCase()} · ESTACIÓN {def.station}
@@ -35,7 +44,11 @@ export default async function ExperienciaPage({ params }: { params: Promise<{ ke
           <p style={{ fontSize: 14, color: colors.muted, margin: 0, lineHeight: 1.5 }}>{def.description}</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Link href={`/admin/escena/${def.key}`} className="btn-secondary" style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}>
+          <Link
+            href={`/admin/escena/${def.key}`}
+            className="btn-secondary"
+            style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
+          >
             Probar la escena
           </Link>
           {isSuper && (
@@ -73,11 +86,26 @@ export default async function ExperienciaPage({ params }: { params: Promise<{ ke
               {isSuper ? (
                 <RiskTextsEditor experience={def.key} riskId={risk.id} texts={texts} edited={edited} />
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: colors.inkSoft, lineHeight: 1.5 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    fontSize: 14,
+                    color: colors.inkSoft,
+                    lineHeight: 1.5,
+                  }}
+                >
                   <p style={{ margin: 0, fontWeight: 600, color: colors.ink }}>{texts.prompt}</p>
                   <ol style={{ margin: 0, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 4 }}>
                     {texts.options.map((o, i) => (
-                      <li key={i} style={{ fontWeight: i === texts.correct ? 700 : 400, color: i === texts.correct ? "#1F8A4C" : colors.inkSoft }}>
+                      <li
+                        key={i}
+                        style={{
+                          fontWeight: i === texts.correct ? 700 : 400,
+                          color: i === texts.correct ? "#1F8A4C" : colors.inkSoft,
+                        }}
+                      >
                         {OPTION_KEYS[i]}. {o} {i === texts.correct && "✓"}
                       </li>
                     ))}

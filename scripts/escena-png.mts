@@ -96,14 +96,26 @@ for (const m of [1, 2, 3] as Moment[]) {
 const said: string[] = [];
 const intro = new FincaScene({ say: (t) => said.push(t) });
 intro.playIntro(() => said.push("(fin de la intro)"));
-for (const [k, secs] of [[1, 1.2], [2, 2.6], [3, 2.2], [4, 2.4]] as const) {
+for (const [k, secs] of [
+  [1, 1.2],
+  [2, 2.6],
+  [3, 2.2],
+  [4, 2.4],
+] as const) {
   run(intro, secs);
   save(intro, `intro-${k}`);
 }
 
 const good = new FincaScene({ say: (t) => said.push(t) });
 good.playGoodPractice(() => said.push("(fin del final)"));
-for (const [k, secs] of [[1, 2.2], [2, 3.2], [3, 2.6], [4, 3.4], [5, 4], [6, 3]] as const) {
+for (const [k, secs] of [
+  [1, 2.2],
+  [2, 3.2],
+  [3, 2.6],
+  [4, 3.4],
+  [5, 4],
+  [6, 3],
+] as const) {
   run(good, secs);
   save(good, `final-${k}`);
 }

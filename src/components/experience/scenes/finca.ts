@@ -41,15 +41,61 @@ const RAMIRO: Look = {
 const pose = (p: Partial<Pose>): Pose => ({ ...STAND, ...p });
 
 /** Momento 1: espalda doblada, piernas rectas y el bulto lejos del cuerpo. */
-const BEND_BAD = pose({ lean: 96, thighN: -6, shinN: -6, thighF: 2, shinF: 2, armN: 34, foreN: 44, armF: 26, foreF: 38, headTilt: 22 });
+const BEND_BAD = pose({
+  lean: 96,
+  thighN: -6,
+  shinN: -6,
+  thighF: 2,
+  shinF: 2,
+  armN: 34,
+  foreN: 44,
+  armF: 26,
+  foreF: 38,
+  headTilt: 22,
+});
 /** Momento 2: de un tirón y girando la cintura, el bulto va hacia el hombro. */
-const TWIST_BAD = pose({ lean: 16, thighN: 20, shinN: 2, thighF: -12, shinF: -16, armN: 112, foreN: 146, armF: 98, foreF: 136, headTilt: -8, twist: 1 });
+const TWIST_BAD = pose({
+  lean: 16,
+  thighN: 20,
+  shinN: 2,
+  thighF: -12,
+  shinF: -16,
+  armN: 112,
+  foreN: 146,
+  armF: 98,
+  foreF: 136,
+  headTilt: -8,
+  twist: 1,
+});
 /** Momento 3: el bulto sobre la nuca, cuello torcido, resbalando en el barro. */
-const CARRY_BAD = pose({ lean: 30, thighN: 34, shinN: 40, thighF: -20, shinF: -6, armN: 160, foreN: 222, armF: -28, foreF: -8, headTilt: 38, headPush: 2 });
+const CARRY_BAD = pose({
+  lean: 30,
+  thighN: 34,
+  shinN: 40,
+  thighF: -20,
+  shinF: -6,
+  armN: 160,
+  foreN: 222,
+  armF: -28,
+  foreF: -8,
+  headTilt: 38,
+  headPush: 2,
+});
 const CARRY_WALK = pose({ lean: 24, armN: 160, foreN: 222, armF: -10, foreF: 0, headTilt: 30, headPush: 2 });
 
 const WIDE = pose({ thighN: 13, shinN: 13, thighF: -13, shinF: -13, lean: 4 });
-const SQUAT_GOOD = pose({ lean: 28, thighN: 78, shinN: -12, thighF: 60, shinF: -26, armN: 24, foreN: 62, armF: 18, foreF: 56, headTilt: 4 });
+const SQUAT_GOOD = pose({
+  lean: 28,
+  thighN: 78,
+  shinN: -12,
+  thighF: 60,
+  shinF: -26,
+  armN: 24,
+  foreN: 62,
+  armF: 18,
+  foreF: 56,
+  headTilt: 4,
+});
 const HOLD_GOOD = pose({ lean: 4, thighN: 6, shinN: 6, thighF: -6, shinF: -6, armN: 22, foreN: 104, armF: 16, foreF: 98 });
 const LOAD_GOOD = pose({ lean: 10, thighN: 10, shinN: 10, thighF: -8, shinF: -8, armN: 64, foreN: 92, armF: 58, foreF: 88 });
 const WAVE = pose({ armN: 140, foreN: 168, armF: -6, foreF: 4 });
@@ -95,7 +141,16 @@ export class FincaScene {
   private plantain = art.plantain();
 
   private timeline = new Timeline();
-  private actor: Actor = { x: M1.x, y: M1.y, facing: 1, pose: BEND_BAD, expr: "esfuerzo", walking: false, walkPhase: 0, carrying: false };
+  private actor: Actor = {
+    x: M1.x,
+    y: M1.y,
+    facing: 1,
+    pose: BEND_BAD,
+    expr: "esfuerzo",
+    walking: false,
+    walkPhase: 0,
+    carrying: false,
+  };
   private look: Look = { ...RAMIRO };
   private sack: SackState = { mode: "ground", x: SACK.x, y: SACK.y, fill: 1 };
   private muleLoaded = false;
@@ -293,7 +348,15 @@ export class FincaScene {
       this.mode = "final";
       this.look = { ...RAMIRO, shoes: "botas" };
       this.muleLoaded = false;
-      Object.assign(a, { x: GOOD_START.x, y: GOOD_START.y, facing: 1, pose: STAND, expr: "feliz", carrying: false, walking: false });
+      Object.assign(a, {
+        x: GOOD_START.x,
+        y: GOOD_START.y,
+        facing: 1,
+        pose: STAND,
+        expr: "feliz",
+        carrying: false,
+        walking: false,
+      });
       this.sack = { mode: "ground", x: GOOD_SACK.x, y: GOOD_SACK.y, fill: 0.5 };
       this.timeline.push(
         say("Así sí: botas de caucho y medio bulto, máximo 25 kg."),
@@ -385,7 +448,8 @@ export class FincaScene {
 
     type Drawable = { y: number; draw: () => void };
     const items: Drawable[] = [];
-    for (const b of this.bushes) items.push({ y: b.y, draw: () => out.blit(b.sprite, b.x - b.sprite.w / 2, b.y - b.sprite.h + 3) });
+    for (const b of this.bushes)
+      items.push({ y: b.y, draw: () => out.blit(b.sprite, b.x - b.sprite.w / 2, b.y - b.sprite.h + 3) });
     const pl = art.iso(0.4, 0.35);
     items.push({ y: pl.y, draw: () => out.blit(this.plantain, pl.x - 32, pl.y - 70) });
     items.push({ y: BASKET.y, draw: () => art.drawBasket(out, BASKET.x, BASKET.y) });

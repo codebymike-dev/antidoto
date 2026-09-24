@@ -20,8 +20,9 @@ export default async function BibliotecaPage() {
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ ...calSans, fontSize: 28, margin: "0 0 4px 0", color: colors.ink }}>Biblioteca</h1>
         <p style={{ fontSize: 14, color: colors.muted, margin: 0, maxWidth: 620 }}>
-          Experiencias interactivas listas para usar: escenas donde cada participante encuentra los errores y aprende
-          la forma correcta. {isSuper ? "Asígnalas a una empresa con un código de actividad." : "Pide a Antídoto el código para tu equipo."}
+          Experiencias interactivas listas para usar: escenas donde cada participante encuentra los errores y aprende la forma
+          correcta.{" "}
+          {isSuper ? "Asígnalas a una empresa con un código de actividad." : "Pide a Antídoto el código para tu equipo."}
         </p>
       </div>
 
@@ -40,7 +41,11 @@ export default async function BibliotecaPage() {
                   className="mission-card-link"
                   style={{ ...card, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}
                 >
-                  <Link href={`/admin/escena/${def.key}`} aria-label={`Probar ${def.title}`} style={{ position: "relative", display: "block" }}>
+                  <Link
+                    href={`/admin/escena/${def.key}`}
+                    aria-label={`Probar ${def.title}`}
+                    style={{ position: "relative", display: "block" }}
+                  >
                     <SceneThumb label={`Escena de ${def.title}`} />
                     <span style={thumbChip}>
                       <PlayIcon />
@@ -70,27 +75,46 @@ export default async function BibliotecaPage() {
                         borderTop: `1px solid ${colors.accentTint}`,
                       }}
                     >
-                      <Link href={`/admin/escena/${def.key}`} className="btn-secondary" style={{ ...secondaryButton, height: 36, display: "inline-flex", alignItems: "center" }}>
+                      <Link
+                        href={`/admin/escena/${def.key}`}
+                        className="btn-secondary"
+                        style={{ ...secondaryButton, height: 36, display: "inline-flex", alignItems: "center" }}
+                      >
                         Probar
                       </Link>
                       <Link
                         href={`/admin/biblioteca/${def.key}`}
                         className="btn-text"
-                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 700, color: colors.accent }}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: colors.accent,
+                        }}
                       >
                         {isSuper ? "Editar textos" : "Ver riesgos"}
                         <ArrowRightIcon />
                       </Link>
                       <div style={{ flex: 1 }} />
                       {missionId && (
-                        <Link href={`/admin/actividades/${missionId}`} className="btn-text" style={{ fontSize: 13, fontWeight: 600, color: colors.muted }}>
+                        <Link
+                          href={`/admin/actividades/${missionId}`}
+                          className="btn-text"
+                          style={{ fontSize: 13, fontWeight: 600, color: colors.muted }}
+                        >
                           Resultados
                         </Link>
                       )}
                       {isSuper && (
                         <form action={adoptExperience}>
                           <input type="hidden" name="experience" value={def.key} />
-                          <button type="submit" className="btn-filled" style={{ ...filledButton, height: 36, padding: "0 14px", fontSize: 13 }}>
+                          <button
+                            type="submit"
+                            className="btn-filled"
+                            style={{ ...filledButton, height: 36, padding: "0 14px", fontSize: 13 }}
+                          >
                             Usar con una empresa
                           </button>
                         </form>

@@ -61,7 +61,7 @@ describe("calificación", () => {
         { risk_id: "b", option_index: 0, is_correct: 0 },
         { risk_id: "c", option_index: null, is_correct: 0 },
       ],
-      7
+      7,
     );
     assert.equal(s.answered, 3);
     assert.equal(s.correct, 1);

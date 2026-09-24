@@ -156,10 +156,11 @@ export class PixelBuffer {
         const a = Math.ceil(xs[k] - 0.5);
         const b = Math.floor(xs[k + 1] - 0.5);
         if (typeof c === "number") this.span(y, a, b, c);
-        else for (let x = a; x <= b; x++) {
-          const col = c(x, y);
-          if (col) this.px(x, y, col);
-        }
+        else
+          for (let x = a; x <= b; x++) {
+            const col = c(x, y);
+            if (col) this.px(x, y, col);
+          }
       }
     }
   }

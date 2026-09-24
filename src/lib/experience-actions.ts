@@ -38,7 +38,7 @@ async function playerContext(): Promise<PlayerContext | { error: string }> {
     `SELECT ac.mission_id, ac.estado, ac.expires_at, p.completed_at
      FROM participations p JOIN activity_codes ac ON ac.id = p.activity_code_id
      WHERE p.id = ?`,
-    [id]
+    [id],
   );
   if (!row) return { error: "Tu sesión terminó. Vuelve a entrar con tu código." };
   if (row.completed_at) return { error: "Ya terminaste esta actividad." };
@@ -61,7 +61,7 @@ export async function answerExperienceRisk(riskId: string, option: number): Prom
   await run(
     `INSERT OR IGNORE INTO experience_answers (participation_id, risk_id, option_index, option_text, is_correct)
      VALUES (?, ?, ?, ?, ?)`,
-    [ctx.participationId, riskId, option, texts.options[option], option === texts.correct ? 1 : 0]
+    [ctx.participationId, riskId, option, texts.options[option], option === texts.correct ? 1 : 0],
   );
   const stored = (await participationAnswers(ctx.participationId)).find((r) => r.risk_id === riskId)!;
   const s = await refreshParticipationScore(ctx.participationId, ctx.def);
@@ -79,7 +79,7 @@ export async function revealExperienceRisks(): Promise<{ ok: true; results: Risk
     await run(
       `INSERT OR IGNORE INTO experience_answers (participation_id, risk_id, option_index, option_text, is_correct)
        VALUES (?, ?, NULL, NULL, 0)`,
-      [ctx.participationId, risk.id]
+      [ctx.participationId, risk.id],
     );
   }
   await refreshParticipationScore(ctx.participationId, ctx.def);
@@ -93,10 +93,9 @@ export async function finishExperience() {
   const s = await refreshParticipationScore(ctx.participationId, ctx.def);
   // Solo se termina con todos los riesgos resueltos (encontrados o revelados).
   if (s.answered < s.total) redirect("/mision");
-  await run(
-    "UPDATE participations SET completed_at = datetime('now'), avance = 100 WHERE id = ? AND completed_at IS NULL",
-    [ctx.participationId]
-  );
+  await run("UPDATE participations SET completed_at = datetime('now'), avance = 100 WHERE id = ? AND completed_at IS NULL", [
+    ctx.participationId,
+  ]);
   revalidatePath("/mision");
   redirect("/mision/completada");
 }
@@ -130,7 +129,7 @@ export async function saveRiskTexts(_prev: SaveTextsState, formData: FormData): 
        title = excluded.title, prompt = excluded.prompt, options = excluded.options,
        correct = excluded.correct, explanation = excluded.explanation, practice = excluded.practice,
        updated_by = excluded.updated_by, updated_at = excluded.updated_at`,
-    [def.key, risk.id, t.title, t.prompt, JSON.stringify(t.options), t.correct, t.explanation, t.practice, user.id]
+    [def.key, risk.id, t.title, t.prompt, JSON.stringify(t.options), t.correct, t.explanation, t.practice, user.id],
   );
   await audit(`Textos del riesgo "${t.title}" editados en "${def.series} · ${def.title}".`, user);
   revalidatePath(`/admin/biblioteca/${def.key}`);

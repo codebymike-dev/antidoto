@@ -114,13 +114,17 @@ export function validateRiskTexts(input: {
 
   if (!title || !prompt || !explanation || !practice) return { ok: false, error: "Todos los campos son obligatorios." };
   if (options.length !== 3 || options.some((o) => !o)) return { ok: false, error: "Escribe las tres opciones." };
-  if (new Set(options.map((o) => o.toLowerCase())).size !== 3) return { ok: false, error: "Las tres opciones deben ser distintas." };
+  if (new Set(options.map((o) => o.toLowerCase())).size !== 3)
+    return { ok: false, error: "Las tres opciones deben ser distintas." };
   if (![0, 1, 2].includes(correct)) return { ok: false, error: "Marca cuál opción es la correcta." };
   if (title.length > LIMITS.title) return { ok: false, error: `El título admite hasta ${LIMITS.title} caracteres.` };
   if (prompt.length > LIMITS.prompt) return { ok: false, error: `La pregunta admite hasta ${LIMITS.prompt} caracteres.` };
-  if (options.some((o) => o.length > LIMITS.option)) return { ok: false, error: `Cada opción admite hasta ${LIMITS.option} caracteres.` };
-  if (explanation.length > LIMITS.explanation) return { ok: false, error: `La explicación admite hasta ${LIMITS.explanation} caracteres.` };
-  if (practice.length > LIMITS.practice) return { ok: false, error: `La buena práctica admite hasta ${LIMITS.practice} caracteres.` };
+  if (options.some((o) => o.length > LIMITS.option))
+    return { ok: false, error: `Cada opción admite hasta ${LIMITS.option} caracteres.` };
+  if (explanation.length > LIMITS.explanation)
+    return { ok: false, error: `La explicación admite hasta ${LIMITS.explanation} caracteres.` };
+  if (practice.length > LIMITS.practice)
+    return { ok: false, error: `La buena práctica admite hasta ${LIMITS.practice} caracteres.` };
 
   return {
     ok: true,

@@ -33,7 +33,8 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
         correct: 1,
         explanation:
           "Al agacharse doblando la cintura, todo el peso cae sobre los discos de la zona lumbar. Es la postura más común entre los recolectores y la lumbalgia es su lesión más frecuente.",
-        practice: "Pies separados al ancho de los hombros, flexiona rodillas y cadera, espalda recta y sube con la fuerza de las piernas.",
+        practice:
+          "Pies separados al ancho de los hombros, flexiona rodillas y cadera, espalda recta y sube con la fuerza de las piernas.",
       },
     },
     {
@@ -135,7 +136,8 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
         correct: 1,
         explanation:
           "Llevar el peso sobre la nuca obliga al cuello a doblarse durante todo el trayecto: contracturas y dolor cervical. Además le tapa la vista del camino justo donde más se resbala.",
-        practice: "Si lo cargas tú, que sea poco peso, pegado al cuerpo y con la cabeza erguida. Mejor aún: que lo lleve la mula.",
+        practice:
+          "Si lo cargas tú, que sea poco peso, pegado al cuerpo y con la cabeza erguida. Mejor aún: que lo lleve la mula.",
       },
     },
   ],

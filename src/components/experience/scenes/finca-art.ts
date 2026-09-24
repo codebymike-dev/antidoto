@@ -147,11 +147,25 @@ export function cloudSprite(seed: number, size: number): PixelBuffer {
 const ridge = (x: number, base: number, parts: [number, number, number][]) =>
   base - parts.reduce((acc, [amp, freq, phase]) => acc + amp * Math.sin(x * freq + phase), 0);
 
-export const farRidge = (x: number) => ridge(x, 50, [[9, 0.014, 1], [6, 0.033, 2.4], [2, 0.09, 0.3]]);
-export const midRidge = (x: number) => ridge(x, 70, [[8, 0.019, 0.4], [4, 0.047, 1.6], [1.5, 0.11, 2]]);
+export const farRidge = (x: number) =>
+  ridge(x, 50, [
+    [9, 0.014, 1],
+    [6, 0.033, 2.4],
+    [2, 0.09, 0.3],
+  ]);
+export const midRidge = (x: number) =>
+  ridge(x, 70, [
+    [8, 0.019, 0.4],
+    [4, 0.047, 1.6],
+    [1.5, 0.11, 2],
+  ]);
 // La loma cercana sube detrás de la terraza: ahí se asienta la casa.
 export const nearRidge = (x: number) =>
-  ridge(x, 92, [[5, 0.021, 2.6], [3, 0.052, 0.8]]) - 18 * Math.exp(-(((x - 290) / 55) ** 2));
+  ridge(x, 92, [
+    [5, 0.021, 2.6],
+    [3, 0.052, 0.8],
+  ]) -
+  18 * Math.exp(-(((x - 290) / 55) ** 2));
 
 /** Surcos de café sobre una loma: matas en filas que siguen la curva del terreno. */
 function coffeeRows(buf: PixelBuffer, top: (x: number) => number, gap: number, size: number, seed: number, from = 0) {
@@ -272,7 +286,11 @@ export function drawHouse(buf: PixelBuffer, fx: number, fy: number) {
     x: fx + (u - L - (v - Wd)) * 20,
     y: fy + (u - L + (v - Wd)) * 10 - h,
   });
-  const quad = (a: { x: number; y: number }[], c: Color) => buf.poly(a.flatMap((p) => [p.x, p.y]), c);
+  const quad = (a: { x: number; y: number }[], c: Color) =>
+    buf.poly(
+      a.flatMap((p) => [p.x, p.y]),
+      c,
+    );
 
   // Sombra de la casa en la loma.
   buf.shadow(fx - 4, fy + 2, 46, 7, C.shadow, 0.3);
@@ -322,7 +340,7 @@ export function drawHouse(buf: PixelBuffer, fx: number, fy: number) {
   const eaveFront1 = P(L + eave, Wd + eave, wall - 2);
   const eaveBack1 = P(L + eave, -eave, wall - 2);
   // Agua del frente (iluminada) con filas de teja.
-  quad([eaveFront0, eaveFront1, ridgeB, ridgeA], (C.roof));
+  quad([eaveFront0, eaveFront1, ridgeB, ridgeA], C.roof);
   for (let k = 1; k < 6; k++) {
     const t = k / 6;
     const a = { x: eaveFront0.x + (ridgeA.x - eaveFront0.x) * t, y: eaveFront0.y + (ridgeA.y - eaveFront0.y) * t };
@@ -529,30 +547,44 @@ export function drawSack(buf: PixelBuffer, x: number, y: number, fill: number, l
   const rx = (lying ? 10 : 7.2) * (0.72 + fill * 0.3);
   const ry = (lying ? 5.8 : 8.6) * (0.7 + fill * 0.3);
   const cy = y - ry;
-  buf.implicit(x - rx - 3, cy - ry - 5, x + rx + 3, y + 1, (px, py) => {
-    const dx = (px - x) / rx;
-    const dy = (py - cy) / ry;
-    // Más ancho abajo: un costal lleno se asienta.
-    const squash = lying ? 1 : 1 + Math.max(0, dy) * 0.12;
-    if ((dx / squash) ** 2 + dy * dy <= 1) {
-      if (dx < -0.45) return C.burlapLight;
-      if (dx > 0.5 || dy > 0.6) return C.burlapDark;
-      return (Math.floor(px) + Math.floor(py) * 2) % 5 === 0 ? C.burlapDark : C.burlap;
-    }
-    // Medio bulto: el cuello amarrado con cabuya.
-    if (!lying && !full && Math.abs(px - x) < 2.2 && py < cy - ry + 3 && py > cy - ry - 3) return C.rope;
-    return CLEAR;
-  }, C.outline);
+  buf.implicit(
+    x - rx - 3,
+    cy - ry - 5,
+    x + rx + 3,
+    y + 1,
+    (px, py) => {
+      const dx = (px - x) / rx;
+      const dy = (py - cy) / ry;
+      // Más ancho abajo: un costal lleno se asienta.
+      const squash = lying ? 1 : 1 + Math.max(0, dy) * 0.12;
+      if ((dx / squash) ** 2 + dy * dy <= 1) {
+        if (dx < -0.45) return C.burlapLight;
+        if (dx > 0.5 || dy > 0.6) return C.burlapDark;
+        return (Math.floor(px) + Math.floor(py) * 2) % 5 === 0 ? C.burlapDark : C.burlap;
+      }
+      // Medio bulto: el cuello amarrado con cabuya.
+      if (!lying && !full && Math.abs(px - x) < 2.2 && py < cy - ry + 3 && py > cy - ry - 3) return C.rope;
+      return CLEAR;
+    },
+    C.outline,
+  );
   if (full && !lying) {
     // Lleno a tope: la boca abierta con un montón de cereza que se desborda.
     const topY = cy - ry + 1.5;
-    buf.implicit(x - 7, topY - 5, x + 7, topY + 2, (px, py) => {
-      const dx = (px - x) / 6;
-      const dy = (py - topY) / 4;
-      if (dy > 0.4 || dx * dx + dy * dy > 1) return CLEAR;
-      const k = (Math.floor(px) * 3 + Math.floor(py) * 5) % 7;
-      return k === 0 ? C.cherryYellow : k === 1 ? C.cherryGreen : k < 4 ? C.cherryDark : C.cherry;
-    }, C.outline);
+    buf.implicit(
+      x - 7,
+      topY - 5,
+      x + 7,
+      topY + 2,
+      (px, py) => {
+        const dx = (px - x) / 6;
+        const dy = (py - topY) / 4;
+        if (dy > 0.4 || dx * dx + dy * dy > 1) return CLEAR;
+        const k = (Math.floor(px) * 3 + Math.floor(py) * 5) % 7;
+        return k === 0 ? C.cherryYellow : k === 1 ? C.cherryGreen : k < 4 ? C.cherryDark : C.cherry;
+      },
+      C.outline,
+    );
     // Cerezas que ya se cayeron al piso.
     buf.px(x + 9, y - 1, C.cherry);
     buf.px(x + 11, y, C.cherryDark);
@@ -567,15 +599,22 @@ export function drawSack(buf: PixelBuffer, x: number, y: number, fill: number, l
 /** Canasto de recolección lleno de cereza. Base en (x, y). */
 export function drawBasket(buf: PixelBuffer, x: number, y: number) {
   buf.shadow(x, y, 9, 2.5, C.shadow, 0.3);
-  buf.implicit(x - 9, y - 14, x + 9, y + 1, (px, py) => {
-    const t = (py - (y - 12)) / 12;
-    if (t < 0 || t > 1) return CLEAR;
-    const half = 7.5 - t * 1.8;
-    if (Math.abs(px - x) > half) return CLEAR;
-    if (py < y - 10.5) return C.wickerDark;
-    const weave = (Math.floor(px) + Math.floor(py / 2)) % 2 === 0;
-    return px - x > 3 ? C.wickerDark : weave ? C.wicker : hex("#b48644");
-  }, C.outline);
+  buf.implicit(
+    x - 9,
+    y - 14,
+    x + 9,
+    y + 1,
+    (px, py) => {
+      const t = (py - (y - 12)) / 12;
+      if (t < 0 || t > 1) return CLEAR;
+      const half = 7.5 - t * 1.8;
+      if (Math.abs(px - x) > half) return CLEAR;
+      if (py < y - 10.5) return C.wickerDark;
+      const weave = (Math.floor(px) + Math.floor(py / 2)) % 2 === 0;
+      return px - x > 3 ? C.wickerDark : weave ? C.wicker : hex("#b48644");
+    },
+    C.outline,
+  );
   for (let k = -5; k <= 5; k += 2) {
     buf.px(x + k, y - 13, C.cherry);
     buf.px(x + k + 1, y - 12, k % 4 === 1 ? C.cherryYellow : C.cherryDark);
@@ -661,14 +700,21 @@ export function drawMule(buf: PixelBuffer, x: number, y: number, f: 1 | -1, s: M
   // Enjalma: manta roja con franjas amarillas, jáquima y cincha.
   const e0 = P(-7, -25);
   const e1 = P(7, -25);
-  buf.implicit(Math.min(e0.x, e1.x) - 1, e0.y - 1, Math.max(e0.x, e1.x) + 1, y - 11, (px, py) => {
-    const dx = (px - x) * f;
-    const dy = py - y;
-    if (dx < -7.5 || dx > 7.5 || dy < -25 || dy > -12) return CLEAR;
-    if (dy < -22.5) return C.wood;
-    if (Math.floor(dy) % 4 === 0) return C.blanketStripe;
-    return dx > 3 ? hex("#a1252e") : C.blanket;
-  }, C.outline);
+  buf.implicit(
+    Math.min(e0.x, e1.x) - 1,
+    e0.y - 1,
+    Math.max(e0.x, e1.x) + 1,
+    y - 11,
+    (px, py) => {
+      const dx = (px - x) * f;
+      const dy = py - y;
+      if (dx < -7.5 || dx > 7.5 || dy < -25 || dy > -12) return CLEAR;
+      if (dy < -22.5) return C.wood;
+      if (Math.floor(dy) % 4 === 0) return C.blanketStripe;
+      return dx > 3 ? hex("#a1252e") : C.blanket;
+    },
+    C.outline,
+  );
   const girth = P(1, -12);
   buf.line(girth.x, girth.y, girth.x, girth.y - 11, C.rope);
   const halter = P(19, -26 + nod);

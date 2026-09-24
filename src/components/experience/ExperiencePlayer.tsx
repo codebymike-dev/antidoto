@@ -113,9 +113,12 @@ export default function ExperiencePlayer({
     scene.setFound(marks);
   }, [scene, moment, results]);
 
-  useEffect(() => () => {
-    if (hintTimer.current) clearTimeout(hintTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (hintTimer.current) clearTimeout(hintTimer.current);
+    },
+    [],
+  );
 
   const showToast = useCallback((text: string, good = false) => {
     const id = ++ids.current;
@@ -371,7 +374,8 @@ export default function ExperiencePlayer({
               {experience.series} · Estación {experience.station}: {experience.title}
             </div>
             <div className={styles.roomSub}>
-              {experience.tag.charAt(0) + experience.tag.slice(1).toLowerCase()} · {mode === "preview" ? "Vista previa" : participant}
+              {experience.tag.charAt(0) + experience.tag.slice(1).toLowerCase()} ·{" "}
+              {mode === "preview" ? "Vista previa" : participant}
             </div>
           </div>
         </div>
@@ -388,7 +392,12 @@ export default function ExperiencePlayer({
             {found}/{total}
           </span>
         </div>
-        <button type="button" className={styles.iconButton} onClick={toggleSound} aria-label={muted ? "Activar sonido" : "Silenciar"}>
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={toggleSound}
+          aria-label={muted ? "Activar sonido" : "Silenciar"}
+        >
           <PixelIcon name={muted ? "mudo" : "sonido"} size={18} />
         </button>
         {exitAction ? (
@@ -443,7 +452,9 @@ export default function ExperiencePlayer({
                     <div className={styles.dim} />
                     <section className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-cover-title">
                       <div className={styles.winHead}>
-                        <span className={styles.winTitle}>{experience.tag.charAt(0) + experience.tag.slice(1).toLowerCase()}</span>
+                        <span className={styles.winTitle}>
+                          {experience.tag.charAt(0) + experience.tag.slice(1).toLowerCase()}
+                        </span>
                       </div>
                       <div className={styles.winBody}>
                         <span className={styles.coverKicker}>
@@ -453,7 +464,8 @@ export default function ExperiencePlayer({
                           {experience.title}
                         </h1>
                         <p>
-                          {mode === "preview" ? "Vista previa: nada de lo que respondas se guarda." : `¡Hola, ${participant}!`} {experience.description}
+                          {mode === "preview" ? "Vista previa: nada de lo que respondas se guarda." : `¡Hola, ${participant}!`}{" "}
+                          {experience.description}
                         </p>
                         <ol className={styles.steps}>
                           <li>
@@ -468,7 +480,10 @@ export default function ExperiencePlayer({
                         </ol>
                         <div className={styles.stations} aria-label="Estaciones de la ruta">
                           {STATIONS.map((s) => (
-                            <span key={s.n} className={`${styles.station} ${s.n === experience.station ? styles.stationOn : styles.stationOff}`}>
+                            <span
+                              key={s.n}
+                              className={`${styles.station} ${s.n === experience.station ? styles.stationOn : styles.stationOff}`}
+                            >
                               {s.n !== experience.station && <PixelIcon name="candado" size={11} />}
                               {s.n}. {s.label}
                             </span>
@@ -478,8 +493,18 @@ export default function ExperiencePlayer({
                         {paused && mode === "play" ? (
                           <p style={{ color: "#a66b00", fontWeight: 700 }}>Esta actividad está pausada por tu administrador.</p>
                         ) : (
-                          <button type="button" autoFocus className={`${styles.button} ${styles.go}`} onClick={start} disabled={!scene}>
-                            {allDone ? "Ver cómo se hace bien" : found > 0 ? `Continuar (${found}/${total})` : "Entrar a la finca"}
+                          <button
+                            type="button"
+                            autoFocus
+                            className={`${styles.button} ${styles.go}`}
+                            onClick={start}
+                            disabled={!scene}
+                          >
+                            {allDone
+                              ? "Ver cómo se hace bien"
+                              : found > 0
+                                ? `Continuar (${found}/${total})`
+                                : "Entrar a la finca"}
                           </button>
                         )}
                       </div>
@@ -597,22 +622,36 @@ export default function ExperiencePlayer({
                 {confirmReveal && (
                   <>
                     <div className={styles.dim} onClick={() => setConfirmReveal(false)} />
-                    <section className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-reveal-title">
+                    <section
+                      className={`${styles.window} ${styles.dialogCenter}`}
+                      role="dialog"
+                      aria-labelledby="xp-reveal-title"
+                    >
                       <div className={`${styles.winHead} ${styles.winHeadWarn}`}>
                         <span className={styles.winTitle} id="xp-reveal-title">
                           ¿Ver los que faltan?
                         </span>
-                        <button type="button" className={styles.close} onClick={() => setConfirmReveal(false)} aria-label="Cerrar">
+                        <button
+                          type="button"
+                          className={styles.close}
+                          onClick={() => setConfirmReveal(false)}
+                          aria-label="Cerrar"
+                        >
                           ✕
                         </button>
                       </div>
                       <div className={styles.winBody}>
                         <p>
-                          Te faltan {total - found} de {total}. Si los ves ahora, cuentan como no encontrados. Prueba antes con una pista o en otro
-                          momento de la escena.
+                          Te faltan {total - found} de {total}. Si los ves ahora, cuentan como no encontrados. Prueba antes con
+                          una pista o en otro momento de la escena.
                         </p>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                          <button type="button" autoFocus className={`${styles.button} ${styles.primary}`} onClick={() => setConfirmReveal(false)}>
+                          <button
+                            type="button"
+                            autoFocus
+                            className={`${styles.button} ${styles.primary}`}
+                            onClick={() => setConfirmReveal(false)}
+                          >
                             Sigo buscando
                           </button>
                           <button type="button" className={styles.button} onClick={reveal}>
@@ -712,7 +751,10 @@ export default function ExperiencePlayer({
                 <span className={styles.toolbarHint}>Mira lo que hace {experience.character}...</span>
               </>
             ) : phase === "final" || phase === "resumen" || phase === "completo" ? (
-              <span className={styles.px} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 16, padding: "6px 4px" }}>
+              <span
+                className={styles.px}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 16, padding: "6px 4px" }}
+              >
                 <PixelIcon name="check" size={14} /> Así sí se hace: mira a {experience.character} paso a paso.
               </span>
             ) : (
@@ -746,7 +788,12 @@ export default function ExperiencePlayer({
                 <button type="button" className={styles.iconButton} onClick={hint} disabled={phase !== "juego" || windowOpen}>
                   <PixelIcon name="pista" size={16} /> Pista
                 </button>
-                <button type="button" className={styles.iconButton} onClick={openZones} disabled={phase !== "juego" || windowOpen}>
+                <button
+                  type="button"
+                  className={styles.iconButton}
+                  onClick={openZones}
+                  disabled={phase !== "juego" || windowOpen}
+                >
                   <PixelIcon name="zonas" size={16} /> Zonas
                 </button>
                 <span className={styles.toolbarHint}>{momentInfo.hint}</span>
@@ -800,7 +847,8 @@ export default function ExperiencePlayer({
                         <span className={styles.questText}>
                           {res.title}
                           <span className={styles.questCat}>
-                            {res.category} · {res.chosen === null ? "no lo encontraste" : res.correct ? "a la primera" : "con ayuda"}
+                            {res.category} ·{" "}
+                            {res.chosen === null ? "no lo encontraste" : res.correct ? "a la primera" : "con ayuda"}
                           </span>
                         </span>
                         <PixelIcon name={res.correct ? "check" : "cruz"} size={14} />

@@ -13,11 +13,9 @@ export default function SceneThumb({ label }: { label: string }) {
     const buf = new PixelBuffer(scene.width, scene.height);
     scene.update(0.5);
     scene.render(buf);
-    ref.current!.getContext("2d")!.putImageData(
-      new ImageData(new Uint8ClampedArray(buf.data.buffer as ArrayBuffer), scene.width, scene.height),
-      0,
-      0,
-    );
+    ref
+      .current!.getContext("2d")!
+      .putImageData(new ImageData(new Uint8ClampedArray(buf.data.buffer as ArrayBuffer), scene.width, scene.height), 0, 0);
   }, []);
 
   return (

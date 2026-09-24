@@ -62,7 +62,14 @@ function EditorForm({ experience, riskId, texts }: Omit<Props, "edited">) {
         <input id={id("title")} name="title" defaultValue={texts.title} maxLength={LIMITS.title} required style={inputStyle} />
       </Labeled>
       <Labeled label="Pregunta" htmlFor={id("prompt")}>
-        <input id={id("prompt")} name="prompt" defaultValue={texts.prompt} maxLength={LIMITS.prompt} required style={inputStyle} />
+        <input
+          id={id("prompt")}
+          name="prompt"
+          defaultValue={texts.prompt}
+          maxLength={LIMITS.prompt}
+          required
+          style={inputStyle}
+        />
       </Labeled>
       <fieldset style={{ border: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
         <legend style={{ ...fieldLabel, marginBottom: 6 }}>Opciones (marca la correcta)</legend>
@@ -127,7 +134,10 @@ function EditorForm({ experience, riskId, texts }: Omit<Props, "edited">) {
           {pending ? "Guardando..." : "Guardar"}
         </button>
         {state && (
-          <span role={state.ok ? "status" : "alert"} style={{ fontSize: 13, color: state.ok ? "#1F8A4C" : colors.danger, fontWeight: 600 }}>
+          <span
+            role={state.ok ? "status" : "alert"}
+            style={{ fontSize: 13, color: state.ok ? "#1F8A4C" : colors.danger, fontWeight: 600 }}
+          >
             {state.message}
           </span>
         )}
