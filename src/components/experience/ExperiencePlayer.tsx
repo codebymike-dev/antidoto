@@ -712,7 +712,7 @@ export default function ExperiencePlayer({
                 <span className={styles.toolbarHint}>Mira lo que hace {experience.character}...</span>
               </>
             ) : phase === "final" || phase === "resumen" || phase === "completo" ? (
-              <span className={`${styles.toolbarHint} ${styles.px}`} style={{ display: "inline", fontSize: 16, color: "#fff" }}>
+              <span className={styles.px} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 16, padding: "6px 4px" }}>
                 <PixelIcon name="check" size={14} /> Así sí se hace: mira a {experience.character} paso a paso.
               </span>
             ) : (
