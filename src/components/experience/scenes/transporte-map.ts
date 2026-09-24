@@ -54,4 +54,5 @@ export const TRANSPORTE_MAP: SceneMap = {
   miss: "Aquí no hay nada raro. Mira a Ramiro, el yipao y lo que lleva encima.",
   start: "Toca donde veas un error. Cambia de momento del viaje en la barra de abajo.",
   place: "Ramiro maneja un yipao cargado de café por una carretera destapada de montaña.",
+  speaker: "ramiro",
 };

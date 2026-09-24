@@ -113,6 +113,18 @@ const ICONS = {
     "..knmmmk..",
     "...kkkk...",
   ],
+  fabio: [
+    "..........",
+    "...kkkk...",
+    "..kddddk..",
+    ".kddddddkk",
+    ".knmmmmmmk",
+    ".knmmkmmk.",
+    ".knmmmmmk.",
+    ".knmzzzmk.",
+    "..knmmmk..",
+    "...kkkk...",
+  ],
   insignia: [
     "kkkkkkkkkkkkkk",
     "kccccccccccCCk",

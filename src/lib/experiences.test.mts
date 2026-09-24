@@ -1,12 +1,13 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { EXPERIENCES, RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, seriesEntry, seriesFrom } from "./experiences/catalog.ts";
+import { EXPERIENCES, RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA, seriesEntry, seriesFrom } from "./experiences/catalog.ts";
 import { LIMITS, parseStoredTexts, publicExperience, riskResult, score, validateRiskTexts } from "./experiences/texts.ts";
 import { FINCA_MAP } from "../components/experience/scenes/finca-map.ts";
 import { TRANSPORTE_MAP } from "../components/experience/scenes/transporte-map.ts";
+import { TRILLADORA_MAP } from "../components/experience/scenes/trilladora-map.ts";
 import type { SceneMap } from "../components/experience/scenes/types.ts";
 
-const MAPS: Record<string, SceneMap> = { finca: FINCA_MAP, transporte: TRANSPORTE_MAP };
+const MAPS: Record<string, SceneMap> = { finca: FINCA_MAP, transporte: TRANSPORTE_MAP, trilladora: TRILLADORA_MAP };
 
 describe("catálogo", () => {
   test("los textos de fábrica pasan la misma validación que el editor", () => {
@@ -46,19 +47,20 @@ describe("catálogo", () => {
 });
 
 describe("serie", () => {
-  test("la ruta del café va de la finca al transporte", () => {
+  test("la ruta del café va de la finca al transporte y a la trilladora", () => {
     assert.deepEqual(
       seriesFrom(RUTA_CAFE_FINCA).map((d) => d.key),
-      [RUTA_CAFE_FINCA.key, RUTA_CAFE_TRANSPORTE.key],
+      [RUTA_CAFE_FINCA.key, RUTA_CAFE_TRANSPORTE.key, RUTA_CAFE_TRILLADORA.key],
     );
     assert.deepEqual(
       seriesFrom(RUTA_CAFE_TRANSPORTE).map((d) => d.key),
-      [RUTA_CAFE_TRANSPORTE.key],
+      [RUTA_CAFE_TRANSPORTE.key, RUTA_CAFE_TRILLADORA.key],
     );
   });
 
   test("una estación siguiente se asigna con el código de la primera", () => {
     assert.equal(seriesEntry(RUTA_CAFE_TRANSPORTE).key, RUTA_CAFE_FINCA.key);
+    assert.equal(seriesEntry(RUTA_CAFE_TRILLADORA).key, RUTA_CAFE_FINCA.key);
     assert.equal(seriesEntry(RUTA_CAFE_FINCA).key, RUTA_CAFE_FINCA.key);
   });
 
@@ -67,8 +69,10 @@ describe("serie", () => {
     const total = stations.reduce((acc, d) => acc + d.risks.length, 0);
     const rows = RUTA_CAFE_FINCA.risks.map((r) => ({ risk_id: r.id, option_index: r.defaults.correct, is_correct: 1 }));
     const s = score(rows, total);
-    assert.equal(s.avance, 50);
-    assert.equal(s.puntaje, 5);
+    // 7 de 21 riesgos resueltos, todos a la primera.
+    assert.equal(total, 21);
+    assert.equal(s.avance, 33);
+    assert.equal(s.puntaje, 3.3);
   });
 });
 

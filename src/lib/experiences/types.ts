@@ -2,7 +2,7 @@
 // Una experiencia es una escena programada (arte, animación y dónde está cada riesgo) con
 // textos que el superadmin puede editar desde la biblioteca.
 
-export type RiskCategory = "Biomecánico" | "Locativo" | "Tránsito" | "Psicosocial";
+export type RiskCategory = "Biomecánico" | "Locativo" | "Tránsito" | "Psicosocial" | "Físico" | "Químico" | "Mecánico";
 
 /** Lo editable de cada riesgo. `correct` es el índice de la opción correcta. */
 export interface RiskTexts {
@@ -23,7 +23,7 @@ export interface RiskDef {
 export interface ExperienceDef {
   key: string;
   /** Qué escena dibuja el cliente (src/components/experience/scenes). */
-  scene: "finca" | "transporte";
+  scene: "finca" | "transporte" | "trilladora";
   tag: string;
   series: string;
   station: number;

@@ -93,3 +93,69 @@ export function nearestZone(zones: Zone[], x: number, y: number, tolerance = 2):
   }
   return best;
 }
+
+/** Encuadre de la cámara: zoom y el punto del mundo que queda en el centro. */
+export interface Framing {
+  zoom: number;
+  cx: number;
+  cy: number;
+}
+
+/**
+ * Cámara que se acerca a una parte de la escena sin suavizado (píxeles grandes, como un
+ * zoom de Habbo). La escena se dibuja en `world` y la cámara la amplía en pantalla; las
+ * zonas tocables se pasan a pantalla con toScreen.
+ */
+export class Camera {
+  readonly world: PixelBuffer;
+  private cam: Framing;
+  private target: Framing;
+
+  constructor(world: PixelBuffer, start: Framing) {
+    this.world = world;
+    this.cam = { ...start };
+    this.target = start;
+  }
+
+  get zoom() {
+    return this.cam.zoom;
+  }
+
+  set(f: Framing, snap = false) {
+    this.target = f;
+    if (snap) this.cam = { ...f };
+  }
+
+  update(dt: number) {
+    const k = 1 - Math.exp(-dt * 3.5);
+    for (const key of ["zoom", "cx", "cy"] as const) {
+      this.cam[key] += (this.target[key] - this.cam[key]) * k;
+      if (Math.abs(this.target[key] - this.cam[key]) < 0.01) this.cam[key] = this.target[key];
+    }
+  }
+
+  /** Buffer donde dibujar este cuadro: el de la pantalla si no hay zoom. */
+  canvas(screen: PixelBuffer) {
+    return this.cam.zoom > 1.001 ? this.world : screen;
+  }
+
+  /** Copia el mundo ampliado a la pantalla (si hay zoom). */
+  present(screen: PixelBuffer) {
+    if (this.cam.zoom <= 1.001) return;
+    const { zoom, cx, cy } = this.cam;
+    const { w: W, h: H } = screen;
+    const src = this.world.data;
+    for (let y = 0; y < H; y++) {
+      const sy = Math.min(H - 1, Math.max(0, Math.floor(cy + (y + 0.5 - H / 2) / zoom)));
+      for (let x = 0; x < W; x++) {
+        const sx = Math.min(W - 1, Math.max(0, Math.floor(cx + (x + 0.5 - W / 2) / zoom)));
+        screen.data[y * W + x] = src[sy * W + sx];
+      }
+    }
+  }
+
+  toScreen(p: { x: number; y: number }) {
+    const { zoom, cx, cy } = this.cam;
+    return { x: (p.x - cx) * zoom + this.world.w / 2, y: (p.y - cy) * zoom + this.world.h / 2 };
+  }
+}

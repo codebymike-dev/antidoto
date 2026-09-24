@@ -44,6 +44,12 @@ export interface Look {
   band: Color;
   hair: Color;
   shoes: "chanclas" | "botas";
+  /** Sombrero aguadeño (el de siempre) o gorra, para quien trabaja bajo techo. */
+  headwear?: "sombrero" | "gorra";
+  /** Protección auditiva de copa (orejeras). */
+  earmuffs?: boolean;
+  /** Tapabocas o respirador para polvo. */
+  mask?: boolean;
 }
 
 export interface Point {
@@ -296,15 +302,34 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
     const lx = wx * cos + wy * sin;
     const ly = -wx * sin + wy * cos;
 
+    if (look.headwear === "gorra") {
+      // Visera hacia adelante y copa redonda un poco más grande que la cabeza.
+      if (ly >= -3.4 && ly < -1.8 && lx >= 2 && lx <= 10.5 - (ly + 3.4) * 0.6) return look.hatDark;
+      if (ly < -2 && lx * lx + (ly + 1.4) ** 2 <= 7.6 * 7.6) {
+        if (ly < -8.4 && Math.abs(lx) < 1) return look.band;
+        return lx < -2.5 ? look.hatDark : look.hat;
+      }
+    }
+    if (look.earmuffs) {
+      // Copa sobre la oreja y la diadema que sube hasta la gorra.
+      const d = (lx + 1) ** 2 + (ly - 0.6) ** 2;
+      if (d <= 8.4) return d <= 5.2 ? hex("#d8402f") : hex("#9c2019");
+      if (Math.abs(lx + 1) < 0.9 && ly < -1.6 && ly > -8 && lx * lx + ly * ly <= (HEAD_R + 0.8) ** 2) return hex("#2b2e33");
+    }
+    if (look.mask && ly >= 1.3 && ly <= 5.6) {
+      const inFace = lx * lx + ly * ly <= HEAD_R * HEAD_R || (lx - 6.6) ** 2 + (ly - 1.4) ** 2 <= 2.4;
+      if (inFace && lx >= 1.6) return ly > 4.6 || lx > 6.4 ? hex("#b9c7ce") : hex("#e8eef1");
+      if (inFace && lx >= -1 && ly >= 1.8 && ly < 2.6) return hex("#b9c7ce");
+    }
     // Ala del sombrero aguadeño: ancha y plana.
     const bx = (lx - 0.5) / 10;
     const by = (ly + 3.6) / 2.1;
-    if (bx * bx + by * by <= 1) {
+    if (look.headwear !== "gorra" && bx * bx + by * by <= 1) {
       if (ly > -3.1) return look.hatDark;
       return (Math.floor(lx) + Math.floor(ly)) % 3 === 0 ? look.hatDark : look.hat;
     }
     // Copa con la cinta negra y el pliegue de arriba.
-    if (ly >= -11 && ly < -4.4) {
+    if (look.headwear !== "gorra" && ly >= -11 && ly < -4.4) {
       const half = 5.4 - (ly < -9 ? (-9 - ly) * 1.1 : 0);
       if (Math.abs(lx + 0.3) <= half) {
         if (ly >= -6.2) return look.band;

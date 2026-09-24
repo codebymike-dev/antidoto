@@ -477,7 +477,7 @@ function StationPlayer({
                     }}
                   >
                     <span className={styles.bubbleHead}>
-                      <PixelIcon name="ramiro" size={18} />
+                      <PixelIcon name={map.speaker} size={18} />
                     </span>
                     <span>
                       <b>{experience.character}:</b> {b.text}

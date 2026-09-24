@@ -285,7 +285,152 @@ export const RUTA_CAFE_TRANSPORTE: ExperienceDef = {
   ],
 };
 
-export const EXPERIENCES: ExperienceDef[] = [RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE];
+// Fuentes: Resolución 2400 de 1979 (arts. 88, 128, 177, 203, 267, 392 y 396) y estudios
+// sobre polvo de café en plantas de proceso. Detalle en docs/investigacion-ux-habbo.md.
+export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
+  key: "ruta-cafe-trilladora",
+  scene: "trilladora",
+  tag: "SEMANA DE LA SALUD",
+  series: "Ruta del café",
+  station: 3,
+  title: "La trilladora: café verde",
+  description:
+    "Fabio recibe el café pergamino en la trilladora, donde se le quita la cáscara y sale el café verde en sacos de 70 kg. Encuentra los riesgos de la bodega y de la máquina.",
+  character: "Fabio",
+  enter: "Entrar a la trilladora",
+  badge: "Operario seguro",
+  minutes: "5 a 8 min",
+  risks: [
+    {
+      id: "saco",
+      category: "Biomecánico",
+      defaults: {
+        title: "Saco de 70 kg al hombro",
+        prompt: "Mira lo que carga Fabio. ¿Qué está mal?",
+        options: [
+          "Lleva al hombro, él solo, un saco de 70 kg",
+          "El saco es de fique y no de plástico",
+          "Camina hacia el arrume",
+        ],
+        correct: 0,
+        explanation:
+          "Un saco de café verde pesa 70 kg, casi el triple de lo que un hombre puede levantar según la Resolución 2400 de 1979 (art. 392: 25 kg, y 12,5 kg para mujeres). Cargarlo al hombro día tras día termina en hernias discales y lesiones de hombro.",
+        practice:
+          "Mueve los sacos con carretilla, estibador o montacargas. Si toca a mano, entre varios y con ayuda mecánica para subirlos.",
+      },
+    },
+    {
+      id: "arrume",
+      category: "Locativo",
+      defaults: {
+        title: "Arrume alto y ladeado",
+        prompt: "Fíjate en la pila de sacos. ¿Qué riesgo ves?",
+        options: [
+          "Los sacos están acostados",
+          "Está muy alto, ladeado y sin esquineros: se puede venir encima",
+          "Está pegado a la pared",
+        ],
+        correct: 1,
+        explanation:
+          "Una pila alta e inclinada se puede derrumbar sobre quien pasa o arruma, y cada saco pesa 70 kg. La Resolución 2400 de 1979 (art. 396) pide estabilizar los arrumes con esquineros amarrados y no apilar frente a extintores ni salidas.",
+        practice:
+          "Arruma sobre estibas, con la pila derecha, trabada y a una altura segura, con esquineros. Nunca te subas al arrume ni saques sacos de abajo.",
+      },
+    },
+    {
+      id: "montacargas",
+      category: "Mecánico",
+      defaults: {
+        title: "Montacargas sin carril marcado",
+        prompt: "¿Qué pasa entre el montacargas y Fabio?",
+        options: [
+          "El montacargas es amarillo",
+          "Lleva una estiba con sacos",
+          "Pasa pegado a Fabio: no hay franjas que separen el paso de las personas",
+        ],
+        correct: 2,
+        explanation:
+          "Un montacargas cargado no frena en seco y el conductor ve poco hacia los lados. Sin carriles marcados, personas y máquina se cruzan en el mismo espacio. La Resolución 2400 de 1979 (art. 203) pide señalar en amarillo los montacargas y demarcar con franjas las áreas de trabajo y de almacenamiento.",
+        practice:
+          "Camina solo por la franja peatonal, haz contacto visual con el conductor y nunca pases por detrás de un montacargas ni debajo de una carga levantada.",
+      },
+    },
+    {
+      id: "ruido",
+      category: "Físico",
+      defaults: {
+        title: "Ruido sin protección auditiva",
+        prompt: "Mira las orejas de Fabio junto a la trilladora. ¿Qué le falta?",
+        options: [
+          "Una gorra más grande",
+          "Protección auditiva: la trilladora hace mucho ruido",
+          "Un radio para oír música",
+        ],
+        correct: 1,
+        explanation:
+          "Una trilladora en marcha puede pasar el límite de 85 decibeles para una jornada (Resolución 2400 de 1979, art. 88). El daño al oído no duele, no avisa y no tiene cura: la sordera por ruido llega de a poco.",
+        practice:
+          "Usa tapaoídos o copas siempre que la máquina esté prendida (art. 177), y pide que midan el ruido y aíslen la máquina si hace falta.",
+      },
+    },
+    {
+      id: "polvo",
+      category: "Químico",
+      defaults: {
+        title: "Polvo de café sin tapabocas",
+        prompt: "¿Qué está respirando Fabio?",
+        options: [
+          "El polvo y la cascarilla de la trilla, sin tapabocas",
+          "Aire fresco de la bodega",
+          "El olor del café tostado",
+        ],
+        correct: 0,
+        explanation:
+          "La trilla suelta polvo y cascarilla que pueden traer hongos. En plantas de café se han encontrado más síntomas respiratorios crónicos y asma ocupacional entre quienes lo respiran. La Resolución 2400 de 1979 (art. 177) incluye los respiradores contra polvo en la protección que se debe entregar.",
+        practice:
+          "Usa respirador para polvo bien ajustado, mantén la extracción funcionando y limpia con aspiradora o agua, nunca soplando con aire.",
+      },
+    },
+    {
+      id: "guarda",
+      category: "Mecánico",
+      defaults: {
+        title: "Correa sin guarda",
+        prompt: "Mira la mano de Fabio y la correa de la máquina. ¿Qué está mal?",
+        options: [
+          "La correa gira muy despacio",
+          "Fabio usa la mano derecha",
+          "La correa y las poleas giran al aire, sin guarda, y él acerca la mano",
+        ],
+        correct: 2,
+        explanation:
+          "Una correa en movimiento atrapa en una fracción de segundo la mano, la manga o el pelo y los arrastra hacia la polea: amputaciones y fracturas. La Resolución 2400 de 1979 (art. 267) exige guardas metálicas en los órganos móviles de las máquinas.",
+        practice:
+          "No trabajes cerca de partes móviles sin guarda: si falta o está dañada, reporta y no operes. Nada de ropa suelta, anillos ni pulseras cerca de la máquina.",
+      },
+    },
+    {
+      id: "bloqueo",
+      category: "Mecánico",
+      defaults: {
+        title: "Destraba la máquina encendida",
+        prompt: "La salida se atascó. ¿Qué hace mal Fabio?",
+        options: [
+          "Mete la mano con la máquina prendida, sin apagarla ni bloquearla",
+          "Usa guantes de tela",
+          "Revisa la salida del café",
+        ],
+        correct: 0,
+        explanation:
+          "Una máquina trabada puede arrancar de golpe al soltarse el atasco, o alguien puede prenderla sin saber que hay una persona adentro. La Resolución 2400 de 1979 (art. 128) prohíbe hacer reparaciones en las máquinas cuando están en funcionamiento.",
+        practice:
+          "Apaga, desconecta y bloquea el tablero con tu candado y tu tarjeta, verifica que no arranque y solo entonces destraba. La llave del candado la guardas tú.",
+      },
+    },
+  ],
+};
+
+export const EXPERIENCES: ExperienceDef[] = [RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA];
 
 export function getExperience(key: string): ExperienceDef | null {
   return EXPERIENCES.find((e) => e.key === key) ?? null;

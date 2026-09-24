@@ -50,4 +50,5 @@ export const FINCA_MAP: SceneMap = {
   miss: "Aquí no hay nada raro. Mira a Ramiro, lo que carga y lo que lo rodea.",
   start: "Toca donde veas un error. Cambia de momento en la barra de abajo.",
   place: "Ramiro en una finca cafetera de ladera.",
+  speaker: "ramiro",
 };
