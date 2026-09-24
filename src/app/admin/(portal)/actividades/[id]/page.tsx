@@ -6,6 +6,7 @@ import { colors, calSans } from "@/lib/theme";
 import { filledButton, secondaryButton, card, tabButton, tabButtonActive } from "@/lib/styles";
 import { trendToPoints } from "@/lib/utils";
 import GroupsTable from "@/components/admin/GroupsTable";
+import { experienceRiskStats, missionExperience } from "@/lib/experience-data";
 import type { Estado } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,8 @@ export default async function DetallePage({
   if (user.role === "empresa" && allGroups.length === 0) notFound();
 
   const trend = await getTrend(id, user);
+  const experience = await missionExperience(id);
+  const riskReport = experience ? await experienceRiskStats(id, experience, user) : null;
 
   const groups = allGroups.filter(
     (g) =>
@@ -124,6 +127,53 @@ export default async function DetallePage({
           </svg>
         </div>
       </div>
+
+      {experience && riskReport && (
+        <section style={{ ...card, padding: "20px 22px", marginBottom: 22 }} aria-labelledby="riesgos-escena">
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+            <h2 id="riesgos-escena" style={{ ...calSans, fontSize: 18, margin: 0, color: colors.ink }}>
+              Riesgos de la escena
+            </h2>
+            <Link href={`/admin/escena/${experience.key}`} style={{ fontSize: 13, fontWeight: 700, color: colors.accent }}>
+              Probar la escena ›
+            </Link>
+          </div>
+          {riskReport.participants === 0 ? (
+            <p style={{ fontSize: 13.5, color: colors.muted, margin: 0 }}>Todavía nadie ha jugado esta escena.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {riskReport.stats.map((r) => {
+                const foundPct = Math.round((r.found / riskReport.participants) * 100);
+                const correctPct = Math.round((r.correct / riskReport.participants) * 100);
+                return (
+                  <div key={r.id} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 1.2fr) minmax(160px, 2fr)", gap: 14, alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: colors.ink }}>{r.title}</div>
+                      <div style={{ fontSize: 12, color: colors.muted }}>
+                        {r.category}
+                        {r.topWrong && ` · error más común: "${r.topWrong.text}" (${r.topWrong.count})`}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <div
+                        style={{ position: "relative", height: 10, borderRadius: 999, background: colors.accentTint, overflow: "hidden" }}
+                        role="img"
+                        aria-label={`${foundPct}% lo encontró, ${correctPct}% acertó a la primera`}
+                      >
+                        <div style={{ position: "absolute", inset: 0, width: `${foundPct}%`, background: colors.accentLight, borderRadius: 999 }} />
+                        <div style={{ position: "absolute", inset: 0, width: `${correctPct}%`, background: colors.accentDark, borderRadius: 999 }} />
+                      </div>
+                      <div style={{ fontSize: 12, color: colors.muted }}>
+                        {correctPct}% a la primera · {foundPct}% lo encontró{r.revealed > 0 && ` · ${r.revealed} se rindieron`}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       <form style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
         <input
