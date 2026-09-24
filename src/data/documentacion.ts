@@ -711,6 +711,21 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "Sin cambios de base de datos: los ids de riesgo son únicos en toda la serie, así las respuestas de todas las estaciones caben en la misma participación. Las estaciones siguientes no se asignan solas a una empresa; el reporte de la actividad agrupa los riesgos por estación.",
         relacionados: ["RF-902", "RF-904", "RF-906"],
       },
+      {
+        id: "RF-909",
+        titulo: "Estación 3 de la ruta del café: la trilladora",
+        descripcion:
+          "Fabio, operario, recibe el pergamino en la bodega de una trilladora dibujada como una sala de Habbo. En tres momentos (recibir, trillar, destrabar) el participante encuentra siete riesgos: saco de 70 kg al hombro, arrume alto y ladeado, montacargas sin carril marcado, ruido sin protección auditiva, polvo sin tapabocas, correa sin guarda y destrabar la máquina encendida. Al trillar y destrabar la cámara se acerca a la máquina. Al final ve el trabajo bien hecho (carretilla, estiba con esquineros, franjas, protección personal, guarda y bloqueo con candado y tarjeta) y gana la insignia Operario seguro.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "src/components/experience/scenes/trilladora.ts, src/components/experience/scenes/trilladora-art.ts, src/components/experience/scenes/trilladora-map.ts, RUTA_CAFE_TRILLADORA en src/lib/experiences/catalog.ts",
+        verificacion:
+          "Siete riesgos respondidos en la vista previa y ruta completa de participante (finca, transporte y trilladora) con código en Chromium headless: 21 respuestas y cierre verificados en la base. Capturas con node scripts/escena-png.mts <carpeta> 2 --escena=trilladora --zonas.",
+        notas:
+          "Ruta decidida por el usuario (2026-09-24): cinco estaciones (finca, transporte, trilladora, tostión y tienda). Respaldo: Resolución 2400 de 1979 (arts. 88, 128, 177, 203, 267, 392 y 396) y estudios sobre polvo de café en plantas. La cámara con zoom quedó como pieza común (Camera en scenes/common.ts). Detalle en docs/investigacion-ux-habbo.md, sección 9.",
+        relacionados: ["RF-907", "RF-908"],
+      },
     ],
   },
 ];

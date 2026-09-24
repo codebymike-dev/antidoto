@@ -178,3 +178,40 @@ mismo código de la finca y se desbloquea al terminarla.
 
 - Ley 769 de 2002, Código Nacional de Tránsito (Función Pública): https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=5557
 - Resolución 40595 de 2022, metodología del PESV: https://normograma.mincultura.gov.co/mincultura/compilacion/docs/resolucion_mintransporte_40595_2022.htm
+
+## 9. Estación 3: la trilladora
+
+Investigado el 2026-09-24. Decisión del usuario: la ruta tiene **cinco estaciones** (finca,
+transporte, trilladora, tostión y tienda) y la tercera es la trilladora, donde el pergamino
+se trilla y sale el café verde en sacos de 70 kg.
+
+### Escenario
+
+- La bodega es una **sala de Habbo**: piso de baldosas de concreto con su espesor, dos
+  paredes con ventanas altas y zócalo, flotando sobre fondo oscuro.
+- Pared izquierda: la puerta de cargue abierta a la luz del día. Rincón del fondo: el arrume
+  de sacos. Pared derecha: la trilladora (tolva, salida con el saco que se llena, correa y
+  poleas al frente, motor al lado), el tablero eléctrico y el extintor.
+- Un montacargas con conductor recorre la bodega. En la versión correcta hay franjas
+  amarillas: carril del montacargas, paso peatonal y recuadro del almacenamiento.
+- Protagonista nuevo: **Fabio**, operario, con gorra. Ramiro aparece al inicio entregando su
+  café. En la versión correcta Fabio usa orejeras y tapabocas (piezas nuevas del avatar).
+- Momentos: **recibir** (plano abierto), **trillar** y **destrabar** (la cámara se acerca 2x
+  a la máquina, como en el transporte).
+
+### Riesgos
+
+| Riesgo | Tipo (GTC 45) | Respaldo (Resolución 2400 de 1979) |
+| --- | --- | --- |
+| Saco de 70 kg al hombro | Biomecánico | Art. 392: 25 kg de carga compacta para hombres y 12,5 kg para mujeres. |
+| Arrume alto y ladeado | Locativo | Art. 396: arrumes estabilizados con esquineros amarrados; nada apilado frente a extintores o salidas. |
+| Montacargas sin carril marcado | Mecánico | Art. 203: montacargas señalados en amarillo y áreas de trabajo y almacenamiento demarcadas con franjas. |
+| Ruido sin protección auditiva | Físico | Art. 88: 85 decibeles como máximo para ruido continuo; art. 177: protectores auditivos. |
+| Polvo de café sin tapabocas | Químico | Art. 177: respiradores contra polvo. Estudios en plantas de café: más síntomas respiratorios crónicos y asma ocupacional. |
+| Correa sin guarda | Mecánico | Art. 267: guardas en los órganos móviles de las máquinas. |
+| Destrabar la máquina encendida | Mecánico | Art. 128, parágrafo: prohibido reparar máquinas en funcionamiento. |
+
+### Fuentes
+
+- Resolución 2400 de 1979 (ARL SURA): https://www.arlsura.com/files/resolucion_2400_1979.pdf
+- Exposición laboral a hongos en una planta de procesamiento de café (Medicina y Seguridad del Trabajo, 2008): https://scielo.isciii.es/scielo.php?script=sci_arttext&pid=S0465-546X2008000200005
