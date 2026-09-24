@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions";
 import { colors, LOGO_SRC } from "@/lib/theme";
-import { DocIcon, GridIcon, GearIcon, LogoutIcon, PlayIcon } from "@/components/icons";
+import { DocIcon, GridIcon, GearIcon, LibraryIcon, LogoutIcon, PlayIcon } from "@/components/icons";
 import NotificationsBell from "./NotificationsBell";
 
 interface Props {
@@ -21,7 +21,8 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, notifica
   const navConfigOn = pathname.startsWith("/admin/config");
   const navGamesOn = pathname.startsWith("/admin/juegos");
   const navDocsOn = pathname.startsWith("/admin/docs");
-  const navActivitiesOn = !navConfigOn && !navGamesOn && !navDocsOn;
+  const navLibraryOn = pathname.startsWith("/admin/biblioteca");
+  const navActivitiesOn = !navConfigOn && !navGamesOn && !navDocsOn && !navLibraryOn;
   const roleInitial = roleSubtitle === "Acceso total" ? "S" : roleSubtitle.charAt(0).toUpperCase();
 
   function navStyle(active: boolean) {
@@ -121,6 +122,14 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, notifica
           >
             <GridIcon />
             Actividades
+          </Link>
+          <Link
+            href="/admin/biblioteca"
+            className={navLibraryOn ? "btn-navlink-active" : "btn-navlink"}
+            style={navStyle(navLibraryOn)}
+          >
+            <LibraryIcon />
+            Biblioteca
           </Link>
           <Link
             href="/admin/juegos"

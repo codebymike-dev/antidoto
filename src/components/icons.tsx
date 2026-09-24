@@ -140,3 +140,13 @@ export function DocIcon() {
     </svg>
   );
 }
+
+export function LibraryIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M4 19.5V5a2 2 0 012-2h3v18H6a2 2 0 01-2-1.5z" />
+      <path d="M9 3h4v18H9" />
+      <path d="M15.5 4.2l3.9-1 3.1 16.8-3.9 1z" />
+    </svg>
+  );
+}
