@@ -187,9 +187,7 @@ export function drawLandscape(buf: PixelBuffer) {
 
   for (let x = 0; x < W; x++) {
     const top = Math.round(midRidge(x));
-    // Las laderas que miran a la izquierda reciben la luz de la mañana.
-    const lit = midRidge(x + 3) < midRidge(x - 3);
-    for (let y = top; y < H; y++) buf.px(x, y, y < top + 2 ? mix(C.mid, C.farLight, 0.35) : lit ? C.mid : C.midDark);
+    for (let y = top; y < H; y++) buf.px(x, y, y < top + 2 ? mix(C.mid, C.farLight, 0.35) : C.mid);
   }
   // Surcos lejanos: puntitos en filas.
   for (let row = 0; row < 8; row++) {
@@ -207,8 +205,7 @@ export function drawLandscape(buf: PixelBuffer) {
 
   for (let x = 0; x < W; x++) {
     const top = Math.round(nearRidge(x));
-    const lit = nearRidge(x + 3) < nearRidge(x - 3);
-    for (let y = top; y < H; y++) buf.px(x, y, y < top + 2 ? C.midDark : lit ? C.near : C.nearDark);
+    for (let y = top; y < H; y++) buf.px(x, y, y < top + 2 ? C.midDark : C.near);
   }
   coffeeRows(buf, nearRidge, 7, 2.6, 11, 0);
 
@@ -238,7 +235,7 @@ function drawGuadua(buf: PixelBuffer, x: number, base: number, seed: number) {
   const rnd = seeded(seed);
   for (let k = 0; k < 9; k++) {
     const sx = x + (k - 4) * 3.2 + rnd() * 2;
-    const height = 70 + rnd() * 34;
+    const height = 44 + rnd() * 24;
     const lean = (k - 4) * 0.1 + (rnd() - 0.5) * 0.08;
     let px = sx;
     for (let d = 0; d < height; d++) {
