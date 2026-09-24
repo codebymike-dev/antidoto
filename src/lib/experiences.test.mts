@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { EXPERIENCES, RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA, RUTA_CAFE_TOSTION, seriesEntry, seriesFrom } from "./experiences/catalog.ts";
+import { EXPERIENCES, RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA, RUTA_CAFE_TOSTION, RUTA_CAFE_TIENDA, seriesEntry, seriesFrom } from "./experiences/catalog.ts";
 import { LIMITS, parseStoredTexts, publicExperience, riskResult, score, validateRiskTexts } from "./experiences/texts.ts";
 import { FINCA_MAP } from "../components/experience/scenes/finca-map.ts";
 import { TRANSPORTE_MAP } from "../components/experience/scenes/transporte-map.ts";
@@ -49,14 +49,14 @@ describe("catálogo", () => {
 });
 
 describe("serie", () => {
-  test("la ruta del café va de la finca a la tostión, en orden", () => {
+  test("la ruta del café va de la finca a la tienda, en orden", () => {
     assert.deepEqual(
       seriesFrom(RUTA_CAFE_FINCA).map((d) => d.key),
-      [RUTA_CAFE_FINCA.key, RUTA_CAFE_TRANSPORTE.key, RUTA_CAFE_TRILLADORA.key, RUTA_CAFE_TOSTION.key],
+      [RUTA_CAFE_FINCA.key, RUTA_CAFE_TRANSPORTE.key, RUTA_CAFE_TRILLADORA.key, RUTA_CAFE_TOSTION.key, RUTA_CAFE_TIENDA.key],
     );
     assert.deepEqual(
-      seriesFrom(RUTA_CAFE_TRILLADORA).map((d) => d.key),
-      [RUTA_CAFE_TRILLADORA.key, RUTA_CAFE_TOSTION.key],
+      seriesFrom(RUTA_CAFE_TOSTION).map((d) => d.key),
+      [RUTA_CAFE_TOSTION.key, RUTA_CAFE_TIENDA.key],
     );
   });
 
@@ -64,6 +64,7 @@ describe("serie", () => {
     assert.equal(seriesEntry(RUTA_CAFE_TRANSPORTE).key, RUTA_CAFE_FINCA.key);
     assert.equal(seriesEntry(RUTA_CAFE_TRILLADORA).key, RUTA_CAFE_FINCA.key);
     assert.equal(seriesEntry(RUTA_CAFE_TOSTION).key, RUTA_CAFE_FINCA.key);
+    assert.equal(seriesEntry(RUTA_CAFE_TIENDA).key, RUTA_CAFE_FINCA.key);
     assert.equal(seriesEntry(RUTA_CAFE_FINCA).key, RUTA_CAFE_FINCA.key);
   });
 
@@ -72,10 +73,10 @@ describe("serie", () => {
     const total = stations.reduce((acc, d) => acc + d.risks.length, 0);
     const rows = RUTA_CAFE_FINCA.risks.map((r) => ({ risk_id: r.id, option_index: r.defaults.correct, is_correct: 1 }));
     const s = score(rows, total);
-    // 7 de 28 riesgos resueltos, todos a la primera.
-    assert.equal(total, 28);
-    assert.equal(s.avance, 25);
-    assert.equal(s.puntaje, 2.5);
+    // 7 de 35 riesgos resueltos, todos a la primera.
+    assert.equal(total, 35);
+    assert.equal(s.avance, 20);
+    assert.equal(s.puntaje, 2);
   });
 });
 

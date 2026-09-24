@@ -587,7 +587,7 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
   minutes: "5 a 8 min",
   risks: [
     {
-      id: "calzado",
+      id: "chanclas",
       category: "Locativo",
       defaults: {
         title: "Chanclas para trapear",
@@ -675,16 +675,16 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
       id: "silla",
       category: "Locativo",
       defaults: {
-        title: "Se sube a una silla",
+        title: "Se sube a un butaco",
         prompt: "Se acabaron los vasos. ¿Qué hace mal Sara para alcanzarlos?",
         options: [
           "Busca vasos del mismo tamaño",
-          "Se para en una silla para llegar al estante alto",
+          "Se para en un butaco para llegar al estante alto",
           "Guarda los vasos boca abajo",
         ],
         correct: 1,
         explanation:
-          "Una silla se voltea, se desliza o se quiebra: no está hecha para subirse. Con prisa y las manos llenas, la caída es casi segura. La Resolución 2400 de 1979 pide escaleras portátiles en buen estado y con bases antirresbaladizas (arts. 642 y 643).",
+          "Un butaco o una silla se voltea, se desliza o se quiebra: no está hecho para subirse. Con prisa y las manos llenas, la caída es casi segura. La Resolución 2400 de 1979 pide escaleras portátiles en buen estado y con bases antirresbaladizas (arts. 642 y 643).",
         practice: "Usa una escalera de tijera en buen estado, abierta del todo y con alguien que la sostenga. Mejor aún: lo que se usa mucho, abajo y a la mano.",
       },
     },

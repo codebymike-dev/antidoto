@@ -30,7 +30,7 @@ export default async function BibliotecaPage() {
         <section key={name} style={{ marginBottom: 28 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
             <h2 style={{ ...calSans, fontSize: 19, margin: 0, color: colors.ink }}>{name}</h2>
-            <span style={{ fontSize: 12.5, color: colors.muted }}>De la finca a la taza, una estación por cada eslabón.</span>
+            <span style={{ fontSize: 12.5, color: colors.muted }}>De la finca a la taza, una estación por cada eslabón. Se juega completa con un solo código.</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
             {items
@@ -128,27 +128,6 @@ export default async function BibliotecaPage() {
                   </div>
                 </article>
               ))}
-            <article
-              style={{
-                borderRadius: 18,
-                border: `2px dashed ${colors.border}`,
-                padding: 22,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                gap: 8,
-                minHeight: 220,
-                color: colors.muted,
-              }}
-            >
-              <span style={{ ...tagChip, background: "#F1F5F7", color: colors.muted }}>EN CONSTRUCCIÓN</span>
-              <h3 style={{ ...calSans, fontSize: 18, margin: 0, color: colors.inkSoft }}>
-                Estación {items.filter((i) => i.def.series === name).length + 1} · Próxima parada
-              </h3>
-              <p style={{ fontSize: 13, margin: 0, lineHeight: 1.5 }}>
-                La ruta sigue por la cadena del café hasta la taza. Cada estación nueva se juega con el mismo código.
-              </p>
-            </article>
           </div>
         </section>
       ))}

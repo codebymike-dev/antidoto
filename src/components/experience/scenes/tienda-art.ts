@@ -54,9 +54,9 @@ export function drawRoom(buf: PixelBuffer) {
     extinguisherI: 7.6,
   });
   // Tablero del menú en la pared del fondo.
-  onFront(buf, 0.03, [5.0, 7.2, 50, 72], (i, z) => {
-    if (i < 5.0 || i > 7.2 || z < 50 || z > 72) return CLEAR;
-    const u = (i - 5.0) * 20;
+  onFront(buf, 0.03, [1.1, 3.3, 50, 72], (i, z) => {
+    if (i < 1.1 || i > 3.3 || z < 50 || z > 72) return CLEAR;
+    const u = (i - 1.1) * 20;
     if (u < 1.5 || u > 42.5 || z < 51.5 || z > 70.5) return C.woodStore;
     // Renglones de tiza y una taza dibujada.
     if (Math.abs(z - 66) < 0.6 && u > 6 && u < 30) return C.chalk;
@@ -71,7 +71,7 @@ export function drawRoom(buf: PixelBuffer) {
 export const BACK = { i0: 1.0, i1: 7.4, j0: 0.08, j1: 0.8, h: 24 };
 export const SINK = { i0: 1.35, i1: 2.35 };
 export const STRIP = { i: 2.75, j: 0.5 };
-export const SHELF = { i0: 2.6, i1: 4.7, z: 58 };
+export const SHELF = { i0: 5.3, i1: 7.3, z: 58 };
 
 const WOOD: BoxColors = { top: C.stone, front: C.woodStore, side: C.woodStoreDark, line: C.outline };
 
@@ -241,8 +241,8 @@ export function drawBar(buf: PixelBuffer, s: BarState) {
   buf.rect(w0.x - 1, w0.y - 2, 4, 3, C.outline);
 
   // Molino de café.
-  isoBox(buf, 5.75, 2.35, B.h, 0.4, 0.4, 12, { top: C.outline, front: hex("#3b4046"), side: hex("#2b2f33"), line: C.outline });
-  isoBox(buf, 5.8, 2.4, B.h + 12, 0.3, 0.3, 8, { top: hex("#3b2014"), front: mix(C.glass, hex("#5a3421"), 0.5), side: mix(C.glass, hex("#3b2014"), 0.5), line: C.outline });
+  isoBox(buf, 3.75, 2.35, B.h, 0.4, 0.4, 12, { top: C.outline, front: hex("#3b4046"), side: hex("#2b2f33"), line: C.outline });
+  isoBox(buf, 3.8, 2.4, B.h + 12, 0.3, 0.3, 8, { top: hex("#3b2014"), front: mix(C.glass, hex("#5a3421"), 0.5), side: mix(C.glass, hex("#3b2014"), 0.5), line: C.outline });
 
   if (s.steam) drawSteam(buf, s.t);
 }
@@ -254,13 +254,15 @@ export function wandTip(): Pt {
 
 function drawSteam(buf: PixelBuffer, t: number) {
   const tip = wandTip();
-  for (let k = 0; k < 10; k++) {
-    const u = ((k / 10 + t * 1.8) % 1 + 1) % 1;
-    const x = tip.x + Math.sin(k * 2.3 + t * 6) * (1 + u * 4);
-    const y = tip.y + 2 + u * 12;
-    const r = 1 + u * 2.2;
+  // Nube de vapor que sale de la punta y se abre hacia los lados.
+  for (let k = 0; k < 14; k++) {
+    const u = ((k / 14 + t * 1.6) % 1 + 1) % 1;
+    const a = k * 2.4;
+    const x = tip.x + Math.cos(a) * u * 9;
+    const y = tip.y + 2 + Math.sin(a) * u * 5 + u * 6;
+    const r = 1.2 + u * 2.4;
     for (let dy = -r; dy <= r; dy++)
-      for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r) buf.blend(x + dx, y + dy, C.steam, 0.75 * (1 - u * 0.6));
+      for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r) buf.blend(x + dx, y + dy, C.steam, 0.85 * (1 - u * 0.55));
   }
 }
 
@@ -322,28 +324,30 @@ export function drawMop(buf: PixelBuffer, hand: Pt, floor: Pt) {
   for (let k = -4; k <= 4; k++) buf.line(floor.x, floor.y - 4, floor.x + k * 1.2, floor.y + 1, k % 2 ? C.plastic : C.plasticShade);
 }
 
-/** Silla plástica (para pararse encima: el error). */
+/** Butaco alto de la barra (pararse encima: el error). Devuelve la altura del asiento. */
 export function drawChair(buf: PixelBuffer, i: number, j: number): number {
-  const seat = 16;
-  const c: BoxColors = { top: C.plastic, front: C.plasticShade, side: C.plasticShade, line: C.outline };
-  for (const [li, lj] of [
+  const seat = 34;
+  const legs: [number, number][] = [
     [i, j],
-    [i + 0.5, j],
-    [i, j + 0.5],
-    [i + 0.5, j + 0.5],
-  ] as [number, number][]) {
+    [i + 0.45, j],
+    [i, j + 0.45],
+    [i + 0.45, j + 0.45],
+  ];
+  for (const [li, lj] of legs) {
     const a = P(li, lj, 0);
     const b = P(li, lj, seat);
-    buf.rect(a.x - 1, b.y, 2, a.y - b.y, C.plasticShade);
+    buf.line(a.x, a.y, b.x, b.y, C.woodStoreDark);
+    buf.line(a.x + 1, a.y, b.x + 1, b.y, C.woodStore);
   }
-  isoBox(buf, i - 0.05, j - 0.05, seat, 0.6, 0.6, 2, c);
-  isoBox(buf, i - 0.05, j - 0.05, seat + 2, 0.08, 0.6, 14, c);
-  return seat + 2;
+  const ring = [P(i, j, 12), P(i + 0.45, j, 12), P(i + 0.45, j + 0.45, 12), P(i, j + 0.45, 12)];
+  for (let k = 0; k < 4; k++) buf.line(ring[k].x, ring[k].y, ring[(k + 1) % 4].x, ring[(k + 1) % 4].y, C.woodStoreDark);
+  isoBox(buf, i - 0.05, j - 0.05, seat, 0.55, 0.55, 3, { top: C.woodStoreLit, front: C.woodStore, side: C.woodStoreDark, line: C.outline });
+  return seat + 3;
 }
 
 /** Escalera de tijera (versión correcta). */
 export function drawLadder(buf: PixelBuffer, i: number, j: number): number {
-  const top = 22;
+  const top = 36;
   const rail = (ai: number, aj: number, bi: number, bj: number) => {
     const a = P(ai, aj, 0);
     const b = P(bi, bj, top);
@@ -353,7 +357,7 @@ export function drawLadder(buf: PixelBuffer, i: number, j: number): number {
   rail(i, j + 0.35, i + 0.2, j + 0.1);
   rail(i + 0.5, j + 0.35, i + 0.3, j + 0.1);
   rail(i, j - 0.15, i + 0.2, j + 0.1);
-  for (const h of [7, 14]) {
+  for (const h of [9, 18, 27]) {
     const a = P(i + 0.06, j + 0.28, h);
     const b = P(i + 0.44, j + 0.28, h);
     buf.line(a.x, a.y, b.x, b.y, C.chrome);

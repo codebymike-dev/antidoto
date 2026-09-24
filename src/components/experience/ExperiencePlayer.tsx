@@ -772,7 +772,7 @@ function StationPlayer({
                               Desbloqueaste la estación {next.station}: <b>{next.title}</b>.
                             </>
                           ) : (
-                            "Completaste la ruta hasta aquí. Muy pronto, nuevas estaciones."
+                            `¡Completaste la ${experience.series}, de principio a fin!`
                           )}
                         </p>
                         {next ? (

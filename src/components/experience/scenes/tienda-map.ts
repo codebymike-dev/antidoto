@@ -11,7 +11,7 @@ export const TIENDA_MOMENTS: { id: Moment; label: string; hint: string }[] = [
 
 /** Zona de la escena → riesgo, por momento. Una zona sin riesgo cae en TIENDA_OK. */
 export const TIENDA_RISK_ZONES: Record<Moment, Record<string, string>> = {
-  1: { pies: "calzado", charco: "piso", regleta: "enchufe" },
+  1: { pies: "chanclas", charco: "piso", regleta: "enchufe" },
   2: { mano: "vapor", lanceta: "vapor", lavaplatos: "cuchillo", regleta: "enchufe" },
   3: { silla: "silla", sara: "silla", fila: "estres", cliente: "estres", charco: "piso" },
 };
@@ -36,7 +36,7 @@ export const TIENDA_ZONE_LABELS: Record<string, string> = {
   mano: "Mano de Sara",
   lanceta: "Lanceta de vapor",
   lavaplatos: "Lavaplatos",
-  silla: "Silla",
+  silla: "Butaco",
   sara: "Sara",
   fila: "Fila de clientes",
   cliente: "Cliente",
