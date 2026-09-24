@@ -1,0 +1,334 @@
+// Avatar estilo Habbo con esqueleto posable. Habbo solo tiene poses fijas (de pie,
+// caminar, sentarse, llevar algo); aquí cada articulación tiene ángulo propio para poder
+// mostrar una espalda doblada o una sentadilla y pasar de una a otra interpolando.
+// Las proporciones siguen a Habbo: cabeza grande (un tercio de la altura) y cuerpo corto.
+
+import { CLEAR, hex, type Color, type PixelBuffer } from "./buffer.ts";
+
+/**
+ * Ángulos en grados. Piernas y brazos se miden desde la vertical hacia abajo; el torso
+ * desde la vertical hacia arriba. Positivo = hacia donde mira el personaje.
+ */
+export interface Pose {
+  lean: number;
+  thighN: number;
+  shinN: number;
+  thighF: number;
+  shinF: number;
+  armN: number;
+  foreN: number;
+  armF: number;
+  foreF: number;
+  /** Positivo = mira hacia abajo. */
+  headTilt: number;
+  /** Adelanta la cabeza respecto al cuello (cuello forzado), en px. */
+  headPush: number;
+  /** 0 = todo el cuerpo mira igual; 1 = el tronco giró hacia el lado contrario de las piernas. */
+  twist: number;
+  /** Baja todo el cuerpo unos px (respiración, rebote del paso). */
+  bob: number;
+}
+
+export type Expression = "normal" | "esfuerzo" | "feliz";
+
+export interface Look {
+  shirt: Color;
+  shirtDark: Color;
+  shirtLine: Color;
+  pants: Color;
+  pantsDark: Color;
+  skin: Color;
+  skinDark: Color;
+  hat: Color;
+  hatDark: Color;
+  band: Color;
+  hair: Color;
+  shoes: "chanclas" | "botas";
+}
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Rig {
+  hip: Point;
+  lumbar: Point;
+  shoulder: Point;
+  neck: Point;
+  head: Point;
+  elbowN: Point;
+  handN: Point;
+  elbowF: Point;
+  handF: Point;
+  kneeN: Point;
+  kneeF: Point;
+  footN: Point;
+  footF: Point;
+  /** Hacia dónde mira el tronco (puede diferir de las piernas si hay giro). */
+  facingUpper: 1 | -1;
+  facingLegs: 1 | -1;
+}
+
+export const OUTLINE = hex("#2a1e17");
+
+const THIGH = 11;
+const SHIN = 11;
+const UPPER_ARM = 9.5;
+const FOREARM = 8.5;
+const TORSO = 16;
+const HEAD_R = 7;
+const SOLE = 2;
+
+const RAD = Math.PI / 180;
+
+export const STAND: Pose = {
+  lean: 2,
+  thighN: 0,
+  shinN: 0,
+  thighF: 0,
+  shinF: 0,
+  armN: 6,
+  foreN: 12,
+  armF: -6,
+  foreF: 4,
+  headTilt: 0,
+  headPush: 0,
+  twist: 0,
+  bob: 0,
+};
+
+export function lerpPose(a: Pose, b: Pose, t: number): Pose {
+  const out = {} as Pose;
+  for (const k of Object.keys(a) as (keyof Pose)[]) out[k] = a[k] + (b[k] - a[k]) * t;
+  return out;
+}
+
+/** Ciclo de caminar de 4 tiempos a partir de una pose base; phase en vueltas (0..1). */
+export function walkPose(base: Pose, phase: number, stride = 1): Pose {
+  const s = Math.sin(phase * Math.PI * 2);
+  const c = Math.cos(phase * Math.PI * 2);
+  const lift = (v: number) => Math.max(0, v);
+  return {
+    ...base,
+    thighN: base.thighN + 24 * s * stride,
+    shinN: base.shinN + (24 * s - 30 * lift(c)) * stride,
+    thighF: base.thighF - 24 * s * stride,
+    shinF: base.shinF + (-24 * s - 30 * lift(-c)) * stride,
+    armN: base.armN - 18 * s * stride,
+    foreN: base.foreN - 10 * s * stride,
+    armF: base.armF + 18 * s * stride,
+    foreF: base.foreF + 10 * s * stride,
+    bob: base.bob + Math.abs(c) * stride,
+  };
+}
+
+function down(angle: number, f: number): Point {
+  return { x: f * Math.sin(angle * RAD), y: Math.cos(angle * RAD) };
+}
+
+function up(angle: number, f: number): Point {
+  return { x: f * Math.sin(angle * RAD), y: -Math.cos(angle * RAD) };
+}
+
+function add(p: Point, v: Point, k: number): Point {
+  return { x: p.x + v.x * k, y: p.y + v.y * k };
+}
+
+/** Calcula las articulaciones con los pies apoyados en groundY. */
+export function poseRig(pose: Pose, x: number, groundY: number, facing: 1 | -1): Rig {
+  const fl = facing;
+  const fu = (pose.twist > 0.5 ? -facing : facing) as 1 | -1;
+
+  // Primero con la cadera en (0, 0); después se baja hasta que el pie más bajo toque el piso.
+  const hip0 = { x: 0, y: 0 };
+  const kneeN0 = add(hip0, down(pose.thighN, fl), THIGH);
+  const ankleN0 = add(kneeN0, down(pose.shinN, fl), SHIN);
+  const kneeF0 = add(hip0, down(pose.thighF, fl), THIGH);
+  const ankleF0 = add(kneeF0, down(pose.shinF, fl), SHIN);
+  const lowest = Math.max(ankleN0.y, ankleF0.y) + SOLE;
+  const offset = { x, y: groundY - lowest + pose.bob };
+  const at = (p: Point) => ({ x: p.x + offset.x, y: p.y + offset.y });
+
+  const hip = at(hip0);
+  const lumbar = add(hip, up(pose.lean, fu), 5);
+  const shoulder = add(hip, up(pose.lean, fu), TORSO - 2.5);
+  const neck = add(hip, up(pose.lean, fu), TORSO);
+  // La cabeza no sigue del todo al torso: con la espalda doblada mira hacia adelante.
+  const head = add(add(neck, up(pose.lean * 0.55, fu), 1.5 + HEAD_R), { x: fu, y: 0 }, pose.headPush);
+
+  const elbowN = add(shoulder, down(pose.armN, fu), UPPER_ARM);
+  const handN = add(elbowN, down(pose.foreN, fu), FOREARM);
+  const shoulderF = add(shoulder, { x: -fu, y: 0 }, 1);
+  const elbowF = add(shoulderF, down(pose.armF, fu), UPPER_ARM);
+  const handF = add(elbowF, down(pose.foreF, fu), FOREARM);
+
+  return {
+    hip,
+    lumbar,
+    shoulder,
+    neck,
+    head,
+    elbowN,
+    handN,
+    elbowF,
+    handF,
+    kneeN: at(kneeN0),
+    kneeF: at(kneeF0),
+    footN: at(ankleN0),
+    footF: at(ankleF0),
+    facingUpper: fu,
+    facingLegs: fl,
+  };
+}
+
+export interface AvatarLayers {
+  /** Detrás de todo (por ejemplo, un bulto en la espalda). */
+  back?: () => void;
+  /** Después del torso y antes de la cabeza y el brazo cercano (un bulto en los brazos). */
+  held?: () => void;
+  /** Encima de todo. */
+  front?: () => void;
+}
+
+export function drawAvatar(
+  buf: PixelBuffer,
+  pose: Pose,
+  look: Look,
+  x: number,
+  groundY: number,
+  facing: 1 | -1,
+  expression: Expression,
+  layers: AvatarLayers = {},
+): Rig {
+  const rig = poseRig(pose, x, groundY, facing);
+  const fu = rig.facingUpper;
+  const fl = rig.facingLegs;
+
+  layers.back?.();
+
+  drawLeg(buf, rig.hip, rig.kneeF, rig.footF, fl, look, true);
+  drawArm(buf, add(rig.shoulder, { x: -fu, y: 0 }, 1), rig.elbowF, rig.handF, look, true);
+  drawTorso(buf, rig, pose, look);
+  drawLeg(buf, rig.hip, rig.kneeN, rig.footN, fl, look, false);
+  layers.held?.();
+  buf.capsule(rig.neck.x, rig.neck.y, rig.head.x, rig.head.y, 2, 2, look.skinDark, OUTLINE);
+  drawHead(buf, rig.head, fu, pose.headTilt, look, expression);
+  drawArm(buf, rig.shoulder, rig.elbowN, rig.handN, look, false);
+  layers.front?.();
+
+  return rig;
+}
+
+function drawLeg(buf: PixelBuffer, hip: Point, knee: Point, ankle: Point, f: number, look: Look, far: boolean) {
+  const pants = far ? look.pantsDark : look.pants;
+  buf.capsule(hip.x, hip.y, knee.x, knee.y, 3, 2.8, pants, OUTLINE);
+  if (look.shoes === "botas") {
+    // Bota de caucho: cubre media pantorrilla.
+    const shinDir = { x: knee.x - ankle.x, y: knee.y - ankle.y };
+    const len = Math.hypot(shinDir.x, shinDir.y) || 1;
+    const top = add(ankle, { x: shinDir.x / len, y: shinDir.y / len }, 6);
+    buf.capsule(knee.x, knee.y, top.x, top.y, 2.8, 2.6, pants, OUTLINE);
+    const boot = far ? hex("#1d1f22") : hex("#2b2e33");
+    buf.capsule(top.x, top.y, ankle.x, ankle.y, 3, 2.8, boot, OUTLINE);
+    buf.capsule(ankle.x - f * 0.5, ankle.y + 0.6, ankle.x + f * 4.5, ankle.y + 0.8, 2.1, 1.8, boot, OUTLINE);
+    if (!far) buf.px(top.x - f * 1, top.y + 2, hex("#5a616b"));
+  } else {
+    buf.capsule(knee.x, knee.y, ankle.x, ankle.y, 2.8, 2.4, pants, OUTLINE);
+    // Chancla: suela roja y el pie descubierto encima.
+    const sole = far ? hex("#a82c22") : hex("#d8402f");
+    buf.capsule(ankle.x - f * 1.5, ankle.y + 1.6, ankle.x + f * 5, ankle.y + 1.6, 1, 1, sole, OUTLINE);
+    buf.capsule(ankle.x, ankle.y, ankle.x + f * 4, ankle.y + 0.4, 1.5, 1.2, far ? look.skinDark : look.skin, CLEAR);
+    buf.px(ankle.x + f * 2, ankle.y + 0.5, sole);
+  }
+}
+
+function drawArm(buf: PixelBuffer, shoulder: Point, elbow: Point, hand: Point, look: Look, far: boolean) {
+  const sleeve = far ? look.shirtDark : look.shirt;
+  buf.capsule(shoulder.x, shoulder.y, elbow.x, elbow.y, 2.5, 2.3, sleeve, OUTLINE);
+  buf.capsule(elbow.x, elbow.y, hand.x, hand.y, 2.3, 2.1, sleeve, OUTLINE);
+  buf.disc(hand.x, hand.y, 0, CLEAR);
+  buf.capsule(hand.x, hand.y, hand.x, hand.y, 2, 2, far ? look.skinDark : look.skin, OUTLINE);
+}
+
+function drawTorso(buf: PixelBuffer, rig: Rig, pose: Pose, look: Look) {
+  const { hip, neck } = rig;
+  const fu = rig.facingUpper;
+  const ax = neck.x - hip.x;
+  const ay = neck.y - hip.y;
+  const len = Math.hypot(ax, ay) || 1;
+  const ux = ax / len;
+  const uy = ay / len;
+  // Lado "espalda": perpendicular al eje, hacia atrás.
+  const bx = -uy * -fu;
+  const by = ux * -fu;
+  const shader = (x: number, y: number): Color => {
+    const rx = x - hip.x;
+    const ry = y - hip.y;
+    const u = rx * ux + ry * uy;
+    const v = rx * bx + ry * by;
+    if (u < 1.2) return hex("#5b3a22"); // cinturón
+    const stripeU = Math.floor(u + 0.5) % 5 === 0;
+    const stripeV = Math.floor(v + 20.5) % 5 === 0;
+    if (stripeU && stripeV) return look.shirtLine;
+    if (stripeU || stripeV) return look.shirtDark;
+    if (v > 3.2) return look.shirtDark;
+    return look.shirt;
+  };
+  buf.capsule(hip.x, hip.y, rig.shoulder.x, rig.shoulder.y, 4.4, 5.3, shader, OUTLINE);
+  void pose;
+}
+
+function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Look, expression: Expression) {
+  const cos = Math.cos(tilt * RAD);
+  const sin = Math.sin(tilt * RAD);
+  const eye = hex("#241812");
+  const shader = (x: number, y: number): Color => {
+    const wx = (x - c.x) * f;
+    const wy = y - c.y;
+    const lx = wx * cos + wy * sin;
+    const ly = -wx * sin + wy * cos;
+
+    // Ala del sombrero aguadeño: ancha y plana.
+    const bx = (lx - 0.5) / 10;
+    const by = (ly + 3.6) / 2.1;
+    if (bx * bx + by * by <= 1) {
+      if (ly > -3.1) return look.hatDark;
+      return (Math.floor(lx) + Math.floor(ly)) % 3 === 0 ? look.hatDark : look.hat;
+    }
+    // Copa con la cinta negra y el pliegue de arriba.
+    if (ly >= -11 && ly < -4.4) {
+      const half = 5.4 - (ly < -9 ? (-9 - ly) * 1.1 : 0);
+      if (Math.abs(lx + 0.3) <= half) {
+        if (ly >= -6.2) return look.band;
+        if (ly < -10 && Math.abs(lx) < 1.2) return look.hatDark;
+        if (lx < -2.5) return look.hatDark;
+        return (Math.floor(lx * 1.3) + Math.floor(ly)) % 4 === 0 ? look.hatDark : look.hat;
+      }
+    }
+    // Nariz: sobresale del perfil.
+    if ((lx - 6.6) ** 2 + (ly - 1.4) ** 2 <= 2.4) return look.skin;
+    if (lx * lx + ly * ly > HEAD_R * HEAD_R) return CLEAR;
+
+    if (lx < -2.8 && ly < 3.2) return look.hair;
+    if ((lx + 1) ** 2 + (ly - 0.8) ** 2 <= 2.3) return (lx + 1) ** 2 + (ly - 0.8) ** 2 <= 0.6 ? eye : look.skinDark;
+    if (ly < -0.6) return look.skinDark; // sombra bajo el ala
+
+    const eyeX = lx >= 3 && lx < 4;
+    if (expression === "esfuerzo") {
+      if (eyeX && ly >= 0.5 && ly < 1.5) return eye;
+      if (lx >= 2.4 && lx < 3.2 && ly >= 0 && ly < 1) return eye;
+    } else if (expression === "feliz") {
+      if (eyeX && ly >= 0 && ly < 1) return eye;
+      if (lx >= 2.4 && lx < 3.2 && ly >= 1 && ly < 2) return eye;
+    } else if (eyeX && ly >= -0.2 && ly < 1.8) {
+      return eye;
+    }
+    if (lx >= 3.6 && lx < 6.8 && ly >= 2.7 && ly < 3.8) return look.hair; // bigote
+    if (expression === "esfuerzo" && lx >= 4 && lx < 6 && ly >= 4.2 && ly < 5.4) return eye;
+    if (expression === "feliz" && lx >= 3.4 && lx < 5.8 && ly >= 4.4 && ly < 5.2) return eye;
+    if (lx < -1.5) return look.skinDark;
+    return look.skin;
+  };
+  buf.implicit(c.x - 12, c.y - 13, c.x + 12, c.y + 9, shader, OUTLINE);
+}
