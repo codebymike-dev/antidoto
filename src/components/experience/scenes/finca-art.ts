@@ -149,7 +149,30 @@ const ridge = (x: number, base: number, parts: [number, number, number][]) =>
 
 export const farRidge = (x: number) => ridge(x, 50, [[9, 0.014, 1], [6, 0.033, 2.4], [2, 0.09, 0.3]]);
 export const midRidge = (x: number) => ridge(x, 70, [[8, 0.019, 0.4], [4, 0.047, 1.6], [1.5, 0.11, 2]]);
-export const nearRidge = (x: number) => ridge(x, 90, [[6, 0.021, 2.6], [3, 0.052, 0.8]]);
+// La loma cercana sube detrás de la terraza: ahí se asienta la casa.
+export const nearRidge = (x: number) =>
+  ridge(x, 92, [[5, 0.021, 2.6], [3, 0.052, 0.8]]) - 18 * Math.exp(-(((x - 290) / 55) ** 2));
+
+/** Surcos de café sobre una loma: matas en filas que siguen la curva del terreno. */
+function coffeeRows(buf: PixelBuffer, top: (x: number) => number, gap: number, size: number, seed: number, from = 0) {
+  const rnd = seeded(seed);
+  for (let row = from; row < 40; row++) {
+    const offset = 3 + row * gap;
+    const step = size * 2.4;
+    for (let x0 = (row % 2) * step * 0.5 - 4; x0 < W + 4; x0 += step) {
+      const x = x0 + (rnd() - 0.5) * 1.5;
+      const y = top(x) + offset + (rnd() - 0.5);
+      if (y > H + 4) continue;
+      const lit = (row + Math.floor(x0 / step)) % 7 !== 0;
+      buf.ellipse(x, y, size, size * 0.7, lit ? C.leaf : C.leafDark);
+      if (size > 1.6) {
+        buf.px(x - 1, y - 1, C.leafLight);
+        buf.px(x + size - 1, y + 1, C.leafDark);
+        if (rnd() > 0.6) buf.px(x + (rnd() - 0.5) * size, y, rnd() > 0.3 ? C.cherry : C.cherryYellow);
+      }
+    }
+  }
+}
 
 /** Cordillera, lomas con cafetales en surcos, palmas de cera y la loma cercana. */
 export function drawLandscape(buf: PixelBuffer) {
@@ -157,7 +180,6 @@ export function drawLandscape(buf: PixelBuffer) {
   for (let x = 0; x < W; x++) {
     const top = Math.round(farRidge(x));
     for (let y = top; y < H; y++) buf.px(x, y, y < top + 2 ? C.farLight : C.far);
-    // Nieve del nevado al fondo, muy tenue.
     if (x > 300 && x < 330 && top < 44) buf.px(x, top, hex("#dbe9ef"));
   }
 
@@ -165,39 +187,33 @@ export function drawLandscape(buf: PixelBuffer) {
 
   for (let x = 0; x < W; x++) {
     const top = Math.round(midRidge(x));
-    for (let y = top; y < H; y++) {
-      const depth = y - top;
-      // Surcos de café que siguen la pendiente: filas punteadas.
-      const row = (depth + x * 0.32) % 5 < 1 && x % 2 === 0;
-      buf.px(x, y, row ? C.rows : depth < 2 ? mix(C.mid, C.farLight, 0.3) : x % 97 < 30 ? C.midDark : C.mid);
+    // Las laderas que miran a la izquierda reciben la luz de la mañana.
+    const lit = midRidge(x + 3) < midRidge(x - 3);
+    for (let y = top; y < H; y++) buf.px(x, y, y < top + 2 ? mix(C.mid, C.farLight, 0.35) : lit ? C.mid : C.midDark);
+  }
+  // Surcos lejanos: puntitos en filas.
+  for (let row = 0; row < 8; row++) {
+    for (let x = row % 2; x < W; x += 3) {
+      const y = Math.round(midRidge(x) + 4 + row * 3.2);
+      if (buf.get(x, y)) buf.px(x, y, C.rows);
     }
   }
   // Manchas de plátano y guamo (sombrío) entre los surcos.
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < 22; i++) {
     const x = rnd() * W;
-    const y = midRidge(x) + 3 + rnd() * 16;
-    buf.ellipse(x, y, 2 + rnd() * 2, 1.5, rnd() > 0.5 ? hex("#a3c95e") : hex("#4f7f36"));
+    const y = midRidge(x) + 5 + rnd() * 18;
+    buf.ellipse(x, y, 2 + rnd() * 2, 1.6, rnd() > 0.5 ? hex("#a3c95e") : hex("#4f7f36"));
   }
 
   for (let x = 0; x < W; x++) {
     const top = Math.round(nearRidge(x));
-    for (let y = top; y < H; y++) {
-      const depth = y - top;
-      const dots = (depth * 3 + x * 5) % 11 === 0 || (depth + x * 0.4) % 6 < 1;
-      buf.px(x, y, dots ? C.nearDots : depth < 2 ? C.midDark : x % 71 < 20 ? C.nearDark : C.near);
-    }
+    const lit = nearRidge(x + 3) < nearRidge(x - 3);
+    for (let y = top; y < H; y++) buf.px(x, y, y < top + 2 ? C.midDark : lit ? C.near : C.nearDark);
   }
-  // Matas de café sobre la loma cercana.
-  for (let i = 0; i < 70; i++) {
-    const x = rnd() * W;
-    const y = nearRidge(x) + 4 + rnd() * 150;
-    if (y > H) continue;
-    buf.ellipse(x, y, 3 + rnd() * 2, 2 + rnd(), rnd() > 0.5 ? C.leaf : C.leafDark);
-    if (rnd() > 0.5) buf.px(x + rnd() * 3, y, C.cherry);
-  }
+  coffeeRows(buf, nearRidge, 7, 2.6, 11, 0);
 
-  drawGuadua(buf, 14, nearRidge(14) + 20, 7);
-  drawGuadua(buf, 372, nearRidge(372) + 26, 11);
+  drawGuadua(buf, 16, nearRidge(16) + 34, 7);
+  drawGuadua(buf, 380, nearRidge(380) + 30, 11);
 }
 
 function drawWaxPalm(buf: PixelBuffer, x: number, base: number, height: number) {
@@ -220,24 +236,26 @@ function drawWaxPalm(buf: PixelBuffer, x: number, base: number, height: number) 
 
 function drawGuadua(buf: PixelBuffer, x: number, base: number, seed: number) {
   const rnd = seeded(seed);
-  for (let k = 0; k < 7; k++) {
-    const sx = x + (k - 3) * 3 + rnd() * 2;
-    const height = 55 + rnd() * 30;
-    const lean = (k - 3) * 0.12 + (rnd() - 0.5) * 0.1;
+  for (let k = 0; k < 9; k++) {
+    const sx = x + (k - 4) * 3.2 + rnd() * 2;
+    const height = 70 + rnd() * 34;
+    const lean = (k - 4) * 0.1 + (rnd() - 0.5) * 0.08;
     let px = sx;
     for (let d = 0; d < height; d++) {
-      const bend = lean * d + (d * d * lean) / 90;
-      px = sx + bend;
+      px = sx + lean * d + (d * d * lean) / 80;
       const y = base - d;
-      const node = d % 7 === 0;
+      const node = d % 8 === 0;
+      buf.px(px - 1, y, node ? C.guaduaNode : C.guaduaDark);
       buf.px(px, y, node ? C.guaduaNode : C.guadua);
       buf.px(px + 1, y, node ? C.guaduaNode : C.guaduaDark);
-      if (d > height * 0.45 && d % 6 === 3) {
+      // Ramitas con hojas finas en la mitad de arriba.
+      if (d > height * 0.4 && d % 5 === 2) {
         const side = rnd() > 0.5 ? 1 : -1;
-        buf.line(px, y, px + side * 4, y + 2, C.leafLight);
+        buf.line(px, y, px + side * (4 + rnd() * 3), y + 1 + rnd() * 2, rnd() > 0.5 ? C.leafLight : C.plantainDark);
       }
     }
-    buf.ellipse(px, base - height, 3, 1.5, C.leafLight);
+    buf.ellipse(px + lean * 8, base - height, 4, 2, C.leafLight);
+    buf.ellipse(px + lean * 8 + 2, base - height + 2, 3, 1.5, C.plantainDark);
   }
 }
 
@@ -524,27 +542,24 @@ export function drawSack(buf: PixelBuffer, x: number, y: number, fill: number, l
       if (dx > 0.5 || dy > 0.6) return C.burlapDark;
       return (Math.floor(px) + Math.floor(py) * 2) % 5 === 0 ? C.burlapDark : C.burlap;
     }
-    if (!lying && Math.abs(px - x) < (full ? 5.5 : 2.2) && py < cy - ry + 3 && py > cy - ry - (full ? 3.5 : 3)) {
-      return full ? C.cherry : C.rope;
-    }
+    // Medio bulto: el cuello amarrado con cabuya.
+    if (!lying && !full && Math.abs(px - x) < 2.2 && py < cy - ry + 3 && py > cy - ry - 3) return C.rope;
     return CLEAR;
   }, C.outline);
   if (full && !lying) {
-    // Cerezas desbordando por la boca abierta del costal.
-    const topY = cy - ry - 1;
-    const cherries: [number, number, Color][] = [
-      [-4, 0, C.cherryDark],
-      [-2, -1, C.cherry],
-      [0, -2, C.cherry],
-      [2, -1, C.cherryYellow],
-      [4, 0, C.cherry],
-      [-1, 0, C.cherryGreen],
-      [1, 0, C.cherryDark],
-      [6, 2, C.cherry],
-    ];
-    for (const [dx, dy, c] of cherries) buf.px(x + dx, topY + dy, c);
-    buf.px(x + 8, y - 1, C.cherry);
-    buf.px(x + 10, y, C.cherryDark);
+    // Lleno a tope: la boca abierta con un montón de cereza que se desborda.
+    const topY = cy - ry + 1.5;
+    buf.implicit(x - 7, topY - 5, x + 7, topY + 2, (px, py) => {
+      const dx = (px - x) / 6;
+      const dy = (py - topY) / 4;
+      if (dy > 0.4 || dx * dx + dy * dy > 1) return CLEAR;
+      const k = (Math.floor(px) * 3 + Math.floor(py) * 5) % 7;
+      return k === 0 ? C.cherryYellow : k === 1 ? C.cherryGreen : k < 4 ? C.cherryDark : C.cherry;
+    }, C.outline);
+    // Cerezas que ya se cayeron al piso.
+    buf.px(x + 9, y - 1, C.cherry);
+    buf.px(x + 11, y, C.cherryDark);
+    buf.px(x - 10, y, C.cherry);
   }
   if (!full && !lying) {
     buf.px(x - 1, cy - ry - 2, C.rope);
