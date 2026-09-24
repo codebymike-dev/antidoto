@@ -41,7 +41,7 @@ const RAMIRO: Look = {
 const pose = (p: Partial<Pose>): Pose => ({ ...STAND, ...p });
 
 /** Momento 1: espalda doblada, piernas rectas y el bulto lejos del cuerpo. */
-const BEND_BAD = pose({ lean: 94, thighN: -5, shinN: -5, thighF: 3, shinF: 3, armN: 24, foreN: 34, armF: 16, foreF: 28, headTilt: 22 });
+const BEND_BAD = pose({ lean: 96, thighN: -6, shinN: -6, thighF: 2, shinF: 2, armN: 34, foreN: 44, armF: 26, foreF: 38, headTilt: 22 });
 /** Momento 2: de un tirón y girando la cintura, el bulto va hacia el hombro. */
 const TWIST_BAD = pose({ lean: -10, thighN: 10, shinN: -2, thighF: -8, shinF: -10, armN: 118, foreN: 150, armF: 104, foreF: 140, headTilt: -12, twist: 1 });
 /** Momento 3: el bulto sobre la nuca, cuello torcido, resbalando en el barro. */
@@ -52,17 +52,17 @@ const WIDE = pose({ thighN: 13, shinN: 13, thighF: -13, shinF: -13, lean: 4 });
 const SQUAT_GOOD = pose({ lean: 28, thighN: 78, shinN: -12, thighF: 60, shinF: -26, armN: 24, foreN: 62, armF: 18, foreF: 56, headTilt: 4 });
 const HOLD_GOOD = pose({ lean: 4, thighN: 6, shinN: 6, thighF: -6, shinF: -6, armN: 22, foreN: 104, armF: 16, foreF: 98 });
 const LOAD_GOOD = pose({ lean: 10, thighN: 10, shinN: 10, thighF: -8, shinF: -8, armN: 64, foreN: 92, armF: 58, foreF: 88 });
-const WAVE = pose({ armN: 164, foreN: 186, armF: -6, foreF: 4 });
+const WAVE = pose({ armN: 140, foreN: 168, armF: -6, foreF: 4 });
 
 // --- Lugares (pies del personaje, en píxeles del lienzo) --------------------------
 
 const ENTER = { x: 96, y: 148 };
 const M1 = { x: 158, y: 166 };
-const SACK = { x: 188, y: 168 };
+const SACK = { x: 196, y: 169 };
 const M3 = { x: 236, y: 145 };
 const MULE = { x: 246, y: 192 };
 const POST = { x: 276, y: 196 };
-const BASKET = { x: 176, y: 138 };
+const BASKET = { x: 138, y: 190 };
 const HOUSE = { x: 300, y: 92 };
 const GOOD_START = { x: 120, y: 176 };
 const GOOD_SACK = { x: 204, y: 184 };
@@ -391,7 +391,8 @@ export class FincaScene {
     });
     if (this.sack.mode === "ground") {
       items.push({
-        y: this.sack.y,
+        // En la sentadilla el bulto queda entre las rodillas: se dibuja delante.
+        y: this.sack.y + (this.mode === "final" ? 1 : 0),
         draw: () => {
           out.shadow(this.sack.x, this.sack.y, 9, 2.5, art.C.shadow, 0.3);
           this.sackCenter = { x: this.sack.x, y: this.sack.y - 9 };
@@ -428,18 +429,17 @@ export class FincaScene {
       }
     };
     this.rig = drawAvatarLayers(out, pose, this.look, a, {
-      back: (rig) => {
-        if (sack.mode === "nape") {
-          const c = { x: rig.neck.x - rig.facingUpper * 3, y: rig.neck.y - 5 };
-          this.sackCenter = c;
-          art.drawSack(out, c.x, c.y + 6, sack.fill, true);
-        }
-      },
       afterTorso: (rig) => {
         if (sack.mode === "hands") hold(rig);
       },
       held: (rig) => {
         if (sack.mode === "chest" || sack.mode === "twist") hold(rig);
+        if (sack.mode === "nape") {
+          // Atravesado sobre la nuca y los hombros, con la cabeza doblada debajo.
+          const c = { x: rig.neck.x - rig.facingUpper * 2, y: rig.neck.y - 6 };
+          this.sackCenter = c;
+          art.drawSack(out, c.x, c.y + 7, sack.fill * 1.1, true);
+        }
       },
     });
 
