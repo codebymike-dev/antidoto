@@ -115,7 +115,10 @@ export class FincaScene {
   /** "juego": momentos quietos; "intro" y "final": secuencias automáticas. */
   mode: "juego" | "intro" | "final" = "juego";
 
-  constructor(private events: SceneEvents = {}) {
+  private events: SceneEvents;
+
+  constructor(events: SceneEvents = {}) {
+    this.events = events;
     art.drawSky(this.sky);
     art.drawLandscape(this.world);
     art.drawHillPath(this.world, art.iso(3.5, 0), { x: HOUSE.x - 14, y: HOUSE.y + 4 });

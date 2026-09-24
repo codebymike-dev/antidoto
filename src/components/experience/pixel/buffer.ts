@@ -38,12 +38,14 @@ export function seeded(seed: number): () => number {
 export type Shader = (x: number, y: number) => Color;
 
 export class PixelBuffer {
+  readonly w: number;
+  readonly h: number;
   readonly data: Uint32Array;
 
-  constructor(
-    readonly w: number,
-    readonly h: number,
-  ) {
+  // Sin propiedades en el constructor: Node corre este archivo quitando solo los tipos.
+  constructor(w: number, h: number) {
+    this.w = w;
+    this.h = h;
     this.data = new Uint32Array(w * h);
   }
 
