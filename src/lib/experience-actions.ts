@@ -137,14 +137,16 @@ export async function saveRiskTexts(_prev: SaveTextsState, formData: FormData): 
   return { ok: true, message: "Guardado. Los participantes ya ven el texto nuevo." };
 }
 
-export async function resetRiskTexts(formData: FormData) {
+/** Vuelve a los textos del código. Devuelve una marca para que el formulario se recargue. */
+export async function resetRiskTexts(_prev: number, formData: FormData): Promise<number> {
   const user = await requireSuper();
   const def = getExperience(String(formData.get("experience") ?? ""));
   const risk = def?.risks.find((r) => r.id === String(formData.get("risk") ?? ""));
-  if (!def || !risk) return;
+  if (!def || !risk) return _prev;
   await run("DELETE FROM experience_risk_texts WHERE experience_key = ? AND risk_id = ?", [def.key, risk.id]);
   await audit(`Textos del riesgo "${risk.defaults.title}" restaurados en "${def.series} · ${def.title}".`, user);
   revalidatePath(`/admin/biblioteca/${def.key}`);
+  return _prev + 1;
 }
 
 /** Crea la actividad de la experiencia (si falta) y lleva a generar un código. */

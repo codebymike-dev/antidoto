@@ -19,11 +19,14 @@ interface Props {
 /** Formulario de un riesgo de la biblioteca: pregunta, 3 opciones, correcta, explicación. */
 export default function RiskTextsEditor({ experience, riskId, texts, edited }: Props) {
   const [state, action, pending] = useActionState<SaveTextsState, FormData>(saveRiskTexts, null);
+  // Los campos usan defaultValue: al restaurar se remonta el formulario para que muestre
+  // los textos originales. Al guardar no, así queda visible el mensaje de confirmación.
+  const [resets, resetAction] = useActionState<number, FormData>(resetRiskTexts, 0);
   const id = (name: string) => `${riskId}-${name}`;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <form action={action} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <form key={resets} action={action} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <input type="hidden" name="experience" value={experience} />
         <input type="hidden" name="risk" value={riskId} />
         <Labeled label="Título del riesgo" htmlFor={id("title")}>
@@ -77,7 +80,7 @@ export default function RiskTextsEditor({ experience, riskId, texts, edited }: P
           <button type="submit" className="btn-filled" disabled={pending} style={{ ...filledButton, height: 38, fontSize: 13 }}>
             {pending ? "Guardando..." : "Guardar"}
           </button>
-          {state && (
+          {state && resets === 0 && (
             <span role={state.ok ? "status" : "alert"} style={{ fontSize: 13, color: state.ok ? "#1F8A4C" : colors.danger, fontWeight: 600 }}>
               {state.message}
             </span>
@@ -85,7 +88,7 @@ export default function RiskTextsEditor({ experience, riskId, texts, edited }: P
         </div>
       </form>
       {edited && (
-        <form action={resetRiskTexts}>
+        <form action={resetAction}>
           <input type="hidden" name="experience" value={experience} />
           <input type="hidden" name="risk" value={riskId} />
           <button

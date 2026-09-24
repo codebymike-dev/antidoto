@@ -71,7 +71,7 @@ export default async function ExperienciaPage({ params }: { params: Promise<{ ke
                 {edited && <span style={{ ...chip, background: "#FFF3D6", color: "#A66B00" }}>Editado</span>}
               </div>
               {isSuper ? (
-                <RiskTextsEditor key={JSON.stringify(texts)} experience={def.key} riskId={risk.id} texts={texts} edited={edited} />
+                <RiskTextsEditor experience={def.key} riskId={risk.id} texts={texts} edited={edited} />
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: colors.inkSoft, lineHeight: 1.5 }}>
                   <p style={{ margin: 0, fontWeight: 600, color: colors.ink }}>{texts.prompt}</p>
