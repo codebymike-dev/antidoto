@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Pixelify_Sans } from "next/font/google";
 import styles from "./player.module.css";
@@ -75,7 +75,11 @@ export default function ExperiencePlayer({
   const [toast, setToast] = useState<Toast | null>(null);
   const [zoneList, setZoneList] = useState<Zone[] | null>(null);
   const [confirmReveal, setConfirmReveal] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const muted = useSyncExternalStore(
+    sceneSound().subscribe,
+    () => sceneSound().muted,
+    () => false,
+  );
   const [maxHeight, setMaxHeight] = useState(560);
   const ids = useRef(0);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -91,7 +95,6 @@ export default function ExperiencePlayer({
   useEffect(() => {
     const fit = () => setMaxHeight(Math.max(260, window.innerHeight - 150));
     fit();
-    setMuted(sceneSound().muted);
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, []);
@@ -331,7 +334,6 @@ export default function ExperiencePlayer({
   function toggleSound() {
     const next = !muted;
     sceneSound().setMuted(next);
-    setMuted(next);
     if (!next) {
       sceneSound().unlock();
       sfx("ok");

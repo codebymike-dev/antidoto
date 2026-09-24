@@ -41,7 +41,7 @@ export default function SceneCanvas({ onScene, onSay, onTap, maxHeight, label, c
 
     const buf = new PixelBuffer(scene.width, scene.height);
     const ctx = canvas.getContext("2d")!;
-    const image = new ImageData(new Uint8ClampedArray(buf.data.buffer), scene.width, scene.height);
+    const image = new ImageData(new Uint8ClampedArray(buf.data.buffer as ArrayBuffer), scene.width, scene.height);
     let raf = 0;
     let last = performance.now();
     let acc = FRAME;

@@ -12,6 +12,13 @@ class SceneSound {
   private ctx: AudioContext | null = null;
   private out: GainNode | null = null;
   muted = false;
+  private listeners = new Set<() => void>();
+
+  /** Para useSyncExternalStore: el botón de sonido refleja la preferencia guardada. */
+  subscribe = (fn: () => void) => {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  };
 
   constructor() {
     if (typeof window === "undefined") return;
@@ -37,6 +44,7 @@ class SceneSound {
 
   setMuted(muted: boolean) {
     this.muted = muted;
+    this.listeners.forEach((fn) => fn());
     try {
       localStorage.setItem(KEY, muted ? "off" : "on");
     } catch {
