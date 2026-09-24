@@ -6,7 +6,7 @@ import { colors, calSans } from "@/lib/theme";
 import { filledButton, secondaryButton, card, tabButton, tabButtonActive } from "@/lib/styles";
 import { trendToPoints } from "@/lib/utils";
 import GroupsTable from "@/components/admin/GroupsTable";
-import { experienceRiskStats, missionExperience } from "@/lib/experience-data";
+import { experienceRiskStats, missionStations } from "@/lib/experience-data";
 import type { Estado } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -32,8 +32,9 @@ export default async function DetallePage({
   if (user.role === "empresa" && allGroups.length === 0) notFound();
 
   const trend = await getTrend(id, user);
-  const experience = await missionExperience(id);
-  const riskReport = experience ? await experienceRiskStats(id, experience, user) : null;
+  const stations = await missionStations(id);
+  const experience = stations?.[0] ?? null;
+  const riskReport = stations ? await experienceRiskStats(id, stations, user) : null;
 
   const groups = allGroups.filter(
     (g) =>
@@ -142,11 +143,18 @@ export default async function DetallePage({
             <p style={{ fontSize: 13.5, color: colors.muted, margin: 0 }}>Todavía nadie ha jugado esta escena.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {riskReport.stats.map((r) => {
+              {riskReport.stats.map((r, k) => {
                 const foundPct = Math.round((r.found / riskReport.participants) * 100);
                 const correctPct = Math.round((r.correct / riskReport.participants) * 100);
+                const newStation = stations!.length > 1 && (k === 0 || riskReport.stats[k - 1].station !== r.station);
                 return (
-                  <div key={r.id} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 1.2fr) minmax(160px, 2fr)", gap: 14, alignItems: "center" }}>
+                  <Fragment key={r.id}>
+                  {newStation && (
+                    <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.6, color: colors.accentDark, margin: k === 0 ? 0 : "8px 0 0" }}>
+                      ESTACIÓN {r.station} · {r.stationTitle.toUpperCase()}
+                    </h3>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(180px, 1.2fr) minmax(160px, 2fr)", gap: 14, alignItems: "center" }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: colors.ink }}>{r.title}</div>
                       <div style={{ fontSize: 12, color: colors.muted }}>

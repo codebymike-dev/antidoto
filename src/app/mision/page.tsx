@@ -5,7 +5,7 @@ import { completeMission, leaveActivity } from "@/lib/actions";
 import { colors, LOGO_SRC, calSans } from "@/lib/theme";
 import { cardAccent, filledButton } from "@/lib/styles";
 import { GAME_MODE } from "@/lib/data";
-import { loadOverrides, missionExperience, participationAnswers, resultsFor } from "@/lib/experience-data";
+import { loadAllOverrides, missionStations, participationAnswers, resultsFor } from "@/lib/experience-data";
 import { publicExperience } from "@/lib/experiences/texts";
 import ExperiencePlayer from "@/components/experience/ExperiencePlayer";
 
@@ -22,15 +22,16 @@ export default async function MisionPage() {
   if (p.completed_at) redirect("/mision/completada");
 
   // Las actividades de la biblioteca (escenas interactivas) tienen su propio jugador.
-  const experience = await missionExperience(p.mission_id);
-  if (experience) {
-    const overrides = await loadOverrides(experience.key);
+  // Una serie (la Ruta del café) se juega estación por estación con el mismo código.
+  const stations = await missionStations(p.mission_id);
+  if (stations) {
+    const overrides = await loadAllOverrides(stations);
     const answers = await participationAnswers(p.id);
     return (
       <ExperiencePlayer
-        experience={publicExperience(experience, overrides)}
+        stations={stations.map((d) => publicExperience(d, overrides.get(d.key)!))}
         participant={p.participant_name}
-        initialResults={resultsFor(experience, overrides, answers)}
+        initialResults={resultsFor(stations, overrides, answers)}
         mode="play"
         paused={p.estado !== "activo"}
         exitAction={leaveActivity}

@@ -32,6 +32,8 @@ export function publicExperience(def: ExperienceDef, overrides: TextOverrides): 
     title: def.title,
     description: def.description,
     character: def.character,
+    enter: def.enter,
+    badge: def.badge,
     risks: def.risks.map((r) => {
       const t = riskTexts(r, overrides);
       return { id: r.id, category: r.category, prompt: t.prompt, options: t.options };

@@ -7,16 +7,18 @@ import { one, run } from "./db";
 import { PARTICIPATION_COOKIE } from "./participation";
 import { isExpired } from "./expiry";
 import { audit, requireSuper, requireUser } from "./admin-guard";
-import { getExperience } from "./experiences/catalog";
+import { getExperience, seriesEntry } from "./experiences/catalog";
 import { riskResult, riskTexts, validateRiskTexts } from "./experiences/texts";
 import type { ExperienceDef, RiskResult } from "./experiences/types";
 import {
   ensureExperienceMission,
+  loadAllOverrides,
   loadOverrides,
-  missionExperience,
+  missionStations,
   participationAnswers,
   refreshParticipationScore,
   resultsFor,
+  stationRisks,
 } from "./experience-data";
 
 // --- Participante --------------------------------------------------------------
@@ -25,7 +27,8 @@ export type AnswerOutcome = { ok: true; result: RiskResult; grains: number } | {
 
 interface PlayerContext {
   participationId: string;
-  def: ExperienceDef;
+  /** Las estaciones que se juegan con el código, en orden. */
+  stations: ExperienceDef[];
 }
 
 /** La participación de la cookie, si es de una experiencia abierta y sin terminar. */
@@ -45,18 +48,19 @@ async function playerContext(): Promise<PlayerContext | { error: string }> {
   if (row.estado === "pausado") return { error: "Esta actividad está pausada por tu administrador." };
   if (isExpired(row.expires_at)) return { error: "Esta actividad ya venció." };
 
-  const def = await missionExperience(row.mission_id);
-  if (!def) return { error: "Esta actividad no es una escena interactiva." };
-  return { participationId: id, def };
+  const stations = await missionStations(row.mission_id);
+  if (!stations) return { error: "Esta actividad no es una escena interactiva." };
+  return { participationId: id, stations };
 }
 
 export async function answerExperienceRisk(riskId: string, option: number): Promise<AnswerOutcome> {
   const ctx = await playerContext();
   if ("error" in ctx) return { ok: false, error: ctx.error };
-  const risk = ctx.def.risks.find((r) => r.id === riskId);
-  if (!risk || ![0, 1, 2].includes(option)) return { ok: false, error: "Respuesta no válida." };
+  const found = stationRisks(ctx.stations).find((x) => x.risk.id === riskId);
+  if (!found || ![0, 1, 2].includes(option)) return { ok: false, error: "Respuesta no válida." };
+  const { def, risk } = found;
 
-  const texts = riskTexts(risk, await loadOverrides(ctx.def.key));
+  const texts = riskTexts(risk, await loadOverrides(def.key));
   // Si ya lo respondió (doble clic, otra pestaña), vale la primera respuesta.
   await run(
     `INSERT OR IGNORE INTO experience_answers (participation_id, risk_id, option_index, option_text, is_correct)
@@ -64,17 +68,24 @@ export async function answerExperienceRisk(riskId: string, option: number): Prom
     [ctx.participationId, riskId, option, texts.options[option], option === texts.correct ? 1 : 0],
   );
   const stored = (await participationAnswers(ctx.participationId)).find((r) => r.risk_id === riskId)!;
-  const s = await refreshParticipationScore(ctx.participationId, ctx.def);
+  const s = await refreshParticipationScore(ctx.participationId, ctx.stations);
   const result = riskResult(risk, texts, stored.option_index);
   return { ok: true, result: { ...result, correct: stored.is_correct === 1 }, grains: s.grains };
 }
 
-/** "Ya no encuentro más": revela los riesgos que faltan (cuentan como no encontrados). */
-export async function revealExperienceRisks(): Promise<{ ok: true; results: RiskResult[] } | { ok: false; error: string }> {
+/**
+ * "Ya no encuentro más": revela los riesgos que faltan en una estación (cuentan como no
+ * encontrados). Las demás estaciones de la serie no se tocan.
+ */
+export async function revealExperienceRisks(
+  stationKey: string,
+): Promise<{ ok: true; results: RiskResult[] } | { ok: false; error: string }> {
   const ctx = await playerContext();
   if ("error" in ctx) return { ok: false, error: ctx.error };
+  const station = ctx.stations.find((d) => d.key === stationKey);
+  if (!station) return { ok: false, error: "Estación no válida." };
   const done = new Set((await participationAnswers(ctx.participationId)).map((r) => r.risk_id));
-  for (const risk of ctx.def.risks) {
+  for (const risk of station.risks) {
     if (done.has(risk.id)) continue;
     await run(
       `INSERT OR IGNORE INTO experience_answers (participation_id, risk_id, option_index, option_text, is_correct)
@@ -82,16 +93,20 @@ export async function revealExperienceRisks(): Promise<{ ok: true; results: Risk
       [ctx.participationId, risk.id],
     );
   }
-  await refreshParticipationScore(ctx.participationId, ctx.def);
-  const results = resultsFor(ctx.def, await loadOverrides(ctx.def.key), await participationAnswers(ctx.participationId));
+  await refreshParticipationScore(ctx.participationId, ctx.stations);
+  const results = resultsFor(
+    ctx.stations,
+    await loadAllOverrides(ctx.stations),
+    await participationAnswers(ctx.participationId),
+  );
   return { ok: true, results };
 }
 
 export async function finishExperience() {
   const ctx = await playerContext();
   if ("error" in ctx) redirect("/mision");
-  const s = await refreshParticipationScore(ctx.participationId, ctx.def);
-  // Solo se termina con todos los riesgos resueltos (encontrados o revelados).
+  const s = await refreshParticipationScore(ctx.participationId, ctx.stations);
+  // Solo se termina con todos los riesgos de todas las estaciones resueltos (encontrados o revelados).
   if (s.answered < s.total) redirect("/mision");
   await run("UPDATE participations SET completed_at = datetime('now'), avance = 100 WHERE id = ? AND completed_at IS NULL", [
     ctx.participationId,
@@ -154,7 +169,8 @@ export async function adoptExperience(formData: FormData) {
   if (user.role !== "super") return;
   const def = getExperience(String(formData.get("experience") ?? ""));
   if (!def) return;
-  const missionId = await ensureExperienceMission(def);
+  // Una estación siguiente se juega con el código de la primera de su serie.
+  const missionId = await ensureExperienceMission(seriesEntry(def));
   revalidatePath("/admin");
   redirect(`/admin/config?mission=${missionId}`);
 }

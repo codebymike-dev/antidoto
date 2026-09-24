@@ -2,7 +2,7 @@ import "server-only";
 import { all, one, run } from "./db";
 import type { AdminUser } from "./auth";
 import { companyFilter } from "./scope";
-import { EXPERIENCES, experienceMissionId, getExperience } from "./experiences/catalog";
+import { EXPERIENCES, experienceMissionId, getExperience, seriesEntry, seriesFrom } from "./experiences/catalog";
 import { parseStoredTexts, riskResult, riskTexts, score, type AnswerRow, type TextOverrides } from "./experiences/texts";
 import type { ExperienceDef, RiskResult } from "./experiences/types";
 
@@ -12,6 +12,17 @@ export async function missionExperience(missionId: string): Promise<ExperienceDe
     missionId,
   ]);
   return row ? getExperience(row.experience_key) : null;
+}
+
+/** Las estaciones que se juegan con el código de la misión, en orden; null si es una misión común. */
+export async function missionStations(missionId: string): Promise<ExperienceDef[] | null> {
+  const def = await missionExperience(missionId);
+  return def ? seriesFrom(def) : null;
+}
+
+/** Todos los riesgos de las estaciones, cada uno con la experiencia a la que pertenece. */
+export function stationRisks(stations: ExperienceDef[]) {
+  return stations.flatMap((def) => def.risks.map((risk) => ({ def, risk })));
 }
 
 export async function loadOverrides(key: string): Promise<TextOverrides> {
@@ -48,14 +59,22 @@ export async function participationAnswers(participationId: string): Promise<Ans
   }));
 }
 
-/** Resultados ya resueltos por un participante, con los textos vigentes. */
-export function resultsFor(def: ExperienceDef, overrides: TextOverrides, rows: AnswerRow[]): RiskResult[] {
-  const byId = new Map(def.risks.map((r) => [r.id, r]));
+/** Textos editados de varias experiencias, por clave. */
+export async function loadAllOverrides(stations: ExperienceDef[]): Promise<Map<string, TextOverrides>> {
+  const out = new Map<string, TextOverrides>();
+  for (const def of stations) out.set(def.key, await loadOverrides(def.key));
+  return out;
+}
+
+/** Resultados ya resueltos por un participante en las estaciones, con los textos vigentes. */
+export function resultsFor(stations: ExperienceDef[], overrides: Map<string, TextOverrides>, rows: AnswerRow[]): RiskResult[] {
+  const byId = new Map(stationRisks(stations).map((x) => [x.risk.id, x]));
   const out: RiskResult[] = [];
   for (const row of rows) {
-    const risk = byId.get(row.risk_id);
-    if (!risk) continue;
-    const texts = riskTexts(risk, overrides);
+    const found = byId.get(row.risk_id);
+    if (!found) continue;
+    const { def, risk } = found;
+    const texts = riskTexts(risk, overrides.get(def.key) ?? new Map());
     const result = riskResult(risk, texts, row.option_index);
     // La calificación guardada manda: si después se cambió la opción correcta, no se recalifica.
     out.push({ ...result, correct: row.is_correct === 1 });
@@ -63,9 +82,9 @@ export function resultsFor(def: ExperienceDef, overrides: TextOverrides, rows: A
   return out;
 }
 
-/** Recalcula avance y puntaje de la participación desde sus respuestas. */
-export async function refreshParticipationScore(participationId: string, def: ExperienceDef) {
-  const s = score(await participationAnswers(participationId), def.risks.length);
+/** Recalcula avance y puntaje de la participación desde sus respuestas, sobre toda la serie. */
+export async function refreshParticipationScore(participationId: string, stations: ExperienceDef[]) {
+  const s = score(await participationAnswers(participationId), stationRisks(stations).length);
   await run("UPDATE participations SET avance = ?, puntaje = ? WHERE id = ?", [s.avance, s.puntaje, participationId]);
   return s;
 }
@@ -109,8 +128,10 @@ export async function listLibrary(user: AdminUser): Promise<LibraryItem[]> {
     "SELECT experience_key, COUNT(*) AS n FROM experience_risk_texts GROUP BY experience_key",
   );
   return EXPERIENCES.map((def) => {
-    const own = rows.filter((r) => r.experience_key === def.key);
-    const mine = own.find((r) => r.mission_id === experienceMissionId(def.key)) ?? own[0];
+    // Las estaciones siguientes se juegan con el código de la primera: comparten su uso.
+    const entry = seriesEntry(def);
+    const own = rows.filter((r) => r.experience_key === entry.key);
+    const mine = own.find((r) => r.mission_id === experienceMissionId(entry.key)) ?? own[0];
     return {
       def,
       missionId: mine?.mission_id ?? null,
@@ -122,6 +143,9 @@ export async function listLibrary(user: AdminUser): Promise<LibraryItem[]> {
 
 export interface RiskStat {
   id: string;
+  /** Estación de la serie donde está el riesgo. */
+  station: number;
+  stationTitle: string;
   title: string;
   category: string;
   /** Participantes que lo encontraron (sin contar los que se rindieron). */
@@ -132,8 +156,8 @@ export interface RiskStat {
   topWrong: { text: string; count: number } | null;
 }
 
-/** Resumen por riesgo de una actividad de tipo escena, filtrado por empresa. */
-export async function experienceRiskStats(missionId: string, def: ExperienceDef, user: AdminUser) {
+/** Resumen por riesgo de una actividad de tipo escena (todas sus estaciones), filtrado por empresa. */
+export async function experienceRiskStats(missionId: string, stations: ExperienceDef[], user: AdminUser) {
   const { clause, args } = companyFilter(user.role, user.company_id);
   const rows = await all<{
     risk_id: string;
@@ -156,8 +180,8 @@ export async function experienceRiskStats(missionId: string, def: ExperienceDef,
      WHERE ac.mission_id = ? ${clause}`,
     [missionId, ...args],
   );
-  const overrides = await loadOverrides(def.key);
-  const stats: RiskStat[] = def.risks.map((risk) => {
+  const overrides = await loadAllOverrides(stations);
+  const stats: RiskStat[] = stationRisks(stations).map(({ def, risk }) => {
     const mine = rows.filter((r) => r.risk_id === risk.id);
     const count = (pred: (r: (typeof rows)[number]) => boolean) => mine.filter(pred).reduce((acc, r) => acc + Number(r.n), 0);
     const wrong = mine
@@ -165,7 +189,9 @@ export async function experienceRiskStats(missionId: string, def: ExperienceDef,
       .sort((a, b) => Number(b.n) - Number(a.n))[0];
     return {
       id: risk.id,
-      title: riskTexts(risk, overrides).title,
+      station: def.station,
+      stationTitle: def.title,
+      title: riskTexts(risk, overrides.get(def.key) ?? new Map()).title,
       category: risk.category,
       found: count((r) => r.option_index !== null),
       correct: count((r) => Number(r.is_correct) === 1),
