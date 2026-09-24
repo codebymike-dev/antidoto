@@ -726,6 +726,21 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "Ruta decidida por el usuario (2026-09-24): cinco estaciones (finca, transporte, trilladora, tostión y tienda). Respaldo: Resolución 2400 de 1979 (arts. 88, 128, 177, 203, 267, 392 y 396) y estudios sobre polvo de café en plantas. La cámara con zoom quedó como pieza común (Camera en scenes/common.ts). Detalle en docs/investigacion-ux-habbo.md, sección 9.",
         relacionados: ["RF-907", "RF-908"],
       },
+      {
+        id: "RF-910",
+        titulo: "Estación 4 de la ruta del café: la tostión",
+        descripcion:
+          "Luz, maestra tostadora, trabaja en una planta de tostión (sala de Habbo con tostadora de tambor, cilindro de gas, colector de cascarilla, extractor, bandeja de enfriamiento, molino y estante). En tres momentos (preparar, tostar, enfriar) el participante encuentra siete riesgos: buscar una fuga de gas con llama, extensión regada por el piso, cascarilla acumulada junto al fuego, humo sin extracción, muestra sin guantes, pelo suelto sobre las aspas y granos regados en el piso. Al final ve el trabajo bien hecho y gana la insignia Tostadora segura.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "src/components/experience/scenes/tostion.ts, src/components/experience/scenes/tostion-art.ts, src/components/experience/scenes/tostion-map.ts, RUTA_CAFE_TOSTION en src/lib/experiences/catalog.ts",
+        verificacion:
+          "Siete riesgos respondidos en la vista previa y ruta completa de participante (cuatro estaciones) con código en Chromium headless: 28 respuestas y cierre verificados en la base. Capturas con node scripts/escena-png.mts <carpeta> 2 --escena=tostion --zonas.",
+        notas:
+          "Respaldo: Resolución 2400 de 1979 (arts. 29, 32, 121, 125, 161, 171, 177, 536 y 543) y evaluaciones de NIOSH en tostadoras (monóxido de carbono y diacetilo). El avatar ganó pelo largo, moño, cofia y la opción sin bigote. La sala de la trilladora quedó parametrizada (con o sin puerta, colores). Detalle en docs/investigacion-ux-habbo.md, sección 10.",
+        relacionados: ["RF-908", "RF-909"],
+      },
     ],
   },
 ];

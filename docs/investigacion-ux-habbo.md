@@ -215,3 +215,41 @@ se trilla y sale el café verde en sacos de 70 kg.
 
 - Resolución 2400 de 1979 (ARL SURA): https://www.arlsura.com/files/resolucion_2400_1979.pdf
 - Exposición laboral a hongos en una planta de procesamiento de café (Medicina y Seguridad del Trabajo, 2008): https://scielo.isciii.es/scielo.php?script=sci_arttext&pid=S0465-546X2008000200005
+
+## 10. Estación 4: la tostión
+
+Investigado el 2026-09-24. Es la cuarta de las cinco estaciones de la ruta: el café verde
+que sale de la trilladora se tuesta.
+
+### Escenario
+
+- La misma sala de Habbo de la trilladora, sin puerta de cargue, con paredes cálidas y
+  zócalo de ladrillo. `drawRoom` de trilladora-art.ts quedó parametrizado para eso.
+- Tostadora de tambor negra con frente de cobre, mirilla, quemador con llama, tolva de
+  carga con café verde, ducto de humos hasta un extractor en la pared y ducto al ciclón
+  (colector de cascarilla). Cilindro de propano color aluminio (art. 203) con su manguera.
+- Bandeja de enfriamiento redonda con aspas que giran, molino sobre una mesa con una
+  extensión regada por el piso, estante con café empacado y extintor.
+- Si la tostadora está prendida sin extractor, el humo se acumula contra el techo.
+- Protagonista nueva: **Luz**, maestra tostadora, con el pelo largo suelto. En la versión
+  correcta lo lleva recogido con cofia y usa guantes para el calor.
+- Momentos: **preparar** (plano abierto), **tostar** (cámara sobre la tostadora) y
+  **enfriar** (cámara sobre la bandeja).
+
+### Riesgos
+
+| Riesgo | Tipo (GTC 45) | Respaldo |
+| --- | --- | --- |
+| Busca la fuga de gas con una llama | Tecnológico | Res. 2400 de 1979, art. 543 (fugas con agua jabonosa, nunca con llama) y art. 536 (cilindros ventilados y lejos de la llama). |
+| Extensión regada por el piso | Eléctrico | Res. 2400, art. 125 (evitar cables dispersos en el piso) y art. 121 (aislamiento eficaz). |
+| Cascarilla acumulada junto al fuego | Tecnológico | Res. 2400, art. 29 (no se permite acumular polvo, basuras y desperdicios). |
+| Humo de la tostión sin extracción | Químico | Res. 2400, art. 161 (ventilación o extracción de humos y gases); NIOSH midió monóxido de carbono y diacetilo sobre sus límites en tostadoras. |
+| Saca la muestra sin guantes | Físico | Res. 2400, art. 177 g (guantes, mitones y mangas resistentes al calor). |
+| Pelo suelto sobre las aspas | Mecánico | Res. 2400, art. 177 b (cofias para cabello largo cerca de maquinaria) y art. 171 (nada suelto cerca de piezas en movimiento). |
+| Granos regados en el piso | Locativo | Res. 2400, art. 32 (pisos libres de desperdicios y de lo que los haga resbaladizos). |
+
+### Fuentes
+
+- Resolución 2400 de 1979 (ARL SURA): https://www.arlsura.com/files/resolucion_2400_1979.pdf
+- NIOSH, exposiciones en tostadoras de café y cafés (diacetilo, 2,3-pentanodiona y otros): https://pmc.ncbi.nlm.nih.gov/articles/PMC7531227/
+- NIOSH, evaluación de una tostadora de café (monóxido de carbono): https://www.cdc.gov/niosh/hhe/reports/pdfs/2018-0071-3342.pdf

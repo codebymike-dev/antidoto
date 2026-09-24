@@ -46,16 +46,6 @@ export const C = {
 
 type P3 = [number, number, number];
 
-function quad(buf: PixelBuffer, pts: P3[], c: Color | ((x: number, y: number) => Color)) {
-  buf.poly(
-    pts.flatMap(([i, j, z]) => {
-      const p = P(i, j, z);
-      return [p.x, p.y];
-    }),
-    c,
-  );
-}
-
 function edge(buf: PixelBuffer, a: P3, b: P3, c: Color) {
   const pa = P(...a);
   const pb = P(...b);
@@ -210,26 +200,19 @@ export function drawRoaster(buf: PixelBuffer, s: RoasterState) {
   // Cuchara de muestreo asomada al lado del tambor.
   isoBox(buf, TRIER.i - 0.05, R.j1, TRIER.z, 0.1, 0.35, 2, { top: C.steelLit, front: C.steel, side: C.steelDark });
   isoBox(buf, TRIER.i - 0.07, R.j1 + 0.35, TRIER.z - 1, 0.14, 0.12, 4, { top: C.woodDark, front: C.wood, side: C.woodDark });
-  // Tolva de carga arriba, de cobre.
-  isoBox(buf, 4.45, 0.55, R.h, 0.7, 0.6, 6, COPPER);
-  quad(buf, [
-    [4.3, 0.4, R.h + 16],
-    [5.3, 0.4, R.h + 16],
-    [5.3, 1.3, R.h + 16],
-    [4.3, 1.3, R.h + 16],
-  ], C.copperDark);
-  quad(buf, [
-    [4.45, 1.15, R.h + 6],
-    [5.15, 1.15, R.h + 6],
-    [5.3, 1.3, R.h + 16],
-    [4.3, 1.3, R.h + 16],
-  ], C.copper);
-  quad(buf, [
-    [5.15, 0.55, R.h + 6],
-    [5.15, 1.15, R.h + 6],
-    [5.3, 1.3, R.h + 16],
-    [5.3, 0.4, R.h + 16],
-  ], C.copperDark);
+  // Tolva de carga arriba: embudo de cobre con el café verde adentro.
+  isoBox(buf, 4.6, 0.65, R.h, 0.45, 0.45, 5, COPPER);
+  const hop = P(4.82, 0.88, R.h + 5);
+  buf.implicit(hop.x - 14, hop.y - 14, hop.x + 14, hop.y + 2, (x, y) => {
+    const u = (x - hop.x) / 13;
+    const top = hop.y - 11;
+    const half = 0.45 + ((hop.y - y) / 11) * 0.55;
+    if (y > hop.y || y < top - 4 || Math.abs(u) > half) return CLEAR;
+    const e = ((x - hop.x) / 13) ** 2 + ((y - top) / 4) ** 2;
+    if (e <= 1) return e < 0.62 ? ((Math.floor(x) + Math.floor(y) * 2) % 3 === 0 ? C.green : mix(C.green, C.outline, 0.3)) : C.copperLit;
+    if (y < top) return CLEAR;
+    return u < -0.2 ? C.copperLit : u > 0.25 ? C.copperDark : C.copper;
+  }, C.outline);
   // Ducto de humos: sube por atrás y va por la pared hasta el extractor.
   isoBox(buf, 5.5, 0.3, R.h, 0.3, 0.3, 14, { top: C.steelLit, front: C.steel, side: C.steelDark, line: C.outline });
   isoBox(buf, 5.5, 0.05, R.h + 12, FAN.i - 5.5 - 0.3, 0.3, 5, { top: C.steelLit, front: C.steel, side: C.steelDark, line: C.outline });
