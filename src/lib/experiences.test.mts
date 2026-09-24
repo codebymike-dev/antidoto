@@ -1,8 +1,8 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { EXPERIENCES, RUTA_CAFE_FINCA } from "./catalog.ts";
-import { LIMITS, parseStoredTexts, publicExperience, riskResult, score, validateRiskTexts } from "./texts.ts";
-import { FINCA_OK, FINCA_RISK_ZONES, FINCA_ZONE_LABELS } from "../../components/experience/scenes/finca-map.ts";
+import { EXPERIENCES, RUTA_CAFE_FINCA } from "./experiences/catalog.ts";
+import { LIMITS, parseStoredTexts, publicExperience, riskResult, score, validateRiskTexts } from "./experiences/texts.ts";
+import { FINCA_OK, FINCA_RISK_ZONES, FINCA_ZONE_LABELS } from "../components/experience/scenes/finca-map.ts";
 
 describe("catálogo", () => {
   test("los textos de fábrica pasan la misma validación que el editor", () => {
