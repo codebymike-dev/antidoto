@@ -261,3 +261,24 @@ CREATE TABLE IF NOT EXISTS experience_answers (
   answered_at      TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (participation_id, risk_id)
 );
+
+-- --- Marca de cada empresa (co-branding) -------------------------------------------
+-- Logo y colores que ven los participantes, las pantallas en vivo y los reportes.
+-- Sin fila = la empresa se muestra con la marca de Antídoto.
+-- Tabla aparte y no columnas en companies: el esquema solo usa CREATE IF NOT EXISTS.
+CREATE TABLE IF NOT EXISTS company_branding (
+  company_id      INTEGER PRIMARY KEY REFERENCES companies(id) ON DELETE CASCADE,
+  -- "#RRGGBB" en mayúsculas; el resto de tonos se deriva en src/lib/brand-palette.ts.
+  primary_color   TEXT NOT NULL CHECK (primary_color GLOB '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]'),
+  secondary_color TEXT CHECK (secondary_color IS NULL OR secondary_color GLOB '#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]'),
+  welcome         TEXT CHECK (welcome IS NULL OR length(welcome) <= 140),
+  -- El logo vive en la base: el editor lo recorta y comprime antes de subirlo (máx. 200 KB).
+  logo            BLOB,
+  logo_mime       TEXT CHECK (logo_mime IS NULL OR logo_mime IN ('image/png', 'image/jpeg', 'image/webp', 'image/svg+xml')),
+  -- Hash corto del archivo: va en la URL del logo para cachearlo sin servir uno viejo.
+  logo_version    TEXT,
+  -- Fondo para el que está pensado el logo; sobre el fondo contrario se muestra en una placa.
+  logo_surface    TEXT NOT NULL DEFAULT 'claro' CHECK (logo_surface IN ('claro', 'oscuro')),
+  updated_by      INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
+  updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
