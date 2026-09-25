@@ -90,6 +90,7 @@ export async function saveCompanyBrand(_prev: BrandFormState, formData: FormData
   else if (name !== existing!.name) await audit(`Empresa "${existing!.name}" renombrada a "${name}" y marca actualizada.`, user, savedId);
   else await audit(`Marca de "${name}" actualizada.`, user, savedId);
 
-  revalidatePath("/admin/config");
-  redirect(isSuper ? `/admin/config?tab=companies&guardada=${savedId}` : "/admin/config?tab=marca&guardada=1");
+  revalidatePath("/admin/empresas");
+  revalidatePath(`/admin/empresas/${savedId}`);
+  redirect(`/admin/empresas/${savedId}?guardada=1`);
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getLegalTexts } from "@/lib/queries";
 import LandingScreen from "@/components/LandingScreen";
+import PassBackdrop from "@/components/motion/PassBackdrop";
 
 // Los textos legales se editan desde el portal, así que la landing no se prerenderiza.
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
-      <LandingScreen policyText={legal.privacidad} termsText={legal.terminos} />
+      <LandingScreen policyText={legal.privacidad} termsText={legal.terminos} backdrop={<PassBackdrop />} />
     </>
   );
 }

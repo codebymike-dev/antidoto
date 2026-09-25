@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { listLibrary } from "@/lib/experience-data";
-import { adoptExperience } from "@/lib/experience-actions";
 import { colors, calSans } from "@/lib/theme";
 import { card, filledButton, secondaryButton } from "@/lib/styles";
 import { ArrowRightIcon, PlayIcon } from "@/components/icons";
 import SceneThumb from "@/components/experience/SceneThumb";
+import DealGrid from "@/components/motion/DealGrid";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function BibliotecaPage() {
         <p style={{ fontSize: 14, color: colors.muted, margin: 0, maxWidth: 620 }}>
           Experiencias interactivas listas para usar: escenas donde cada participante encuentra los errores y aprende la forma
           correcta.{" "}
-          {isSuper ? "Asígnalas a una empresa con un código de actividad." : "Pide a Antídoto el código para tu equipo."}
+          {isSuper ? "Asígnalas a una empresa y se crea el código para sus participantes." : "Pide a Antídoto el código para tu equipo."}
         </p>
       </div>
 
@@ -32,7 +32,11 @@ export default async function BibliotecaPage() {
             <h2 style={{ ...calSans, fontSize: 19, margin: 0, color: colors.ink }}>{name}</h2>
             <span style={{ fontSize: 12.5, color: colors.muted }}>De la finca a la taza, una estación por cada eslabón. Se juega completa con un solo código.</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
+          <DealGrid
+            storageKey="antidoto:biblioteca-vista"
+            className=""
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}
+          >
             {items
               .filter((i) => i.def.series === name)
               .map(({ def, missionId, participantes, edited }) => (
@@ -113,22 +117,19 @@ export default async function BibliotecaPage() {
                         </span>
                       )}
                       {isSuper && def.station === 1 && (
-                        <form action={adoptExperience}>
-                          <input type="hidden" name="experience" value={def.key} />
-                          <button
-                            type="submit"
-                            className="btn-filled"
-                            style={{ ...filledButton, height: 36, padding: "0 14px", fontSize: 13 }}
-                          >
-                            Usar con una empresa
-                          </button>
-                        </form>
+                        <Link
+                          href={`/admin/asignar?actividad=${def.key}`}
+                          className="btn-filled"
+                          style={{ ...filledButton, height: 36, padding: "0 14px", fontSize: 13, display: "inline-flex", alignItems: "center" }}
+                        >
+                          Asignar a una empresa
+                        </Link>
                       )}
                     </div>
                   </div>
                 </article>
               ))}
-          </div>
+          </DealGrid>
         </section>
       ))}
     </div>

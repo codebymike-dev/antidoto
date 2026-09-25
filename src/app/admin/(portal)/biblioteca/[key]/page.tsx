@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { getExperience } from "@/lib/experiences/catalog";
 import { loadOverrides } from "@/lib/experience-data";
-import { adoptExperience } from "@/lib/experience-actions";
 import { riskTexts } from "@/lib/experiences/texts";
 import { colors, calSans } from "@/lib/theme";
 import { card, filledButton, secondaryButton } from "@/lib/styles";
@@ -52,12 +51,13 @@ export default async function ExperienciaPage({ params }: { params: Promise<{ ke
             Probar la escena
           </Link>
           {isSuper && def.station === 1 && (
-            <form action={adoptExperience}>
-              <input type="hidden" name="experience" value={def.key} />
-              <button type="submit" className="btn-filled" style={filledButton}>
-                Usar con una empresa
-              </button>
-            </form>
+            <Link
+              href={`/admin/asignar?actividad=${def.key}`}
+              className="btn-filled"
+              style={{ ...filledButton, display: "inline-flex", alignItems: "center" }}
+            >
+              Asignar a una empresa
+            </Link>
           )}
         </div>
       </div>

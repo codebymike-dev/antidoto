@@ -6,6 +6,7 @@ import { canEditGame } from "@/lib/scope";
 import { colors, calSans } from "@/lib/theme";
 import { card, filledButton, tabButton, tabButtonActive } from "@/lib/styles";
 import { ArrowRightIcon, CopyIcon, InboxIcon, PlayIcon, SearchIcon } from "@/components/icons";
+import DealGrid from "@/components/motion/DealGrid";
 
 export const dynamic = "force-dynamic";
 
@@ -133,7 +134,11 @@ export default async function JuegosPage({
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
+      <DealGrid
+        storageKey="antidoto:juegos-vistos"
+        className=""
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}
+      >
         {games.map((g) => {
           const editable = canEditGame(user.role, user.company_id, g.company_id);
           return (
@@ -233,7 +238,7 @@ export default async function JuegosPage({
             </div>
           );
         })}
-      </div>
+      </DealGrid>
     </div>
   );
 }

@@ -3,7 +3,8 @@
 import { useRef, useState } from "react";
 import { colors } from "@/lib/theme";
 
-export default function ConfirmDeleteButton({ children }: { children: string }) {
+/** Botón de enviar que pide un segundo clic antes de una acción destructiva. */
+export default function ConfirmDeleteButton({ children, confirmLabel = "¿Confirmar?" }: { children: string; confirmLabel?: string }) {
   const [confirming, setConfirming] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -33,7 +34,7 @@ export default function ConfirmDeleteButton({ children }: { children: string }) 
         padding: confirming ? "6px 12px" : 0,
       }}
     >
-      {confirming ? "¿Confirmar?" : children}
+      {confirming ? confirmLabel : children}
     </button>
   );
 }

@@ -1,0 +1,751 @@
+/* ==========================================================================
+   Lenguaje "pase de misión": split-flap, perforación, sello e impresión.
+   Todo lo que está aquí es el estado FINAL y legible; los scripts (src/components/motion)
+   solo animan hacia él. Con prefers-reduced-motion nada se mueve (bloque del final).
+   ========================================================================== */
+
+/* --- Entrada a prueba de fallos -------------------------------------------
+   Lo que tiene coreografía de entrada nace oculto para no mostrar un fotograma del estado
+   final antes de que el script lo reinicie. Si el script no llega (sin JS, error, red muy
+   lenta) este failsafe lo muestra solo a los 1,2 s. El script quita la clase al tomar el
+   control (claimEntrance en components/motion/gsap.ts). */
+@keyframes motion-failsafe {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-pending {
+    animation: motion-failsafe 0.35s ease 1.2s both;
+  }
+}
+
+/* --- Celdas split-flap ----------------------------------------------------- */
+.flap {
+  display: inline-block;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.flap-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.flap-cells {
+  display: inline-flex;
+  gap: 0.12em;
+}
+
+.flap-cell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.18em;
+  height: 1.5em;
+  padding: 0 0.06em;
+  border-radius: 0.24em;
+  transform-origin: 50% 50%;
+}
+
+/* La bisagra: la línea donde se parte la paleta de un tablero real. */
+.flap-cell::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.14;
+}
+
+.flap--light .flap-cell {
+  background: #eaf8fd;
+  color: #0c5c7d;
+  box-shadow: inset 0 -1px 0 rgba(12, 92, 125, 0.1);
+}
+
+.flap--dark .flap-cell {
+  background: #1a2a32;
+  color: #80dcff;
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Mientras gira, el carácter real se esconde y se ve el de paso (data-show). Así el script
+   nunca toca los nodos de texto que maneja React. */
+.flap-cell[data-flipping] .flap-char {
+  visibility: hidden;
+}
+
+.flap-cell[data-flipping]::after {
+  content: attr(data-show);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* --- Fondo guilloche ------------------------------------------------------- */
+.guilloche {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.guilloche svg {
+  position: absolute;
+  aspect-ratio: 1;
+  fill: none;
+}
+
+.guilloche path {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 0.7;
+}
+
+.guilloche-a {
+  width: min(1100px, 170vw);
+  left: 50%;
+  top: 62%;
+  translate: -50% -50%;
+  opacity: 0.2;
+  animation: guillocheSpin 200s linear infinite;
+}
+
+.guilloche-b {
+  width: min(760px, 130vw);
+  left: -18%;
+  top: -22%;
+  opacity: 0.22;
+  animation: guillocheSpin 260s linear infinite reverse;
+}
+
+@media (min-width: 860px) {
+  /* Detrás del pase, como el sello de agua de un billete. */
+  .guilloche-a {
+    left: calc(50% + 260px);
+    top: 50%;
+  }
+}
+
+@keyframes guillocheSpin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* --- Pantallas de acceso (entrada del participante y login admin) ---------- */
+.access {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: linear-gradient(160deg, #eafbff 0%, #ffffff 60%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px 28px;
+}
+
+.access-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.access-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  width: 100%;
+}
+
+.access-brand h1 {
+  text-wrap: balance;
+}
+
+/* Login admin: el tablero va en la columna de la marca en escritorio y, en el celular,
+   después del formulario (primero la tarea). */
+.access-board {
+  width: 100%;
+  order: 3;
+}
+
+@media (min-width: 860px) {
+  .access-card--board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    grid-template-areas:
+      "brand side"
+      "board side";
+    grid-template-rows: 1fr auto;
+    column-gap: 72px;
+    row-gap: 26px;
+  }
+
+  .access-card--board .access-brand {
+    grid-area: brand;
+    align-self: end;
+  }
+
+  .access-card--board .access-board {
+    grid-area: board;
+    align-self: start;
+  }
+
+  .access-card--board .access-side {
+    grid-area: side;
+    align-self: center;
+  }
+}
+
+.access-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 860px) {
+  .access-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 72px;
+    max-width: 900px;
+  }
+
+  .access-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .access-side {
+    flex: 0 0 380px;
+    max-width: 380px;
+  }
+}
+
+/* --- El pase --------------------------------------------------------------- */
+.pass-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* La ranura de la impresora: solo se ve mientras el pase sale. */
+.pass-slot {
+  position: absolute;
+  z-index: 2;
+  top: -7px;
+  left: -12px;
+  right: -12px;
+  height: 14px;
+  border-radius: 8px;
+  background: linear-gradient(#24363f, #0f181d);
+  box-shadow: 0 8px 16px rgba(15, 24, 29, 0.22);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* La sombra va en un envoltorio con drop-shadow: la del pase la cortaría su propia máscara. */
+.pass-tilt {
+  filter: drop-shadow(0 24px 36px rgba(12, 92, 125, 0.16)) drop-shadow(0 3px 6px rgba(12, 92, 125, 0.08));
+}
+
+.pass {
+  --perf-y: -40px;
+  --notch: 11px;
+  position: relative;
+  background: #fff;
+  border-radius: 22px;
+  overflow: hidden;
+  /* Dos muescas semicirculares a la altura de la perforación (--perf-y lo mide el script;
+     por defecto quedan fuera del pase y no se ven). */
+  -webkit-mask:
+    radial-gradient(circle var(--notch) at 0 var(--perf-y), #0000 97%, #000 100%),
+    radial-gradient(circle var(--notch) at 100% var(--perf-y), #0000 97%, #000 100%);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle var(--notch) at 0 var(--perf-y), #0000 97%, #000 100%),
+    radial-gradient(circle var(--notch) at 100% var(--perf-y), #0000 97%, #000 100%);
+  mask-composite: intersect;
+}
+
+/* Reflejo que sigue al puntero (las variables --fx/--fy las escribe el script). */
+.pass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at calc(var(--fx, 0.5) * 100%) calc(var(--fy, 0.3) * 100%),
+    rgba(128, 220, 255, 0.16),
+    transparent 45%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pass-wrap:hover .pass::after {
+    opacity: 1;
+  }
+}
+
+.pass-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 20px;
+  /* Con la marca de una empresa (--brand-*, lib/brand-palette.ts) toma su botón; el texto
+     usa el color pensado para ir sobre ese botón, así el contraste queda garantizado. */
+  background: linear-gradient(135deg, var(--brand-button, #3bc8f3), var(--brand-strong, #1c99ca));
+  color: var(--brand-button-text, #fff);
+}
+
+.pass-kicker {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Holograma de seguridad: el ángulo del brillo sigue al puntero. */
+.pass-holo {
+  flex-shrink: 0;
+  width: 30px;
+  height: 21px;
+  border-radius: 6px;
+  background: conic-gradient(
+    from calc(var(--fx, 0.35) * 360deg) at calc(var(--fx, 0.35) * 100%) calc(var(--fy, 0.4) * 100%),
+    #80dcff,
+    #ffffff,
+    #3bc8f3,
+    #e3f6fc,
+    #1c99ca,
+    #80dcff
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+    0 1px 3px rgba(12, 92, 125, 0.25);
+}
+
+.pass-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 22px 20px;
+}
+
+.pass-perf {
+  height: 0;
+  margin: 0 18px;
+  border-top: 2px dashed #cfeffb;
+}
+
+.pass-stub {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 22px 20px;
+  background: #f5fcfe;
+}
+
+/* --- Sello ----------------------------------------------------------------- */
+.stamp {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  right: 16px;
+  pointer-events: none;
+  transform: rotate(-9deg);
+  padding: 7px 12px 6px;
+  border: 2.5px solid currentColor;
+  border-radius: 9px;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.92),
+    inset 0 0 0 3.5px currentColor;
+  font-family: "Cal Sans", sans-serif;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.72);
+  mix-blend-mode: multiply;
+  filter: url(#stamp-ink);
+}
+
+.stamp--ink {
+  color: #1c99ca;
+}
+
+.stamp--danger {
+  color: #c0392b;
+}
+
+.stamp--brand {
+  color: var(--brand-accent, #1c99ca);
+}
+
+/* Misión cumplida: más grande y en la esquina del cuerpo, sobre el logo. */
+.stamp--done {
+  top: 14px;
+  right: 12px;
+  font-size: 19px;
+  padding: 8px 14px 7px;
+}
+
+/* --- Campo de código split-flap -------------------------------------------- */
+.code-field {
+  --pad: 12px;
+  --gap: 0.5ch;
+  position: relative;
+  height: 54px;
+  border: 1.5px solid #cfeffb;
+  border-radius: 12px;
+  background: #fff;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 17px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.code-field:focus-within {
+  border-color: #3bc8f3;
+  box-shadow: 0 0 0 4px rgba(59, 200, 243, 0.14);
+}
+
+.code-cells,
+.code-flaps {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: var(--pad);
+  display: flex;
+  pointer-events: none;
+}
+
+.code-flaps {
+  z-index: 2;
+}
+
+.code-cell,
+.code-flaps .code-flap {
+  width: calc(1ch + var(--gap));
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+}
+
+.code-cell::before {
+  content: "";
+  display: block;
+  height: 100%;
+  margin: 0 1.5px;
+  border-radius: 6px;
+  background: #f1fafd;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.code-cell.is-filled::before {
+  background: #dcf3fb;
+}
+
+.code-field:focus-within .code-cell.is-next::before {
+  box-shadow: inset 0 -2px 0 #3bc8f3;
+}
+
+.code-flaps .code-flap {
+  display: block;
+  visibility: hidden;
+  border-radius: 0;
+  color: #0c5c7d;
+}
+
+.code-flaps .code-flap::before {
+  left: 1.5px;
+  right: 1.5px;
+  z-index: 1;
+}
+
+.code-flaps .code-flap[data-flipping] {
+  visibility: visible;
+}
+
+.code-flaps .code-flap[data-flipping]::after {
+  inset: 0 1.5px;
+  border-radius: 6px;
+  background: #c9edf9;
+}
+
+.code-field .code-input {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0 var(--pad) 0 calc(var(--pad) + var(--gap) / 2);
+  font: inherit;
+  letter-spacing: var(--gap);
+  text-transform: uppercase;
+  color: #0f181d;
+}
+
+/* El anillo de foco lo pinta el campo completo (arriba), no el input interno. */
+.code-field .code-input:focus-visible {
+  outline: none !important;
+}
+
+.code-field .code-input::placeholder {
+  color: #a9c3cc;
+}
+
+/* --- Tablero de salidas ---------------------------------------------------- */
+.board {
+  width: 100%;
+  padding: 16px 16px 12px;
+  border-radius: 18px;
+  background: #0f181d;
+  box-shadow: 0 24px 50px rgba(15, 24, 29, 0.2);
+  font-size: 10.5px;
+}
+
+.board-head,
+.board-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #5c7680;
+}
+
+.board-head {
+  margin-bottom: 12px;
+  font-size: 10.5px;
+}
+
+.board-head strong {
+  color: #80dcff;
+  font-weight: 600;
+}
+
+.board-note {
+  margin-top: 12px;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: space-between;
+  column-gap: 10px;
+  row-gap: 6px;
+}
+
+.board-col {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: #5c7680;
+}
+
+.board-row {
+  display: contents;
+}
+
+@media (min-width: 400px) {
+  .board {
+    font-size: 11.5px;
+  }
+}
+
+@media (min-width: 860px) {
+  .board {
+    font-size: 13px;
+    padding: 18px 20px 14px;
+  }
+}
+
+/* --- Estadísticas en tablero (dashboard) ----------------------------------- */
+.stats-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px 18px;
+  padding: 16px 20px;
+  margin-bottom: 22px;
+  border-radius: 16px;
+  background: #0f181d;
+  font-size: 18px;
+}
+
+.stats-board dt {
+  margin-bottom: 7px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7c93a0;
+}
+
+.stats-board dd {
+  margin: 0;
+}
+
+/* --- Rejilla de tickets (dashboard, biblioteca, juegos) -------------------- */
+.ticket-slot {
+  filter: drop-shadow(0 10px 22px rgba(12, 92, 125, 0.09));
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+.ticket-slot:hover {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 18px 30px rgba(12, 92, 125, 0.15));
+}
+
+.ticket {
+  --perf-y: calc(100% - 57px);
+  --notch: 9px;
+  position: relative;
+  height: 100%;
+  background: #fff;
+  border-radius: 18px;
+  -webkit-mask:
+    radial-gradient(circle var(--notch) at 0 var(--perf-y), #0000 97%, #000 100%),
+    radial-gradient(circle var(--notch) at 100% var(--perf-y), #0000 97%, #000 100%);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle var(--notch) at 0 var(--perf-y), #0000 97%, #000 100%),
+    radial-gradient(circle var(--notch) at 100% var(--perf-y), #0000 97%, #000 100%);
+  mask-composite: intersect;
+}
+
+/* Luz que sigue al cursor dentro del ticket (--lx/--ly desde DealGrid). */
+.ticket::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    260px circle at var(--lx, 50%) var(--ly, 0%),
+    rgba(59, 200, 243, 0.1),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ticket-slot:hover .ticket::after {
+    opacity: 1;
+  }
+}
+
+.ticket-perf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  height: 40px;
+  padding-top: 12px;
+  border-top: 2px dashed #d6f0fa;
+}
+
+/* Los hijos de la tarjeta quedan por encima del reflejo. */
+.ticket > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Menú lateral: píldora del ítem activo --------------------------------- */
+.nav-pill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-radius: 10px;
+  background: #3bc8f3;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-pill-ready .nav-pill {
+  opacity: 1;
+}
+
+/* Con la píldora ya puesta, el enlace activo deja de pintar su propio fondo. */
+.nav-pill-ready .btn-navlink-active {
+  background: transparent !important;
+  position: relative;
+}
+
+.nav-pill-ready .btn-navlink {
+  position: relative;
+}
+
+/* --- Movimiento reducido --------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .guilloche svg {
+    animation: none;
+  }
+
+  .ticket-slot,
+  .code-field,
+  .code-cell::before,
+  .pass::after {
+    transition: none;
+  }
+
+  .ticket-slot:hover {
+    transform: none;
+  }
+}
+
+.ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}

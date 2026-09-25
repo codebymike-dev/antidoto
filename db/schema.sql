@@ -282,3 +282,20 @@ CREATE TABLE IF NOT EXISTS company_branding (
   updated_by      INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
   updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- --- Archivo ---------------------------------------------------------------------
+-- Archivar esconde sin borrar: los resultados de los participantes se conservan y se
+-- puede restaurar. Tablas aparte y no columnas nuevas: el esquema solo usa CREATE IF NOT EXISTS.
+
+-- Una empresa archivada sale de las listas, sus códigos dejan de aceptar participantes
+-- y su admin ya no puede entrar al portal.
+CREATE TABLE IF NOT EXISTS company_archive (
+  company_id  INTEGER PRIMARY KEY REFERENCES companies(id) ON DELETE CASCADE,
+  archived_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Una actividad quitada a una empresa: su código deja de funcionar y sale de los reportes.
+CREATE TABLE IF NOT EXISTS activity_code_archive (
+  activity_code_id INTEGER PRIMARY KEY REFERENCES activity_codes(id) ON DELETE CASCADE,
+  archived_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);

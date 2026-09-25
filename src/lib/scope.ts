@@ -28,3 +28,10 @@ export function visibleGamesFilter(role: Role, companyId: number | null): Compan
 export function canEditGame(role: Role, companyId: number | null, gameCompanyId: number | null): boolean {
   return role === "super" || (gameCompanyId !== null && gameCompanyId === companyId);
 }
+
+/**
+ * Códigos que siguen en uso (alias `ac`): ni el código ni su empresa están archivados.
+ * Lo archivado no se borra, solo deja de contar en listas, reportes y en el ingreso.
+ */
+export const LIVE_CODE = `NOT EXISTS (SELECT 1 FROM activity_code_archive xa WHERE xa.activity_code_id = ac.id)
+  AND NOT EXISTS (SELECT 1 FROM company_archive xc WHERE xc.company_id = ac.company_id)`;

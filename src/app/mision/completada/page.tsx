@@ -8,6 +8,7 @@ import Blobs from "@/components/Blobs";
 import { getCompanyBrand } from "@/lib/company-brand";
 import { brandCssVars, brandPalette } from "@/lib/brand-palette";
 import BrandLogo, { WithAntidoto } from "@/components/BrandLogo";
+import MissionPass from "@/components/motion/MissionPass";
 
 export const dynamic = "force-dynamic";
 
@@ -38,46 +39,42 @@ export default async function MisionCompletadaPage() {
       }}
     >
       <Blobs colors={brand ? [pal.soft, pal.graphic, pal.button] : undefined} />
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          width: "100%",
-          maxWidth: 440,
-          background: "#fff",
-          borderRadius: 20,
-          padding: "34px 28px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 14,
-          textAlign: "center",
-          boxShadow: colors.cardShadow,
-          borderTop: `4px solid ${pal.soft}`,
-        }}
+      {/* El mismo pase con el que entró, ahora sellado: cierra la historia de la entrada. */}
+      <MissionPass
+        kicker="Misión cumplida"
+        style={{ position: "relative", zIndex: 1, maxWidth: 440 }}
+        stamp={{ label: "Cumplida", tone: "brand", playKey: 1, delay: 1.2, className: "stamp--done" }}
+        stub={
+          <form action={leaveActivity} style={{ display: "flex", justifyContent: "center" }}>
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{ ...primaryButton, marginTop: 0, boxShadow: pal.buttonShadow, height: 50, padding: "0 30px", fontSize: 15 }}
+            >
+              Volver al inicio
+            </button>
+          </form>
+        }
       >
-        {brand ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <BrandLogo brand={brand} surface="claro" height={64} />
-            <WithAntidoto surface="claro" size={16} />
-          </div>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={LOGO_SRC} alt="Antídoto" style={{ height: 90 }} />
-        )}
-        <h2 style={{ ...calSans, fontSize: 26, margin: 0, color: colors.ink }}>
-          ¡Gran trabajo, {p.participant_name}!
-        </h2>
-        <p style={{ fontSize: 14.5, lineHeight: 1.6, color: colors.inkSoft, margin: 0 }}>
-          Completaste &quot;{p.mission_title}&quot;. Tu equipo {p.empresa} va en {p.company_avance}% de avance
-          colectivo.
-        </p>
-        <form action={leaveActivity}>
-          <button type="submit" className="btn-primary" style={{ ...primaryButton, boxShadow: pal.buttonShadow, height: 50, padding: "0 30px", fontSize: 15 }}>
-            Volver al inicio
-          </button>
-        </form>
-      </div>
+        <div data-pass-item style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center", padding: "8px 0 4px" }}>
+          {brand ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <BrandLogo brand={brand} surface="claro" height={64} />
+              <WithAntidoto surface="claro" size={16} />
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={LOGO_SRC} alt="Antídoto" style={{ height: 90 }} />
+          )}
+          <h2 style={{ ...calSans, fontSize: 26, margin: 0, color: colors.ink }}>
+            ¡Gran trabajo, {p.participant_name}!
+          </h2>
+          <p style={{ fontSize: 14.5, lineHeight: 1.6, color: colors.inkSoft, margin: 0 }}>
+            Completaste &quot;{p.mission_title}&quot;. Tu equipo {p.empresa} va en {p.company_avance}% de avance
+            colectivo.
+          </p>
+        </div>
+      </MissionPass>
     </div>
   );
 }

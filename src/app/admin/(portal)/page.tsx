@@ -1,10 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { listMissions } from "@/lib/queries";
-import { duplicateMission } from "@/lib/actions";
 import { colors, calSans } from "@/lib/theme";
-import { filledButton, card } from "@/lib/styles";
-import { SearchIcon, UsersIcon, GridIcon, CopyIcon, ArrowRightIcon, InboxIcon } from "@/components/icons";
+import { filledButton } from "@/lib/styles";
+import { SearchIcon, UsersIcon, GridIcon, ArrowRightIcon } from "@/components/icons";
+import DealGrid from "@/components/motion/DealGrid";
+import FlapText from "@/components/motion/FlapText";
+import SplitFlap from "@/components/motion/SplitFlap";
+import StatsBoard from "@/components/motion/StatsBoard";
+
+// Las cifras y los tickets solo giran la primera vez que se abre el tablero en la sesión.
+const INTRO_KEY = "antidoto:tablero-visto";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +21,18 @@ export default async function ActividadesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const user = (await currentUser())!;
+  // El admin de empresa entra directo a su empresa.
+  if (user.role === "empresa") redirect(`/admin/empresas/${user.company_id}`);
   const { q = "" } = await searchParams;
   const missions = await listMissions(user, q);
+
+  // Totales de lo que se ve (si hay búsqueda, de lo filtrado). El avance se pondera por
+  // participantes: una actividad con 3 personas no pesa lo mismo que una con 300.
+  const grupos = missions.reduce((n, m) => n + m.groupsCount, 0);
+  const participantes = missions.reduce((n, m) => n + m.totalParticipantes, 0);
+  const avance = participantes
+    ? Math.round(missions.reduce((n, m) => n + m.avgAvance * m.totalParticipantes, 0) / participantes)
+    : 0;
 
   return (
     <div>
@@ -35,14 +52,26 @@ export default async function ActividadesPage({
             Misiones activas y el avance de cada grupo participante.
           </p>
         </div>
-        <Link
-          href="/admin/config"
-          className="btn-filled"
-          style={{ ...filledButton, display: "inline-flex", alignItems: "center" }}
-        >
-          ＋ Nueva actividad
-        </Link>
+        {user.role === "super" && (
+          <Link
+            href="/admin/asignar"
+            className="btn-filled"
+            style={{ ...filledButton, display: "inline-flex", alignItems: "center" }}
+          >
+            ＋ Asignar actividad
+          </Link>
+        )}
       </div>
+
+      <StatsBoard
+        introKey={INTRO_KEY}
+        stats={[
+          { label: "Actividades", value: String(missions.length) },
+          { label: "Grupos", value: String(grupos) },
+          { label: "Participantes", value: String(participantes) },
+          { label: "Avance promedio", value: `${avance}%` },
+        ]}
+      />
 
       <form style={{ marginBottom: 20, maxWidth: 320 }}>
         <div
@@ -82,131 +111,81 @@ export default async function ActividadesPage({
             margin: "48px auto",
           }}
         >
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: 18,
-              background: colors.accentTint,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: colors.accent,
-            }}
-          >
-            <InboxIcon />
+          <div style={{ fontSize: 13, padding: "14px 16px", borderRadius: 14, background: "#fff", boxShadow: colors.cardShadowSmall }}>
+            <SplitFlap text={q ? "SIN RESULTADOS" : "SIN ACTIVIDADES"} />
           </div>
           <h2 style={{ ...calSans, fontSize: 17, margin: 0, color: colors.ink }}>
             {q ? "No hay actividades que coincidan" : "Aún no tienes actividades"}
           </h2>
           <p style={{ fontSize: 13.5, color: colors.muted, margin: 0, lineHeight: 1.5 }}>
             {q
-              ? "Probá con otro término de búsqueda o creá un código nuevo desde Configuración."
-              : "Creá un código desde Configuración para poner en marcha tu primer reto o misión."}
+              ? "Prueba con otro término de búsqueda."
+              : "Asigna una actividad a una empresa desde Empresas o desde la Biblioteca."}
           </p>
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
+      <DealGrid storageKey={INTRO_KEY}>
         {missions.map((m) => (
-          <div key={m.id} className="mission-card-link" style={{ ...card, padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-            <Link href={`/admin/actividades/${m.id}`} style={{ display: "flex", flexDirection: "column", gap: 12, color: "inherit" }}>
-              <span
-                style={{
-                  alignSelf: "flex-start",
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  color: colors.accentDark,
-                  letterSpacing: 0.5,
-                  background: colors.accentTint,
-                  padding: "4px 10px",
-                  borderRadius: 999,
-                }}
-              >
-                {m.tag}
-              </span>
-              <h3 style={{ ...calSans, fontSize: 17, margin: 0, color: colors.ink }}>{m.title}</h3>
-              <div style={{ display: "flex", gap: 14, fontSize: 12.5, color: colors.muted }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <GridIcon />
-                  {m.groupsCount} grupos
-                </span>
-                <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <UsersIcon />
-                  {m.totalParticipantes} participantes
-                </span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 11.5,
-                    color: colors.muted,
-                    fontWeight: 600,
-                  }}
-                >
-                  <span>Avance promedio</span>
-                  <span style={{ color: colors.ink, fontWeight: 700 }}>{m.avgAvance}%</span>
-                </div>
-                <div style={{ height: 7, background: colors.accentTint, borderRadius: 8, overflow: "hidden" }}>
-                  <div
-                    style={{
-                      height: "100%",
-                      background: colors.accentLight,
-                      borderRadius: 8,
-                      width: `${m.avgAvance}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </Link>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderTop: `1px solid ${colors.accentTint}`,
-                paddingTop: 12,
-              }}
-            >
+          <div key={m.id} className="ticket-slot">
+            <div className="ticket" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
               <Link
                 href={`/admin/actividades/${m.id}`}
-                className="btn-text"
-                style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, fontWeight: 700, color: colors.accent }}
+                style={{ display: "flex", flexDirection: "column", gap: 12, color: "inherit", textDecoration: "none", flex: 1 }}
               >
-                Ver detalle
-                <ArrowRightIcon />
-              </Link>
-              {user.role === "super" && (
-                <form action={duplicateMission}>
-                  <input type="hidden" name="missionId" value={m.id} />
-                  <button
-                    type="submit"
-                    className="btn-icon"
-                    aria-label="Duplicar actividad"
-                    title="Duplicar actividad"
+                <FlapText text={m.tag} style={{ alignSelf: "flex-start", fontSize: 12 }} />
+                <h3 style={{ ...calSans, fontSize: 17, margin: 0, color: colors.ink }}>{m.title}</h3>
+                <div style={{ display: "flex", gap: 14, fontSize: 12.5, color: colors.muted }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <GridIcon />
+                    {m.groupsCount} grupos
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <UsersIcon />
+                    {m.totalParticipantes} participantes
+                  </span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: "auto" }}>
+                  <div
                     style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      border: `1px solid ${colors.border}`,
-                      background: "none",
-                      cursor: "pointer",
-                      color: colors.muted,
                       display: "flex",
+                      justifyContent: "space-between",
                       alignItems: "center",
-                      justifyContent: "center",
+                      fontSize: 11.5,
+                      color: colors.muted,
+                      fontWeight: 600,
                     }}
                   >
-                    <CopyIcon />
-                  </button>
-                </form>
-              )}
+                    <span>Avance promedio</span>
+                    <FlapText text={`${m.avgAvance}%`} style={{ fontSize: 11 }} />
+                  </div>
+                  <div style={{ height: 7, background: colors.accentTint, borderRadius: 8, overflow: "hidden" }}>
+                    <div
+                      data-bar={m.avgAvance}
+                      style={{
+                        height: "100%",
+                        background: colors.buttonGradient,
+                        borderRadius: 8,
+                        width: `${m.avgAvance}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </Link>
+              <div className="ticket-perf">
+                <Link
+                  href={`/admin/actividades/${m.id}`}
+                  className="btn-text"
+                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, fontWeight: 700, color: colors.accent }}
+                >
+                  Ver detalle
+                  <ArrowRightIcon />
+                </Link>
+              </div>
             </div>
           </div>
         ))}
-      </div>
+      </DealGrid>
     </div>
   );
 }

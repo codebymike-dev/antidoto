@@ -1,135 +1,130 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { joinActivity, type JoinState } from "@/lib/actions";
 import { colors, calSans } from "@/lib/theme";
 import { fieldLabel, fieldInput, primaryButton } from "@/lib/styles";
-import Blobs from "./Blobs";
 import LogoMark from "./LogoMark";
+import CodeField from "./motion/CodeField";
+import MissionPass from "./motion/MissionPass";
+import MotionHeading from "./motion/MotionHeading";
 import PolicyModal from "./PolicyModal";
 
-export default function LandingScreen({ policyText, termsText }: { policyText: string; termsText: string }) {
+export default function LandingScreen({
+  policyText,
+  termsText,
+  backdrop,
+}: {
+  policyText: string;
+  termsText: string;
+  /** Fondo guilloche, calculado en el servidor (ver PassBackdrop). */
+  backdrop?: ReactNode;
+}) {
   const [state, formAction, pending] = useActionState<JoinState, FormData>(joinActivity, null);
   const [policyTab, setPolicyTab] = useState<"privacidad" | "terminos" | null>(null);
+  // Cada envío deja caer el sello otra vez: "Validando" mientras el servidor responde y
+  // "Revisa" si vuelve con un error. En éxito el servidor redirige a /mision.
+  const [attempt, setAttempt] = useState(0);
+  // React 19 reinicia el <form> al terminar la acción, también cuando vuelve con error, y el
+  // participante tenía que escribir todo de nuevo. Lo enviado pasa a ser el valor por
+  // defecto: el reinicio devuelve los campos a lo que tecleó en vez de vaciarlos.
+  const [draft, setDraft] = useState({ name: "", code: "", accepted: false });
+  const stampLabel = pending ? "Validando" : state?.error ? "Revisa" : null;
 
   return (
-    <div
-      style={{
-        position: "relative",
-        minHeight: "100vh",
-        overflow: "hidden",
-        background: colors.pageGradient,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "32px 20px",
-      }}
-    >
-      <style>{`
-        .login-card {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 34px;
-          width: 100%;
-          max-width: 420px;
-        }
-        .login-brand {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-          text-align: center;
-        }
-        .login-right {
-          display: contents;
-        }
-        @media (min-width: 860px) {
-          .login-card {
-            flex-direction: row;
-            align-items: flex-start;
-            gap: 64px;
-            max-width: 780px;
-          }
-          .login-brand {
-            flex: 1 1 auto;
-            align-items: flex-start;
-            text-align: left;
-          }
-          .login-right {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-            flex: 0 0 360px;
-            max-width: 360px;
-          }
-        }
-      `}</style>
-      <Blobs />
-      <div className="login-card" style={{ position: "relative", zIndex: 1 }}>
-        <div className="login-brand">
+    <div className="access">
+      {backdrop}
+      <div className="access-card">
+        <div className="access-brand">
           <LogoMark height={38} />
-          <h1 style={{ ...calSans, fontSize: 34, lineHeight: 1.15, margin: 0, color: colors.ink }}>
+          <MotionHeading style={{ ...calSans, fontSize: 36, lineHeight: 1.12, margin: 0, color: colors.ink }}>
             Tu misión interactiva empieza aquí
-          </h1>
-          <p style={{ fontSize: 15, lineHeight: 1.5, color: colors.inkSoft, margin: 0 }}>
+          </MotionHeading>
+          <p style={{ fontSize: 15, lineHeight: 1.5, color: colors.inkSoft, margin: 0, maxWidth: 400 }}>
             Ingresa tu nombre y el código de tu actividad para unirte a la misión de tu equipo.
           </p>
         </div>
 
-        <div className="login-right">
+        <div className="access-side">
           <form
             action={formAction}
-            style={{
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
+            onSubmit={(e) => {
+              const data = new FormData(e.currentTarget);
+              setDraft({
+                name: String(data.get("name") ?? ""),
+                code: String(data.get("code") ?? ""),
+                accepted: data.get("acceptedPolicy") !== null,
+              });
+              setAttempt((n) => n + 1);
             }}
+            style={{ width: "100%" }}
           >
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label htmlFor="name" style={fieldLabel}>
-                Tu nombre
-              </label>
-              <input id="name" name="name" placeholder="Ej. Camila Ríos" style={fieldInput} required />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label htmlFor="code" style={fieldLabel}>
-                Código de actividad
-              </label>
-              <input
-                id="code"
-                name="code"
-                placeholder="Ej. RP-ACME-7KX9QM"
-                style={{ ...fieldInput, textTransform: "uppercase" }}
-                required
-              />
-            </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-              <input id="acceptedPolicy" name="acceptedPolicy" type="checkbox" style={{ marginTop: 3 }} />
-              <label htmlFor="acceptedPolicy" style={{ fontSize: 12.5, color: colors.muted, lineHeight: 1.4 }}>
-                Acepto la{" "}
-                <button type="button" onClick={() => setPolicyTab("privacidad")} className="btn-text" style={linkButton}>
-                  política de tratamiento de datos
-                </button>{" "}
-                y los{" "}
-                <button type="button" onClick={() => setPolicyTab("terminos")} className="btn-text" style={linkButton}>
-                  términos y condiciones
-                </button>
-                .
-              </label>
-            </div>
-            <button type="submit" disabled={pending} className="btn-primary" style={{ ...primaryButton, opacity: pending ? 0.7 : 1 }}>
-              {pending ? "Validando..." : "Comenzar mi misión"}
-            </button>
-            {state?.error && (
-              <span role="alert" style={{ fontSize: 12.5, color: colors.danger, fontWeight: 600 }}>
-                {state.error}
-              </span>
-            )}
+            <MissionPass
+              kicker="Pase de misión"
+              stamp={{
+                label: stampLabel,
+                tone: pending ? "ink" : "danger",
+                playKey: `${attempt}-${pending ? "p" : "r"}`,
+              }}
+              stub={
+                <>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                    <input
+                      id="acceptedPolicy"
+                      name="acceptedPolicy"
+                      type="checkbox"
+                      defaultChecked={draft.accepted}
+                      style={{ marginTop: 3 }}
+                    />
+                    <label htmlFor="acceptedPolicy" style={{ fontSize: 12.5, color: colors.muted, lineHeight: 1.4 }}>
+                      Acepto la{" "}
+                      <button type="button" onClick={() => setPolicyTab("privacidad")} className="btn-text" style={linkButton}>
+                        política de tratamiento de datos
+                      </button>{" "}
+                      y los{" "}
+                      <button type="button" onClick={() => setPolicyTab("terminos")} className="btn-text" style={linkButton}>
+                        términos y condiciones
+                      </button>
+                      .
+                    </label>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="btn-primary"
+                    style={{ ...primaryButton, marginTop: 0, opacity: pending ? 0.7 : 1 }}
+                  >
+                    {pending ? "Validando..." : "Comenzar mi misión"}
+                  </button>
+                </>
+              }
+            >
+              <div data-pass-item style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label htmlFor="name" style={fieldLabel}>
+                  Tu nombre
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  placeholder="Ej. Camila Ríos"
+                  defaultValue={draft.name}
+                  style={fieldInput}
+                  required
+                />
+              </div>
+              <div data-pass-item style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label htmlFor="code" style={fieldLabel}>
+                  Código de actividad
+                </label>
+                <CodeField id="code" name="code" placeholder="RP-ACME-7KX9QM" defaultValue={draft.code} required />
+              </div>
+              {state?.error && !pending && (
+                <span role="alert" style={{ fontSize: 12.5, color: colors.danger, fontWeight: 600 }}>
+                  {state.error}
+                </span>
+              )}
+            </MissionPass>
           </form>
 
           <Link href="/admin/login" className="portal-link" style={{ fontSize: 13, color: colors.muted }}>

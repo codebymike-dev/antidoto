@@ -2,7 +2,7 @@ import "server-only";
 import { all, one } from "./db";
 import type { AdminUser } from "./auth";
 import type { Estado } from "./types";
-import { companyFilter } from "./scope";
+import { companyFilter, LIVE_CODE } from "./scope";
 import { isExpired } from "./expiry";
 
 export interface GroupRow {
@@ -44,6 +44,10 @@ function scopeArgs(user: AdminUser): { clause: string; args: number[] } {
   return companyFilter(user.role, user.company_id);
 }
 
+/**
+ * Actividades jugables (las de la biblioteca) con su uso. Las del prototipo, sin escena,
+ * no aparecen; tampoco cuentan los códigos ni las empresas archivadas.
+ */
 export async function listMissions(user: AdminUser, search = ""): Promise<MissionOverview[]> {
   const { clause, args } = scopeArgs(user);
   const rows = await all<{
@@ -60,7 +64,8 @@ export async function listMissions(user: AdminUser, search = ""): Promise<Missio
             COUNT(p.id) AS total_participantes,
             CAST(COALESCE(AVG(p.avance), 0) AS INTEGER) AS avg_avance
      FROM missions m
-     LEFT JOIN activity_codes ac ON ac.mission_id = m.id ${clause}
+     JOIN mission_experiences me ON me.mission_id = m.id
+     LEFT JOIN activity_codes ac ON ac.mission_id = m.id AND ${LIVE_CODE} ${clause}
      LEFT JOIN participations p ON p.activity_code_id = ac.id
      WHERE m.archived_at IS NULL
        AND (? = '' OR LOWER(m.title) LIKE '%' || LOWER(?) || '%')
@@ -108,7 +113,7 @@ export async function listGroups(missionId: string, user: AdminUser): Promise<Gr
      FROM activity_codes ac
      JOIN companies c ON c.id = ac.company_id
      LEFT JOIN participations p ON p.activity_code_id = ac.id
-     WHERE ac.mission_id = ? ${clause}
+     WHERE ac.mission_id = ? AND ${LIVE_CODE} ${clause}
      GROUP BY ac.id
      ORDER BY avance DESC`,
     [missionId, ...args]
@@ -131,7 +136,7 @@ export async function getTrend(missionId: string, user: AdminUser): Promise<numb
             CAST(COALESCE(AVG(p.avance), 0) AS INTEGER) AS avance
      FROM participations p
      JOIN activity_codes ac ON ac.id = p.activity_code_id
-     WHERE ac.mission_id = ? ${clause}
+     WHERE ac.mission_id = ? AND ${LIVE_CODE} ${clause}
        AND p.started_at >= datetime('now', '-42 days')
      GROUP BY weeks_ago`,
     [missionId, ...args]
@@ -160,6 +165,8 @@ export async function listParticipants(activityCodeId: number, limit = 3) {
 
 export interface CodeMatch {
   activity_code_id: number;
+  /** El código o su empresa están archivados: ya no acepta participantes. */
+  archivado: boolean;
   codigo: string;
   estado: Estado;
   expira: string | null;
@@ -174,8 +181,9 @@ export interface CodeMatch {
 
 /** Usado por la landing: valida el código que teclea el participante. */
 export async function findByCode(code: string): Promise<CodeMatch | null> {
-  const row = await one<Omit<CodeMatch, "estado"> & { estado: string }>(
+  const row = await one<Omit<CodeMatch, "estado" | "archivado"> & { estado: string; vigente: number }>(
     `SELECT ac.id AS activity_code_id, ac.code AS codigo, ac.estado, ac.expires_at AS expira,
+            (${LIVE_CODE}) AS vigente,
             c.name AS empresa, m.id AS mission_id, m.tag, m.title, m.description,
             COUNT(p.id) AS participantes,
             CAST(COALESCE(AVG(p.avance), 0) AS INTEGER) AS avance
@@ -189,8 +197,10 @@ export async function findByCode(code: string): Promise<CodeMatch | null> {
   );
   if (!row) return null;
 
+  const { vigente, ...rest } = row;
   return {
-    ...row,
+    ...rest,
+    archivado: Number(vigente) !== 1,
     participantes: Number(row.participantes),
     avance: Number(row.avance),
     estado: resolveEstado(row.estado, row.expira),
@@ -201,41 +211,11 @@ export async function listCompanies() {
   return all<{ id: number; name: string; count: number }>(
     `SELECT c.id, c.name, COUNT(ac.id) AS count
      FROM companies c
-     LEFT JOIN activity_codes ac ON ac.company_id = c.id
+     LEFT JOIN activity_codes ac ON ac.company_id = c.id AND ${LIVE_CODE}
+     WHERE NOT EXISTS (SELECT 1 FROM company_archive ca WHERE ca.company_id = c.id)
      GROUP BY c.id
      ORDER BY c.name`
   );
-}
-
-export async function listAllCodes(user: AdminUser) {
-  const { clause, args } = scopeArgs(user);
-  const rows = await all<{
-    codigo: string;
-    mission_title: string;
-    empresa: string;
-    fecha: string;
-    participantes: number;
-    estado: string;
-    expira: string | null;
-  }>(
-    `SELECT ac.code AS codigo, m.title AS mission_title, c.name AS empresa,
-            ac.created_at AS fecha, ac.estado, ac.expires_at AS expira,
-            COUNT(p.id) AS participantes
-     FROM activity_codes ac
-     JOIN missions m ON m.id = ac.mission_id
-     JOIN companies c ON c.id = ac.company_id
-     LEFT JOIN participations p ON p.activity_code_id = ac.id
-     WHERE 1 = 1 ${clause}
-     GROUP BY ac.id
-     ORDER BY ac.created_at DESC`,
-    args
-  );
-
-  return rows.map((r) => ({
-    ...r,
-    participantes: Number(r.participantes),
-    estado: resolveEstado(r.estado, r.expira),
-  }));
 }
 
 export async function getLegalTexts() {
@@ -274,7 +254,7 @@ export async function listCompanyParticipants(missionId: string, companyId: numb
     `SELECT p.participant_name AS nombre, ac.code AS codigo, p.avance, p.puntaje, p.completed_at
      FROM participations p
      JOIN activity_codes ac ON ac.id = p.activity_code_id
-     WHERE ac.mission_id = ? AND ac.company_id = ?
+     WHERE ac.mission_id = ? AND ac.company_id = ? AND ${LIVE_CODE}
      ORDER BY p.avance DESC, p.puntaje DESC, p.participant_name COLLATE NOCASE`,
     [missionId, companyId]
   );
@@ -283,4 +263,83 @@ export async function listCompanyParticipants(missionId: string, companyId: numb
     avance: Number(r.avance),
     puntaje: r.puntaje === null ? null : Number(r.puntaje),
   }));
+}
+
+// --- Empresas y sus actividades ----------------------------------------------------
+
+export interface Assignment {
+  /** id del código de actividad. */
+  id: number;
+  codigo: string;
+  mission_id: string;
+  title: string;
+  tag: string;
+  company_id: number;
+  empresa: string;
+  estado: Estado;
+  /** "YYYY-MM-DD" tal como se guardó, o null si no vence. */
+  expira: string | null;
+  fecha: string;
+  archivado: boolean;
+  participantes: number;
+  completaron: number;
+  avance: number;
+}
+
+type AssignmentRow = Omit<Assignment, "estado" | "archivado"> & { estado: string; archivado: number };
+
+const ASSIGNMENT_SELECT = `
+  SELECT ac.id, ac.code AS codigo, ac.mission_id, m.title, m.tag, ac.company_id, c.name AS empresa,
+         ac.estado, ac.expires_at AS expira, ac.created_at AS fecha,
+         EXISTS (SELECT 1 FROM activity_code_archive xa WHERE xa.activity_code_id = ac.id) AS archivado,
+         COUNT(p.id) AS participantes,
+         COUNT(p.completed_at) AS completaron,
+         CAST(COALESCE(AVG(p.avance), 0) AS INTEGER) AS avance
+  FROM activity_codes ac
+  JOIN missions m ON m.id = ac.mission_id
+  JOIN companies c ON c.id = ac.company_id
+  LEFT JOIN participations p ON p.activity_code_id = ac.id`;
+
+function toAssignment(r: AssignmentRow): Assignment {
+  return {
+    ...r,
+    archivado: Number(r.archivado) === 1,
+    participantes: Number(r.participantes),
+    completaron: Number(r.completaron),
+    avance: Number(r.avance),
+    estado: resolveEstado(r.estado, r.expira),
+  };
+}
+
+/** Todas las actividades (códigos) de una empresa, archivadas incluidas, las más nuevas primero. */
+export async function listCompanyAssignments(companyId: number): Promise<Assignment[]> {
+  const rows = await all<AssignmentRow>(
+    `${ASSIGNMENT_SELECT}
+     WHERE ac.company_id = ?
+     GROUP BY ac.id
+     ORDER BY ac.created_at DESC, ac.id DESC`,
+    [companyId]
+  );
+  return rows.map(toAssignment);
+}
+
+/** Lo que está en marcha en todas las empresas: para la portada del superadmin. */
+export async function listRunningAssignments(): Promise<Assignment[]> {
+  const rows = await all<AssignmentRow>(
+    `${ASSIGNMENT_SELECT}
+     WHERE ${LIVE_CODE}
+     GROUP BY ac.id
+     ORDER BY c.name COLLATE NOCASE, ac.created_at DESC`
+  );
+  return rows.map(toAssignment);
+}
+
+export async function getCompany(companyId: number) {
+  const row = await one<{ id: number; name: string; archived_at: string | null }>(
+    `SELECT c.id, c.name, ca.archived_at
+     FROM companies c LEFT JOIN company_archive ca ON ca.company_id = c.id
+     WHERE c.id = ?`,
+    [companyId]
+  );
+  return row ? { ...row, id: Number(row.id), archived: row.archived_at !== null } : null;
 }

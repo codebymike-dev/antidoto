@@ -22,6 +22,7 @@ export default async function PortalLayout({ children }: { children: React.React
       roleTitle={user.role === "empresa" ? "Admin de empresa" : "Superadmin"}
       roleSubtitle={user.role === "empresa" ? user.company_name ?? "" : "Acceso total"}
       showDocs={user.role === "super"}
+      ownCompanyId={user.role === "empresa" ? user.company_id : null}
       notifications={notifications}
     >
       {children}

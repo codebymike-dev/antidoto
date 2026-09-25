@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import AdminLoginScreen from "@/components/AdminLoginScreen";
+import PassBackdrop from "@/components/motion/PassBackdrop";
 
 export const dynamic = "force-dynamic";
 
@@ -12,5 +13,5 @@ export const metadata: Metadata = {
 
 export default async function LoginPage() {
   if (await currentUser()) redirect("/admin");
-  return <AdminLoginScreen />;
+  return <AdminLoginScreen backdrop={<PassBackdrop />} />;
 }

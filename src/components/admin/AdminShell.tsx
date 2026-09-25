@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions";
 import { colors, LOGO_SRC } from "@/lib/theme";
-import { DocIcon, GridIcon, GearIcon, LibraryIcon, LogoutIcon, PlayIcon } from "@/components/icons";
+import { BuildingIcon, DocIcon, GearIcon, HomeIcon, LibraryIcon, LogoutIcon, PlayIcon } from "@/components/icons";
+import NavPill from "@/components/motion/NavPill";
 import NotificationsBell from "./NotificationsBell";
 
 interface Props {
@@ -12,17 +13,24 @@ interface Props {
   roleSubtitle: string;
   /** La documentación de ingeniería solo la ve el superadmin. */
   showDocs: boolean;
+  /** Admin de empresa: su menú empieza en la página de su empresa. */
+  ownCompanyId: number | null;
   notifications: { id: number; text: string; time: string; read: boolean }[];
   children: React.ReactNode;
 }
 
-export default function AdminShell({ roleTitle, roleSubtitle, showDocs, notifications, children }: Props) {
+export default function AdminShell({ roleTitle, roleSubtitle, showDocs, ownCompanyId, notifications, children }: Props) {
   const pathname = usePathname();
-  const navConfigOn = pathname.startsWith("/admin/config");
+  const isEmpresa = ownCompanyId !== null;
   const navGamesOn = pathname.startsWith("/admin/juegos");
   const navDocsOn = pathname.startsWith("/admin/docs");
-  const navLibraryOn = pathname.startsWith("/admin/biblioteca");
-  const navActivitiesOn = !navConfigOn && !navGamesOn && !navDocsOn && !navLibraryOn;
+  const navSettingsOn = pathname.startsWith("/admin/ajustes");
+  // Los resultados de una actividad en todas las empresas se abren desde la biblioteca.
+  const navLibraryOn =
+    pathname.startsWith("/admin/biblioteca") || (!isEmpresa && pathname.startsWith("/admin/actividades"));
+  const navCompaniesOn =
+    pathname.startsWith("/admin/empresas") || pathname.startsWith("/admin/asignar") || (isEmpresa && pathname.startsWith("/admin/actividades"));
+  const navHomeOn = !navGamesOn && !navDocsOn && !navSettingsOn && !navLibraryOn && !navCompaniesOn;
   const roleInitial = roleSubtitle === "Acceso total" ? "S" : roleSubtitle.charAt(0).toUpperCase();
 
   function navStyle(active: boolean) {
@@ -101,7 +109,7 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, notifica
 
         <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <NavPill activeKey={pathname}>
           <span
             style={{
               fontSize: 10.5,
@@ -115,14 +123,31 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, notifica
           >
             Menú
           </span>
-          <Link
-            href="/admin"
-            className={navActivitiesOn ? "btn-navlink-active" : "btn-navlink"}
-            style={navStyle(navActivitiesOn)}
-          >
-            <GridIcon />
-            Actividades
-          </Link>
+          {isEmpresa ? (
+            <Link
+              href={`/admin/empresas/${ownCompanyId}`}
+              className={navCompaniesOn || navHomeOn ? "btn-navlink-active" : "btn-navlink"}
+              style={navStyle(navCompaniesOn || navHomeOn)}
+            >
+              <BuildingIcon />
+              Mi empresa
+            </Link>
+          ) : (
+            <>
+              <Link href="/admin" className={navHomeOn ? "btn-navlink-active" : "btn-navlink"} style={navStyle(navHomeOn)}>
+                <HomeIcon />
+                Inicio
+              </Link>
+              <Link
+                href="/admin/empresas"
+                className={navCompaniesOn ? "btn-navlink-active" : "btn-navlink"}
+                style={navStyle(navCompaniesOn)}
+              >
+                <BuildingIcon />
+                Empresas
+              </Link>
+            </>
+          )}
           <Link
             href="/admin/biblioteca"
             className={navLibraryOn ? "btn-navlink-active" : "btn-navlink"}
@@ -139,14 +164,16 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, notifica
             <PlayIcon />
             Juegos en vivo
           </Link>
-          <Link
-            href="/admin/config"
-            className={navConfigOn ? "btn-navlink-active" : "btn-navlink"}
-            style={navStyle(navConfigOn)}
-          >
-            <GearIcon />
-            Configuración
-          </Link>
+          {!isEmpresa && (
+            <Link
+              href="/admin/ajustes"
+              className={navSettingsOn ? "btn-navlink-active" : "btn-navlink"}
+              style={navStyle(navSettingsOn)}
+            >
+              <GearIcon />
+              Ajustes
+            </Link>
+          )}
           {showDocs && (
             <Link
               href="/admin/docs"
@@ -157,7 +184,7 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, notifica
               Documentación
             </Link>
           )}
-        </div>
+        </NavPill>
 
         <div style={{ flex: 1 }} />
 

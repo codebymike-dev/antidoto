@@ -55,7 +55,7 @@ export default async function ReporteActividadPage({ params }: { params: Promise
       kicker={mission.tag}
       title={mission.title}
       subtitle={mission.description}
-      backHref={`/admin/actividades/${id}`}
+      backHref={`/admin/empresas/${companyId}/actividades/${id}`}
     >
       <ReportStats
         brand={brand}

@@ -44,17 +44,34 @@ export async function getCompanyBrand(companyId: number | null): Promise<PublicB
 export interface CompanyListItem {
   id: number;
   name: string;
-  codes: number;
+  /** Actividades distintas que tiene asignadas y sin quitar. */
+  activities: number;
+  participantes: number;
   brand: PublicBrand | null;
 }
 
-export async function listCompaniesWithBrand(): Promise<CompanyListItem[]> {
-  const rows = await all<BrandRow & { codes: number }>(
-    `SELECT ${BRAND_COLUMNS}, (SELECT COUNT(*) FROM activity_codes ac WHERE ac.company_id = c.id) AS codes
-     FROM companies c LEFT JOIN company_branding b ON b.company_id = c.id
+/** Empresas activas, o las archivadas con `archived`. */
+export async function listCompaniesWithBrand(archived = false): Promise<CompanyListItem[]> {
+  const rows = await all<BrandRow & { activities: number; participantes: number }>(
+    `SELECT ${BRAND_COLUMNS},
+            COUNT(DISTINCT ac.mission_id) AS activities,
+            COUNT(p.id) AS participantes
+     FROM companies c
+     LEFT JOIN company_branding b ON b.company_id = c.id
+     LEFT JOIN activity_codes ac ON ac.company_id = c.id
+       AND NOT EXISTS (SELECT 1 FROM activity_code_archive xa WHERE xa.activity_code_id = ac.id)
+     LEFT JOIN participations p ON p.activity_code_id = ac.id
+     WHERE ${archived ? "" : "NOT "}EXISTS (SELECT 1 FROM company_archive ca WHERE ca.company_id = c.id)
+     GROUP BY c.id
      ORDER BY c.name COLLATE NOCASE`
   );
-  return rows.map((r) => ({ id: Number(r.id), name: r.name, codes: Number(r.codes), brand: toBrand(r) }));
+  return rows.map((r) => ({
+    id: Number(r.id),
+    name: r.name,
+    activities: Number(r.activities),
+    participantes: Number(r.participantes),
+    brand: toBrand(r),
+  }));
 }
 
 export async function getCompanyName(companyId: number): Promise<string | null> {

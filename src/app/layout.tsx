@@ -1,13 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import { ViewTransition } from "react";
-import { Poppins } from "next/font/google";
+import { IBM_Plex_Mono, Poppins } from "next/font/google";
 import { colors } from "@/lib/theme";
 import "./globals.css";
+import "./motion.css";
 
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+// Solo para las celdas split-flap del "pase de misión": cada carácter mide lo mismo (1ch),
+// así las celdas dibujadas detrás de un <input> calzan con lo que se escribe.
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["600"],
 });
 
 const SITE_URL = "https://antidotocolombia.vercel.app";
@@ -64,7 +73,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${poppins.variable} h-full`}>
+    <html lang="es" className={`${poppins.variable} ${plexMono.variable} h-full`}>
       <body className="h-full">
         <ViewTransition>{children}</ViewTransition>
       </body>

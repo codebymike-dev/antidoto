@@ -14,12 +14,13 @@ export default async function NuevaEmpresaPage() {
     <div>
       <BrandPageHeader
         title="Nueva empresa"
-        subtitle="Dale su identidad: los participantes, el proyector y los reportes la verán con su logo y sus colores."
+        subtitle="Escribe su nombre y elige su color principal (el logo es opcional). Después de guardar podrás asignarle actividades."
+        back={{ href: "/admin/empresas", label: "Empresas" }}
       />
       <BrandEditor
         companyId={null}
         canRename
-        cancelHref="/admin/config?tab=companies"
+        cancelHref="/admin/empresas"
         initial={{ name: "", primary: null, secondary: null, welcome: null, logoUrl: null, logoSurface: "claro" }}
       />
     </div>

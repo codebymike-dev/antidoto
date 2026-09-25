@@ -5,6 +5,7 @@ import { colors, calSans } from "@/lib/theme";
 import { secondaryButton, cardAccent } from "@/lib/styles";
 import { ESTADO_STYLES } from "@/lib/data";
 import type { Estado } from "@/lib/types";
+import SplitFlap from "@/components/motion/SplitFlap";
 
 interface Group {
   id: number;
@@ -97,7 +98,9 @@ export default function GroupsTable({ groups }: { groups: Group[] }) {
                 />
                 <span style={{ fontWeight: 700, color: colors.accentDark }}>{i + 1}</span>
                 <span style={{ fontWeight: 600, color: colors.ink }}>{g.empresa}</span>
-                <span style={{ fontSize: 13, color: colors.muted, fontFamily: "monospace" }}>{g.codigo}</span>
+                <span style={{ fontSize: 12 }}>
+                  <SplitFlap text={g.codigo} />
+                </span>
                 <span style={{ fontSize: 13.5, color: colors.ink }}>{g.participantes}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ flex: 1, height: 7, background: colors.accentTint, borderRadius: 8, overflow: "hidden" }}>

@@ -89,7 +89,8 @@ export async function currentUser(): Promise<AdminUser | null> {
      FROM sessions s
      JOIN admin_users u ON u.id = s.admin_user_id
      LEFT JOIN companies c ON c.id = u.company_id
-     WHERE s.token_hash = ? AND s.expires_at > ?`,
+     WHERE s.token_hash = ? AND s.expires_at > ?
+       AND NOT EXISTS (SELECT 1 FROM company_archive ca WHERE ca.company_id = u.company_id)`,
     [hashToken(token), new Date().toISOString()]
   );
 
@@ -98,7 +99,9 @@ export async function currentUser(): Promise<AdminUser | null> {
 
 export async function login(username: string, password: string): Promise<AdminUser | null> {
   const user = await one<{ id: number; password_hash: string }>(
-    "SELECT id, password_hash FROM admin_users WHERE username = ?",
+    // El admin de una empresa archivada ya no entra.
+    `SELECT id, password_hash FROM admin_users u
+     WHERE username = ? AND NOT EXISTS (SELECT 1 FROM company_archive ca WHERE ca.company_id = u.company_id)`,
     [username.trim().toLowerCase()]
   );
   if (!user || !(await verifyPassword(password, user.password_hash))) return null;

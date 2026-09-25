@@ -1,7 +1,7 @@
 import "server-only";
 import { all, one, run } from "./db";
 import type { AdminUser } from "./auth";
-import { companyFilter } from "./scope";
+import { companyFilter, LIVE_CODE } from "./scope";
 import { EXPERIENCES, experienceMissionId, getExperience, seriesEntry, seriesFrom } from "./experiences/catalog";
 import { parseStoredTexts, riskResult, riskTexts, score, type AnswerRow, type TextOverrides } from "./experiences/texts";
 import type { ExperienceDef, RiskResult } from "./experiences/types";
@@ -91,16 +91,18 @@ export async function refreshParticipationScore(participationId: string, station
 
 /**
  * Crea (si falta) la misión que representa a la experiencia en actividades y códigos.
- * Id fijo por experiencia: correrlo dos veces no duplica nada.
+ * Id fijo por experiencia: correrlo dos veces no duplica nada. Una serie se juega completa
+ * con el mismo código, así que la actividad lleva el nombre de la serie, no el de su
+ * primera estación; el título se resincroniza por si la actividad ya existía con el viejo.
  */
 export async function ensureExperienceMission(def: ExperienceDef): Promise<string> {
   const id = experienceMissionId(def.key);
-  await run(`INSERT OR IGNORE INTO missions (id, tag, title, description) VALUES (?, ?, ?, ?)`, [
-    id,
-    def.tag,
-    `${def.series} · ${def.title}`,
-    def.description,
-  ]);
+  const title = seriesFrom(def).length > 1 ? def.series : `${def.series} · ${def.title}`;
+  await run(
+    `INSERT INTO missions (id, tag, title, description) VALUES (?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET title = excluded.title`,
+    [id, def.tag, title, def.description],
+  );
   await run("INSERT OR IGNORE INTO mission_experiences (mission_id, experience_key) VALUES (?, ?)", [id, def.key]);
   return id;
 }
@@ -119,7 +121,7 @@ export async function listLibrary(user: AdminUser): Promise<LibraryItem[]> {
     `SELECT me.experience_key, me.mission_id, COUNT(p.id) AS participantes
      FROM mission_experiences me
      JOIN missions m ON m.id = me.mission_id AND m.archived_at IS NULL
-     LEFT JOIN activity_codes ac ON ac.mission_id = me.mission_id ${clause}
+     LEFT JOIN activity_codes ac ON ac.mission_id = me.mission_id AND ${LIVE_CODE} ${clause}
      LEFT JOIN participations p ON p.activity_code_id = ac.id
      GROUP BY me.mission_id`,
     args,
@@ -170,14 +172,14 @@ export async function experienceRiskStats(missionId: string, stations: Experienc
      FROM experience_answers ea
      JOIN participations p ON p.id = ea.participation_id
      JOIN activity_codes ac ON ac.id = p.activity_code_id
-     WHERE ac.mission_id = ? ${clause}
+     WHERE ac.mission_id = ? AND ${LIVE_CODE} ${clause}
      GROUP BY ea.risk_id, ea.option_index, ea.option_text, ea.is_correct`,
     [missionId, ...args],
   );
   const participants = await one<{ n: number }>(
     `SELECT COUNT(*) AS n FROM participations p
      JOIN activity_codes ac ON ac.id = p.activity_code_id
-     WHERE ac.mission_id = ? ${clause}`,
+     WHERE ac.mission_id = ? AND ${LIVE_CODE} ${clause}`,
     [missionId, ...args],
   );
   const overrides = await loadAllOverrides(stations);

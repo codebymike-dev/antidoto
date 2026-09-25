@@ -6,12 +6,11 @@ import { revalidatePath } from "next/cache";
 import { one, run } from "./db";
 import { PARTICIPATION_COOKIE } from "./participation";
 import { isExpired } from "./expiry";
-import { audit, requireSuper, requireUser } from "./admin-guard";
-import { getExperience, seriesEntry } from "./experiences/catalog";
+import { audit, requireSuper } from "./admin-guard";
+import { getExperience } from "./experiences/catalog";
 import { riskResult, riskTexts, validateRiskTexts } from "./experiences/texts";
 import type { ExperienceDef, RiskResult } from "./experiences/types";
 import {
-  ensureExperienceMission,
   loadAllOverrides,
   loadOverrides,
   missionStations,
@@ -161,16 +160,4 @@ export async function resetRiskTexts(_prev: number, formData: FormData): Promise
   await audit(`Textos del riesgo "${risk.defaults.title}" restaurados en "${def.series} · ${def.title}".`, user);
   revalidatePath(`/admin/biblioteca/${def.key}`);
   return _prev + 1;
-}
-
-/** Crea la actividad de la experiencia (si falta) y lleva a generar un código. */
-export async function adoptExperience(formData: FormData) {
-  const user = await requireUser();
-  if (user.role !== "super") return;
-  const def = getExperience(String(formData.get("experience") ?? ""));
-  if (!def) return;
-  // Una estación siguiente se juega con el código de la primera de su serie.
-  const missionId = await ensureExperienceMission(seriesEntry(def));
-  revalidatePath("/admin");
-  redirect(`/admin/config?mission=${missionId}`);
 }
