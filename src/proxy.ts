@@ -34,6 +34,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Todo menos assets estáticos y archivos con extensión (imágenes, fuentes, etc.).
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Los logos de empresa (/marca/...) traen su propia CSP, más estricta, con sandbox.
+    "/((?!_next/static|_next/image|favicon.ico|marca/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
