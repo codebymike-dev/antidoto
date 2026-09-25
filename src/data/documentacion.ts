@@ -1035,6 +1035,18 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
         origen: "docs/investigacion-ux-kahoot.md",
         notas: "Pulido final del módulo en vivo, guiado por la investigación UX.",
       },
+      {
+        id: "RNF-28",
+        titulo: "Movimiento con respaldo (pase de misión)",
+        descripcion:
+          "La entrada, el login, el inicio del portal y misión cumplida usan un solo lenguaje de movimiento (pase impreso, celdas split-flap, sello). El HTML del servidor es el estado final: sin JS o con movimiento reducido todo se ve completo y quieto, y si el script llega tarde la entrada se omite.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "src/components/motion, src/app/motion.css, src/lib/split-flap.ts, src/lib/guilloche.ts",
+        verificacion:
+          "split-flap.test.mts y guilloche.test.mts; capturas con Playwright en 1440x900 y 390x844, con y sin movimiento reducido.",
+        notas: "Unos 31 KB gz de JS en la entrada y 28 KB gz en el portal, casi todo GSAP. Las repeticiones de la sesión solo hacen un fundido corto.",
+      },
     ],
   },
   {

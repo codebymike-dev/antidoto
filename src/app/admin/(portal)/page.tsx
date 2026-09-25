@@ -138,11 +138,11 @@ export default async function ActividadesPage({
                 <div style={{ display: "flex", gap: 14, fontSize: 12.5, color: colors.muted }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                     <GridIcon />
-                    {m.groupsCount} grupos
+                    {m.groupsCount} {m.groupsCount === 1 ? "grupo" : "grupos"}
                   </span>
                   <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                     <UsersIcon />
-                    {m.totalParticipantes} participantes
+                    {m.totalParticipantes} {m.totalParticipantes === 1 ? "participante" : "participantes"}
                   </span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: "auto" }}>

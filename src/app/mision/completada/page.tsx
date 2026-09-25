@@ -45,7 +45,8 @@ export default async function MisionCompletadaPage() {
         style={{ position: "relative", zIndex: 1, maxWidth: 440 }}
         stamp={{ label: "Cumplida", tone: "brand", playKey: 1, delay: 1.2, className: "stamp--done" }}
         stub={
-          <form action={leaveActivity} style={{ display: "flex", justifyContent: "center" }}>
+          <form action={leaveActivity} style={{ display: "flex", justifyContent: "flex-start" }}>
+            {/* Botón a la izquierda: a la derecha cae el sello, que cruza la perforación. */}
             <button
               type="submit"
               className="btn-primary"

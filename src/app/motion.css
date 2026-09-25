@@ -415,10 +415,12 @@
   color: var(--brand-accent, #1c99ca);
 }
 
-/* Misión cumplida: más grande y en la esquina del cuerpo, sobre el logo. */
+/* Misión cumplida: cruza la perforación, como un sello real sobre el corte del talón. Así
+   no tapa el logo de la empresa ni el texto, que van centrados. */
 .stamp--done {
-  top: 14px;
-  right: 12px;
+  top: auto;
+  bottom: -18px;
+  right: 14px;
   font-size: 19px;
   padding: 8px 14px 7px;
 }
