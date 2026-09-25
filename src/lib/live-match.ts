@@ -36,6 +36,7 @@ import {
   type RevealData,
 } from "./live-protocol";
 import type { LiveMatchStatus } from "./types";
+import { getCompanyBrand } from "./company-brand";
 
 /** Tope por partida: el plan gratis de Ably admite 200 conexiones simultáneas en total. */
 export const MAX_PLAYERS = 100;
@@ -617,6 +618,7 @@ async function baseSnapshot(match: MatchRow, questions: FullQuestion[]): Promise
     status: state.status,
     joinLocked: state.joinLocked,
     gameTitle: match.game_title,
+    brand: await getCompanyBrand(match.company_id),
     totalQuestions: questions.length,
     question: q && state.status !== "finished" ? publicQuestion(q, state, questions.length) : null,
     reveal,

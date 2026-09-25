@@ -8,6 +8,7 @@
 
 import type { LeaderboardEntry } from "./live-engine";
 import type { LiveMatchStatus, LiveQuestionType } from "./types";
+import type { PublicBrand } from "./brand-palette";
 
 /**
  * Entrada de cada pregunta, como en Kahoot: la pregunta se ve sola 3 s para leerla y
@@ -75,6 +76,8 @@ export interface MatchSnapshot {
   status: LiveMatchStatus;
   joinLocked: boolean;
   gameTitle: string;
+  /** Marca de la empresa de la partida; null = la de Antídoto. */
+  brand: PublicBrand | null;
   totalQuestions: number;
   question: PublicQuestion | null;
   /** Solo con la pregunta actual ya revelada (reveal, leaderboard o finished). */
@@ -115,6 +118,7 @@ export interface ChallengeSnapshot {
   mode: "challenge";
   matchId: number;
   gameTitle: string;
+  brand: PublicBrand | null;
   nickname: string;
   kicked: boolean;
   totalQuestions: number;

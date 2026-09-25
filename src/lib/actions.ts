@@ -168,19 +168,6 @@ export async function generateCode(formData: FormData) {
   revalidatePath("/admin");
 }
 
-export async function addCompany(formData: FormData) {
-  const user = await requireUser();
-  if (user.role !== "super") return;
-
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-  if (await one("SELECT 1 FROM companies WHERE name = ?", [name])) return;
-
-  await run("INSERT INTO companies (name) VALUES (?)", [name]);
-  await audit(`Empresa "${name}" añadida.`, user);
-  revalidatePath("/admin/config");
-}
-
 export async function deleteCompany(formData: FormData) {
   const user = await requireUser();
   if (user.role !== "super") return;

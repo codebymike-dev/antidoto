@@ -5,6 +5,9 @@ import { leaveActivity } from "@/lib/actions";
 import { colors, LOGO_SRC, calSans } from "@/lib/theme";
 import { primaryButton } from "@/lib/styles";
 import Blobs from "@/components/Blobs";
+import { getCompanyBrand } from "@/lib/company-brand";
+import { brandCssVars, brandPalette } from "@/lib/brand-palette";
+import BrandLogo, { WithAntidoto } from "@/components/BrandLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +19,8 @@ export const metadata: Metadata = {
 export default async function MisionCompletadaPage() {
   const p = await currentParticipation();
   if (!p) redirect("/");
+  const brand = await getCompanyBrand(p.company_id);
+  const pal = brandPalette(brand);
 
   return (
     <div
@@ -23,7 +28,8 @@ export default async function MisionCompletadaPage() {
         position: "relative",
         minHeight: "100vh",
         overflow: "hidden",
-        background: colors.pageGradient,
+        background: pal.pageGradient,
+        ...brandCssVars(pal),
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -31,7 +37,7 @@ export default async function MisionCompletadaPage() {
         padding: "32px 20px",
       }}
     >
-      <Blobs />
+      <Blobs colors={brand ? [pal.soft, pal.graphic, pal.button] : undefined} />
       <div
         style={{
           position: "relative",
@@ -47,11 +53,18 @@ export default async function MisionCompletadaPage() {
           gap: 14,
           textAlign: "center",
           boxShadow: colors.cardShadow,
-          borderTop: `4px solid ${colors.accentLight}`,
+          borderTop: `4px solid ${pal.soft}`,
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={LOGO_SRC} alt="Antídoto" style={{ height: 90 }} />
+        {brand ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <BrandLogo brand={brand} surface="claro" height={64} />
+            <WithAntidoto surface="claro" size={16} />
+          </div>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={LOGO_SRC} alt="Antídoto" style={{ height: 90 }} />
+        )}
         <h2 style={{ ...calSans, fontSize: 26, margin: 0, color: colors.ink }}>
           ¡Gran trabajo, {p.participant_name}!
         </h2>
@@ -60,7 +73,7 @@ export default async function MisionCompletadaPage() {
           colectivo.
         </p>
         <form action={leaveActivity}>
-          <button type="submit" className="btn-primary" style={{ ...primaryButton, height: 50, padding: "0 30px", fontSize: 15 }}>
+          <button type="submit" className="btn-primary" style={{ ...primaryButton, boxShadow: pal.buttonShadow, height: 50, padding: "0 30px", fontSize: 15 }}>
             Volver al inicio
           </button>
         </form>

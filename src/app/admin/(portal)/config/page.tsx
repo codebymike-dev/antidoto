@@ -1,21 +1,27 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
-import { listMissions, listCompanies, listAllCodes, getLegalTexts, listAuditLog } from "@/lib/queries";
-import { generateCode, addCompany, deleteCompany, updateLegalText } from "@/lib/actions";
+import { listMissions, listAllCodes, getLegalTexts, listAuditLog } from "@/lib/queries";
+import { generateCode, deleteCompany, updateLegalText } from "@/lib/actions";
+import { getCompanyBrand, listCompaniesWithBrand } from "@/lib/company-brand";
+import { brandPalette } from "@/lib/brand-palette";
 import { colors, calSans } from "@/lib/theme";
-import { filledButton, card, tabButton, tabButtonActive } from "@/lib/styles";
+import { filledButton, secondaryButton, card, tabButton, tabButtonActive } from "@/lib/styles";
 import { ESTADO_STYLES } from "@/lib/data";
 import ConfirmDeleteButton from "@/components/admin/ConfirmDeleteButton";
+import BrandLogo from "@/components/BrandLogo";
+import BrandEditor from "@/components/admin/brand/BrandEditor";
 import type { ConfigTab } from "@/lib/types";
 import type { AdminUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-const TABS: { key: ConfigTab; label: string; superOnly: boolean }[] = [
-  { key: "codes", label: "Códigos y actividades", superOnly: false },
-  { key: "companies", label: "Empresas y grupos", superOnly: true },
-  { key: "legal", label: "Legal", superOnly: true },
-  { key: "auditoria", label: "Auditoría", superOnly: true },
+// Cada pestaña la ve un solo rol, o ambos (sin `only`).
+const TABS: { key: ConfigTab; label: string; only?: "super" | "empresa" }[] = [
+  { key: "codes", label: "Códigos y actividades" },
+  { key: "companies", label: "Empresas y grupos", only: "super" },
+  { key: "marca", label: "Mi marca", only: "empresa" },
+  { key: "legal", label: "Legal", only: "super" },
+  { key: "auditoria", label: "Auditoría", only: "super" },
 ];
 
 function formatDate(iso: string | null) {
@@ -28,15 +34,14 @@ function formatDate(iso: string | null) {
 export default async function ConfigPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; mission?: string }>;
+  searchParams: Promise<{ tab?: string; mission?: string; guardada?: string }>;
 }) {
   const user = (await currentUser())!;
-  const { tab = "codes", mission } = await searchParams;
+  const { tab = "codes", mission, guardada } = await searchParams;
   const isSuper = user.role === "super";
+  const visibleTabs = TABS.filter((t) => !t.only || t.only === user.role);
 
-  const active: ConfigTab = TABS.some((t) => t.key === tab && (!t.superOnly || isSuper))
-    ? (tab as ConfigTab)
-    : "codes";
+  const active: ConfigTab = visibleTabs.some((t) => t.key === tab) ? (tab as ConfigTab) : "codes";
 
   const missions = await listMissions(user);
 
@@ -45,7 +50,7 @@ export default async function ConfigPage({
       <h1 style={{ ...calSans, fontSize: 28, margin: "0 0 20px 0", color: colors.ink }}>Configuración</h1>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 26, flexWrap: "wrap" }}>
-        {TABS.filter((t) => !t.superOnly || isSuper).map((t) => (
+        {visibleTabs.map((t) => (
           <Link
             key={t.key}
             href={`/admin/config?tab=${t.key}`}
@@ -63,7 +68,8 @@ export default async function ConfigPage({
       </div>
 
       {active === "codes" && <CodesTab user={user} missions={missions} preselected={mission} />}
-      {active === "companies" && isSuper && <CompaniesTab />}
+      {active === "companies" && isSuper && <CompaniesTab savedId={guardada ? Number(guardada) : null} />}
+      {active === "marca" && !isSuper && <OwnBrandTab user={user} saved={!!guardada} />}
       {active === "legal" && isSuper && <LegalTab />}
       {active === "auditoria" && isSuper && <AuditTab user={user} />}
     </div>
@@ -172,51 +178,139 @@ async function CodesTab({
   );
 }
 
-async function CompaniesTab() {
-  const companies = await listCompanies();
+async function CompaniesTab({ savedId }: { savedId: number | null }) {
+  const companies = await listCompaniesWithBrand();
+  const saved = savedId ? companies.find((c) => c.id === savedId) : undefined;
+  const branded = companies.filter((c) => c.brand).length;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 560 }}>
-      <form action={addCompany} style={{ background: "#fff", borderRadius: 18, padding: 20, display: "flex", gap: 10, boxShadow: colors.cardShadowSmall }}>
-        <input
-          name="name"
-          placeholder="Nombre de la empresa o grupo"
-          aria-label="Nombre de la empresa o grupo"
-          style={{ ...select, flex: 1 }}
-          required
-        />
-        <button type="submit" className="btn-filled" style={{ ...filledButton, padding: "0 18px", fontSize: 13.5 }}>
-          ＋ Añadir
-        </button>
-      </form>
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      {saved && <SavedToast text={`Listo: guardamos la marca de ${saved.name}.`} />}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {companies.map((c) => (
-          <div
-            key={c.id}
-            style={{
-              background: "#fff",
-              borderRadius: 14,
-              padding: "14px 18px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              boxShadow: "0 6px 16px rgba(12,92,125,0.06)",
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 14.5, color: colors.ink }}>{c.name}</div>
-              <div style={{ fontSize: 12.5, color: colors.muted }}>
-                {Number(c.count)} {Number(c.count) === 1 ? "código" : "códigos"}
-              </div>
-            </div>
-            <form action={deleteCompany}>
-              <input type="hidden" name="id" value={c.id} />
-              <ConfirmDeleteButton>Eliminar</ConfirmDeleteButton>
-            </form>
-          </div>
-        ))}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <h2 style={{ ...calSans, fontSize: 20, margin: 0, color: colors.ink, fontWeight: 400 }}>Empresas y grupos</h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: colors.muted }}>
+            {companies.length === 0
+              ? "Crea la primera y dale su logo y colores."
+              : `${companies.length} ${companies.length === 1 ? "empresa" : "empresas"} · ${branded} con marca propia`}
+          </p>
+        </div>
+        <Link href="/admin/config/empresas/nueva" className="btn-filled" style={{ ...filledButton, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          ＋ Nueva empresa
+        </Link>
       </div>
+
+      {companies.length > 0 && (
+        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 16 }}>
+          {companies.map((c) => {
+            const p = brandPalette(c.brand);
+            const brand = c.brand ?? { name: c.name, primary: colors.accent, secondary: null, logoUrl: null, logoSurface: "claro" as const };
+            return (
+              <li
+                key={c.id}
+                className="company-card"
+                style={{
+                  background: "#fff",
+                  borderRadius: 18,
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  boxShadow: c.id === savedId ? `0 0 0 2px ${p.graphic}, ${colors.cardShadowSmall}` : colors.cardShadowSmall,
+                }}
+              >
+                <Link
+                  href={`/admin/config/empresas/${c.id}`}
+                  aria-label={`Personalizar ${c.name}`}
+                  style={{
+                    position: "relative",
+                    height: 104,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 20px",
+                    background: c.brand ? (c.brand.logoUrl && c.brand.logoSurface === "oscuro" ? colors.ink : p.pageGradient) : "#F4F8FA",
+                    textDecoration: "none",
+                  }}
+                >
+                  <BrandLogo brand={brand} surface={c.brand?.logoUrl && c.brand.logoSurface === "oscuro" ? "oscuro" : "claro"} height={44} showName={false} />
+                  {!c.brand && (
+                    <span style={{ position: "absolute", top: 10, right: 10, fontSize: 10.5, fontWeight: 700, color: colors.muted, background: "#fff", padding: "3px 8px", borderRadius: 100, letterSpacing: 0.3 }}>
+                      Sin marca
+                    </span>
+                  )}
+                </Link>
+                <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14.5, color: colors.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
+                      <div style={{ fontSize: 12.5, color: colors.muted }}>
+                        {c.codes} {c.codes === 1 ? "código" : "códigos"}
+                      </div>
+                    </div>
+                    {c.brand && (
+                      <span style={{ display: "flex", gap: 4, flexShrink: 0, paddingTop: 3 }} aria-label={`Colores: ${[c.brand.primary, c.brand.secondary].filter(Boolean).join(" y ")}`}>
+                        {[c.brand.primary, c.brand.secondary].filter(Boolean).map((hex) => (
+                          <span key={hex} title={hex!} style={{ width: 14, height: 14, borderRadius: 999, background: hex!, boxShadow: "inset 0 0 0 1px rgba(15,24,29,0.12)" }} />
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: "auto" }}>
+                    <Link href={`/admin/config/empresas/${c.id}`} className="btn-secondary" style={{ ...secondaryButton, height: 36, fontSize: 12.5, display: "inline-flex", alignItems: "center" }}>
+                      {c.brand ? "Editar marca" : "Personalizar"}
+                    </Link>
+                    <form action={deleteCompany}>
+                      <input type="hidden" name="id" value={c.id} />
+                      <ConfirmDeleteButton>Eliminar</ConfirmDeleteButton>
+                    </form>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+async function OwnBrandTab({ user, saved }: { user: AdminUser; saved: boolean }) {
+  const brand = await getCompanyBrand(user.company_id);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      {saved && <SavedToast text="Listo: tu marca ya se ve en las actividades, los juegos en vivo y los reportes." />}
+      <p style={{ margin: 0, fontSize: 14, color: colors.muted, maxWidth: 640, lineHeight: 1.55 }}>
+        Tu logo y tus colores acompañan a tus participantes en cada actividad, en la pantalla de los juegos en vivo y en los reportes PDF.
+      </p>
+      <BrandEditor
+        companyId={user.company_id}
+        canRename={false}
+        initial={{
+          name: user.company_name ?? "",
+          primary: brand?.primary ?? null,
+          secondary: brand?.secondary ?? null,
+          welcome: brand?.welcome ?? null,
+          logoUrl: brand?.logoUrl ?? null,
+          logoSurface: brand?.logoSurface ?? "claro",
+        }}
+      />
+    </div>
+  );
+}
+
+function SavedToast({ text }: { text: string }) {
+  return (
+    <div
+      role="status"
+      className="toast-in"
+      style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", borderRadius: 12, background: "#EAF7EE", color: "#1E6B3A", fontSize: 13.5, fontWeight: 600, maxWidth: 640 }}
+    >
+      <span aria-hidden style={{ width: 20, height: 20, borderRadius: 999, background: "#2E9B57", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
+        ✓
+      </span>
+      {text}
     </div>
   );
 }

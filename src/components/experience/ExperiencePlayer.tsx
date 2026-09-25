@@ -13,6 +13,8 @@ import type { PublicExperience, RiskResult, RiskTexts } from "@/lib/experiences/
 import { GRAINS_CORRECT, GRAINS_FOUND } from "@/lib/experiences/texts";
 import { answerExperienceRisk, finishExperience, revealExperienceRisks } from "@/lib/experience-actions";
 import { LOGO_SRC } from "@/lib/theme";
+import { brandPalette, INK, mix, type PublicBrand } from "@/lib/brand-palette";
+import { CoBrand } from "@/components/BrandLogo";
 
 // Fuente pixel libre (OFL) en lugar de Volter, que es de Sulake: Tiny5 es la más parecida
 // y se lee nítida desde 16 px. Se sirve desde el propio dominio con next/font y solo se
@@ -46,6 +48,8 @@ interface Props {
   /** Salir: una Server Action (participante) o un enlace (vista previa del admin). */
   exitAction?: () => Promise<void>;
   exitHref?: string;
+  /** Marca de la empresa del código; sin ella, la de Antídoto. */
+  brand?: PublicBrand | null;
 }
 
 const OPTION_KEYS = ["A", "B", "C"];
@@ -100,6 +104,7 @@ function StationPlayer({
   paused,
   exitAction,
   exitHref,
+  brand,
   results,
   setResults,
   onNext,
@@ -408,10 +413,14 @@ function StationPlayer({
   const sceneLabel = `Escena en pixel art: ${map.place} ${momentInfo.hint}`;
 
   return (
-    <div className={`${styles.root} ${pixel.variable}`}>
+    <div className={`${styles.root} ${pixel.variable}`} style={brand ? brandSkin(brand) : undefined}>
       <header className={styles.topbar}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={LOGO_SRC} alt="Antídoto" className={styles.logo} />
+        {brand ? (
+          <CoBrand brand={brand} surface="oscuro" height={30} />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={LOGO_SRC} alt="Antídoto" className={styles.logo} />
+        )}
         <div className={styles.roomInfo}>
           <span className={styles.roomDot} aria-hidden />
           <div style={{ minWidth: 0 }}>
@@ -933,4 +942,17 @@ function StationPlayer({
       </main>
     </div>
   );
+}
+
+/**
+ * Tonos de la marca para las ventanas y el botón principal (variables de player.module.css).
+ * Se parte del acento, que siempre lleva texto blanco legible: las cabeceras de ventana lo necesitan.
+ */
+function brandSkin(brand: PublicBrand): React.CSSProperties {
+  const p = brandPalette(brand);
+  return {
+    "--head-a": p.accent,
+    "--head-b": mix(p.accent, INK, 0.35),
+    "--cyan": mix(p.accent, "#FFFFFF", 0.25),
+  } as React.CSSProperties;
 }

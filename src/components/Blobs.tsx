@@ -1,4 +1,7 @@
-export default function Blobs() {
+const DEFAULT_COLORS = ["#80DCFF", "#3BC8F3", "#1C99CA"];
+
+/** Manchas de color difuminadas del fondo. `colors` las tiñe con la marca de una empresa. */
+export default function Blobs({ colors = DEFAULT_COLORS }: { colors?: string[] }) {
   return (
     <>
       <div
@@ -9,7 +12,7 @@ export default function Blobs() {
           width: 320,
           height: 320,
           borderRadius: "50%",
-          background: "#80DCFF",
+          background: colors[0],
           opacity: 0.5,
           filter: "blur(60px)",
           animation: "blobMove1 24s ease-in-out infinite",
@@ -23,7 +26,7 @@ export default function Blobs() {
           width: 360,
           height: 360,
           borderRadius: "50%",
-          background: "#3BC8F3",
+          background: colors[1],
           opacity: 0.25,
           filter: "blur(70px)",
           animation: "blobMove2 28s ease-in-out infinite",
@@ -37,7 +40,7 @@ export default function Blobs() {
           width: 260,
           height: 260,
           borderRadius: "50%",
-          background: "#1C99CA",
+          background: colors[2],
           opacity: 0.18,
           filter: "blur(65px)",
           animation: "blobMove3 32s ease-in-out infinite",

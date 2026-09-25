@@ -25,6 +25,7 @@ import {
   type Result,
 } from "./live-match";
 import { QUESTION_INTRO_MS, type ChallengeSnapshot, type PlayerSnapshot } from "./live-protocol";
+import { getCompanyBrand } from "./company-brand";
 
 // Desafío asíncrono: la misma partida de live_matches, pero sin host ni Ably. Cada
 // jugador abre sus preguntas cuando quiere y el reloj de cada una es suyo
@@ -129,6 +130,7 @@ async function challengeSnapshot({ player, match }: PlayerMatch): Promise<Challe
     mode: "challenge",
     matchId: match.id,
     gameTitle: match.game_title,
+    brand: await getCompanyBrand(match.company_id),
     nickname: player.nickname,
     kicked: player.kicked_at !== null,
     totalQuestions: questions.length,
