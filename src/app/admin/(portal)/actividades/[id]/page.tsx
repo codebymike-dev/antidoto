@@ -137,7 +137,7 @@ export default async function DetallePage({
           >
             Exportar CSV
           </a>
-          {reportCompanies.length === 1 ? (
+          {reportCompanies.length === 0 ? null : reportCompanies.length === 1 ? (
             <Link
               href={`/admin/reporte/actividad/${id}/${reportCompanies[0][0]}`}
               className="btn-secondary"

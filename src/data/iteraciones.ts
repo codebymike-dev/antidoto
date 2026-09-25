@@ -706,6 +706,38 @@ export const ITERACIONES: Iteracion[] = [
     ],
   },
   {
+    id: "it-marca",
+    fase: "Marca de empresa",
+    nombre: "Co-branding: logo y colores de cada empresa",
+    rango: "24 sep 2026 - 25 sep 2026",
+    ghSince: "2026-09-24",
+    ghUntil: "2026-09-26",
+    resumen:
+      "Cada empresa configura su identidad visual y la ven sus participantes, la pantalla de los juegos en vivo y sus reportes, siempre con un sello discreto de Antídoto.",
+    historias: [
+      {
+        id: "AN-35",
+        titulo: "Como superadmin, quiero dar a cada empresa su logo y sus colores para que sus colaboradores sientan la actividad como propia",
+        tipo: "historia",
+        valor: "alto",
+        col: "aceptacion",
+        par: "IA",
+        fecha: "2026-09-25",
+        tags: ["empresas", "marca", "ux"],
+        requisitos: ["RF-303", "RF-307", "RF-308"],
+        dod: [
+          ok("Editor de marca con vista previa en vivo (participante, proyector y reporte) al crear o editar una empresa, y pestaña Mi marca para el admin de empresa."),
+          ok("Logo validado por su firma y sin código (SVG), recortado y comprimido en el navegador, servido con caché por versión."),
+          ok("Paleta derivada con contraste AA probado para cualquier color (src/lib/brand-palette.test.mts)."),
+          ok("Marca aplicada en misión, misión completada, Ruta del café, proyector y celular en vivo."),
+          ok("Reportes PDF por empresa y por partida con la marca."),
+          pend("Revisión visual con el usuario y con logos reales de clientes."),
+          pend("Aplicar la migración (company_branding) en Turso de producción antes de desplegar."),
+        ],
+      },
+    ],
+  },
+  {
     id: "it-backlog",
     fase: "Backlog",
     nombre: "Pendientes del portal y las misiones",

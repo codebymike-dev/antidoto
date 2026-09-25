@@ -258,11 +258,37 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       {
         id: "RF-303",
         titulo: "Gestión de empresas y grupos",
-        descripcion: "El superadmin añade y elimina empresas; eliminar una borra en cascada sus códigos y participaciones.",
+        descripcion: "El superadmin crea, edita y elimina empresas; eliminar una borra en cascada sus códigos, participaciones y marca.",
         prioridad: "media",
         estado: "implementado",
-        origen: "addCompany, deleteCompany en src/lib/actions.ts",
-        notas: "El borrado pide confirmación explícita en la interfaz (ConfirmDeleteButton).",
+        origen: "saveCompanyBrand en src/lib/brand-actions.ts, deleteCompany en src/lib/actions.ts",
+        notas: "Crear una empresa abre el editor de marca (RF-307). El borrado pide confirmación explícita en la interfaz (ConfirmDeleteButton).",
+        relacionados: ["RF-307"],
+      },
+      {
+        id: "RF-307",
+        titulo: "Marca de la empresa (co-branding)",
+        descripcion:
+          "Al crear o editar una empresa se configuran su logo, un color principal, uno secundario opcional y un mensaje de bienvenida. Participantes, juegos en vivo y reportes la ven con esa marca y un sello discreto de Antídoto.",
+        prioridad: "media",
+        estado: "implementado",
+        origen:
+          "src/components/admin/brand/BrandEditor.tsx, src/lib/brand-palette.ts, src/lib/company-brand.ts, tabla company_branding",
+        verificacion: "src/lib/brand-palette.test.mts y src/lib/logo-file.test.mts.",
+        notas:
+          "El superadmin edita cualquier empresa; el admin de empresa, la suya desde Configuración › Mi marca. El editor recorta y comprime el logo en el navegador (máx. 200 KB), sugiere colores leídos del logo y muestra la vista previa en vivo. De cada color se derivan todos los tonos con contraste AA garantizado: si el botón no se lee, se oscurece y se avisa. Un logo pensado para el fondo contrario se muestra sobre una placa. Sin marca configurada todo se ve como antes.",
+        relacionados: ["RF-303", "RF-308"],
+      },
+      {
+        id: "RF-308",
+        titulo: "Reportes PDF con la marca de la empresa",
+        descripcion:
+          "Cada actividad tiene un reporte por empresa y cada partida en vivo el suyo, como hoja A4 con logo y colores de la empresa, lista para imprimir o guardar como PDF.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "src/components/report/ReportFrame.tsx, src/app/admin/reporte/actividad/[id]/[companyId]/page.tsx, src/app/admin/reporte/partida/[gameId]/[matchId]/page.tsx",
+        notas: "El admin de empresa solo abre el de la suya. El CSV se mantiene igual para Excel.",
+        relacionados: ["RF-307"],
       },
       {
         id: "RF-304",
