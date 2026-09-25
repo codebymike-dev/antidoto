@@ -30,12 +30,12 @@ export default function CountdownRing({ question, offsetMs, size = 140 }: { ques
           cy="50"
           r={r}
           fill="none"
-          stroke={urgent ? game.danger : game.accent}
           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={circ}
           strokeDashoffset={circ * (1 - fraction)}
-          style={{ transition: "stroke-dashoffset 0.2s linear, stroke 0.3s ease" }}
+          // En style y no como atributo: el acento es una variable CSS y los atributos SVG no las resuelven.
+          style={{ stroke: urgent ? game.danger : game.accent, transition: "stroke-dashoffset 0.2s linear, stroke 0.3s ease" }}
         />
       </svg>
       <span

@@ -20,6 +20,7 @@ const host = (): HostSnapshot => ({
   status: "lobby",
   joinLocked: false,
   gameTitle: "Juego",
+  brand: null,
   totalQuestions: 3,
   question: null,
   reveal: null,

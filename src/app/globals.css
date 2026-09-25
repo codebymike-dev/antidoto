@@ -560,3 +560,50 @@ button {
     animation: none;
   }
 }
+
+/* --- Reportes PDF (admin/reporte) ---------------------------------------------
+   En pantalla, una hoja sobre fondo gris; al imprimir, solo la hoja a página completa
+   y con los colores de la marca (print-color-adjust). */
+@page {
+  size: A4;
+  margin: 14mm 12mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .report-page {
+    background: #fff !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .report-sheet {
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  .report-page,
+  .report-page * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .avoid-break,
+  .report-sheet tr {
+    break-inside: avoid;
+  }
+
+  .report-sheet h2 {
+    break-after: avoid;
+  }
+}

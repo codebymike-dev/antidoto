@@ -14,6 +14,8 @@ import HostLeaderboard from "./HostLeaderboard";
 import HostPodium from "./HostPodium";
 import { useHostSound, useSoundState } from "./useHostSound";
 import { liveSound } from "../sound";
+import { brandCssVars, brandPalette } from "@/lib/brand-palette";
+import BrandLogo from "@/components/BrandLogo";
 
 interface Props {
   initial: HostSnapshot;
@@ -104,6 +106,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
     else void document.documentElement.requestFullscreen().catch(() => {});
   }
 
+  const brand = state.brand;
   const isLast = (state.question?.position ?? 0) >= state.totalQuestions;
   const inGame = state.status !== "lobby" && state.status !== "finished";
 
@@ -117,6 +120,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        ...(brand && brandCssVars(brandPalette(brand))),
       }}
     >
       <GameBackdrop />
@@ -141,6 +145,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
             joinUrl={joinUrl}
             nicknames={state.nicknames}
             joinLocked={state.joinLocked}
+            brand={brand}
             busy={busy}
             onStart={() => command("start")}
             onToggleLock={() => command(state.joinLocked ? "unlockJoin" : "lockJoin")}
@@ -200,6 +205,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 18, color: game.muted }}>
+          {brand && state.status !== "lobby" && <BrandLogo brand={brand} surface="oscuro" height={26} showName={false} />}
           <span style={{ fontWeight: 600, color: game.text }}>{state.gameTitle}</span>
           {inGame && (
             <span>

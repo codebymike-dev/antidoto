@@ -3,6 +3,8 @@
 import { useState } from "react";
 import QrCode from "../QrCode";
 import { calSans, formatPin, game, liveButton, liveGhostButton } from "../game-theme";
+import type { PublicBrand } from "@/lib/brand-palette";
+import { CoBrand } from "@/components/BrandLogo";
 
 interface Props {
   pin: string;
@@ -10,13 +12,14 @@ interface Props {
   joinUrl: string;
   nicknames: string[];
   joinLocked: boolean;
+  brand: PublicBrand | null;
   busy: boolean;
   onStart: () => void;
   onToggleLock: () => void;
   onKick: (nickname: string) => void;
 }
 
-export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocked, busy, onStart, onToggleLock, onKick }: Props) {
+export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocked, brand, busy, onStart, onToggleLock, onKick }: Props) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
 
@@ -33,6 +36,14 @@ export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocke
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28, alignItems: "center", width: "100%" }}>
+      {brand && (
+        <div className="live-rise" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <CoBrand brand={brand} surface="oscuro" height={56} />
+          {brand.welcome && (
+            <p style={{ margin: 0, maxWidth: 760, textAlign: "center", color: game.muted, fontSize: "clamp(15px, 1.4vw, 20px)", lineHeight: 1.5 }}>{brand.welcome}</p>
+          )}
+        </div>
+      )}
       <section
         className="live-rise"
         style={{
@@ -49,7 +60,7 @@ export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocke
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: "clamp(16px, 1.6vw, 24px)", fontWeight: 600 }}>
-            Únete en <strong style={{ color: "#1C99CA" }}>{joinHost}/jugar</strong>
+            Únete en <strong style={{ color: "var(--brand-accent, #1C99CA)" }}>{joinHost}/jugar</strong>
           </span>
           <span style={{ fontSize: "clamp(13px, 1.2vw, 18px)", fontWeight: 600, color: "#5C7680" }}>PIN del juego</span>
           <span style={{ ...calSans, fontSize: "clamp(56px, 9vw, 132px)", lineHeight: 1, letterSpacing: 4 }}>{formatPin(pin)}</span>
