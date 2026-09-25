@@ -607,3 +607,13 @@ button {
     break-after: avoid;
   }
 }
+
+/* Menú desplegable "Reporte PDF" de una actividad con varias empresas. */
+.report-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.report-menu-item:hover {
+  background: #e3f6fc;
+  text-decoration: none !important;
+}

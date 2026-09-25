@@ -57,13 +57,22 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
             {minutes !== null && ` · ${minutes} min`}
           </p>
         </div>
-        <a
-          href={`/admin/juegos/${match.gameId}/partidas/${match.id}/export`}
-          className="btn-secondary"
-          style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
-        >
-          Exportar CSV
-        </a>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <a
+            href={`/admin/juegos/${match.gameId}/partidas/${match.id}/export`}
+            className="btn-secondary"
+            style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
+          >
+            Exportar CSV
+          </a>
+          <Link
+            href={`/admin/reporte/partida/${match.gameId}/${match.id}`}
+            className="btn-secondary"
+            style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
+          >
+            Reporte PDF
+          </Link>
+        </div>
       </header>
 
       {isChallenge && (

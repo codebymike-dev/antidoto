@@ -70,6 +70,10 @@ export default async function DetallePage({
     : 0;
 
   const exportQuery = new URLSearchParams({ q, estado }).toString();
+  // Un reporte PDF por empresa, con su marca: las empresas con códigos en esta actividad.
+  const reportCompanies = [...new Map(allGroups.map((g) => [g.company_id, g.empresa])).entries()].sort((a, b) =>
+    a[1].localeCompare(b[1], "es"),
+  );
 
   return (
     <div>
@@ -133,6 +137,53 @@ export default async function DetallePage({
           >
             Exportar CSV
           </a>
+          {reportCompanies.length === 1 ? (
+            <Link
+              href={`/admin/reporte/actividad/${id}/${reportCompanies[0][0]}`}
+              className="btn-secondary"
+              style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
+            >
+              Reporte PDF
+            </Link>
+          ) : (
+            <details className="report-menu" style={{ position: "relative" }}>
+              <summary
+                className="btn-secondary"
+                style={{ ...secondaryButton, display: "inline-flex", alignItems: "center", gap: 6, listStyle: "none" }}
+              >
+                Reporte PDF <span aria-hidden style={{ fontSize: 10 }}>▾</span>
+              </summary>
+              <div
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: "calc(100% + 6px)",
+                  zIndex: 20,
+                  minWidth: 240,
+                  maxHeight: 320,
+                  overflowY: "auto",
+                  background: "#fff",
+                  borderRadius: 12,
+                  padding: 6,
+                  boxShadow: "0 16px 40px rgba(15,24,29,0.16)",
+                }}
+              >
+                <div style={{ padding: "8px 10px 6px", fontSize: 11, fontWeight: 700, color: colors.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  Reporte de la empresa
+                </div>
+                {reportCompanies.map(([companyId, name]) => (
+                  <Link
+                    key={companyId}
+                    href={`/admin/reporte/actividad/${id}/${companyId}`}
+                    className="report-menu-item"
+                    style={{ display: "block", padding: "9px 10px", borderRadius: 8, fontSize: 13.5, color: colors.ink, fontWeight: 600 }}
+                  >
+                    {name}
+                  </Link>
+                ))}
+              </div>
+            </details>
+          )}
           <Link
             href={`/admin/config?mission=${id}`}
             className="btn-filled"
