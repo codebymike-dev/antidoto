@@ -172,10 +172,11 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         id: "RF-201",
         titulo: "Listado de actividades con métricas",
         descripcion:
-          "El portal lista las misiones con búsqueda, número de participantes y avance promedio, limitado a la empresa del admin.",
+          "La portada del superadmin (Inicio) lista las actividades jugables con búsqueda, número de códigos, participantes y avance promedio. El admin de empresa entra directo a la página de su empresa.",
         prioridad: "alta",
         estado: "implementado",
         origen: "src/app/admin/(portal)/page.tsx, listMissions en src/lib/queries.ts",
+        notas: "Desde el 2026-09-25 solo salen las actividades con escena (mission_experiences): las del prototipo (m1, m2) no se podían jugar. No cuentan los códigos ni las empresas archivados.",
         relacionados: ["RF-103", "RNF-10"],
       },
       {
@@ -185,8 +186,9 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "Cada actividad muestra participantes, avance promedio, grupos activos y la tendencia de avance de las últimas 6 semanas.",
         prioridad: "alta",
         estado: "implementado",
-        origen: "src/app/admin/(portal)/actividades/[id]/page.tsx, getTrend",
-        notas: "Un admin de empresa sin códigos en esa misión no ve ni su metadata.",
+        origen: "src/components/admin/ActivityResults.tsx, src/app/admin/(portal)/actividades/[id]/page.tsx, src/app/admin/(portal)/empresas/[id]/actividades/[missionId]/page.tsx, getTrend",
+        notas:
+          "La misma vista sirve para todas las empresas (se abre desde la Biblioteca) o para una sola (desde la página de la empresa), con el mismo filtro de alcance que vería su admin. Una empresa sin códigos en esa actividad no ve ni su metadata.",
         relacionados: ["RF-203"],
       },
       {
@@ -206,7 +208,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         estado: "implementado",
         origen: "src/app/admin/(portal)/actividades/[id]/export/route.ts",
         notas:
-          "El archivo lleva BOM UTF-8 para Excel y respeta el mismo filtro por empresa. Usa el mismo csvCell que el export de partidas: neutraliza fórmulas (=, +, -, @) y el nombre va en filename* para admitir tildes.",
+          "El archivo lleva BOM UTF-8 para Excel y respeta el mismo filtro por empresa (?empresa= para la vista de una sola). Usa el mismo csvCell que el export de partidas: neutraliza fórmulas (=, +, -, @) y el nombre va en filename* para admitir tildes.",
         relacionados: ["RF-103"],
       },
       {
@@ -214,8 +216,9 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         titulo: "Duplicar actividad",
         descripcion: "El superadmin duplica una misión existente para reutilizarla como base de otra.",
         prioridad: "baja",
-        estado: "implementado",
-        origen: "duplicateMission en src/lib/actions.ts",
+        estado: "planeado",
+        notas:
+          "Retirado el 2026-09-25: copiaba título y descripción pero no la escena, así que la copia no se podía jugar. Si vuelve, debe copiar también su fila de mission_experiences.",
       },
       {
         id: "RF-206",
@@ -234,36 +237,53 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
     items: [
       {
         id: "RF-301",
-        titulo: "Generar códigos de actividad",
+        titulo: "Asignar una actividad a una empresa",
         descripcion:
-          "El admin genera un código para una pareja misión + empresa, con estado inicial (activo o pausado) y fecha de vencimiento opcional.",
+          "El superadmin asigna una actividad de la biblioteca a una empresa elegida de la lista (nunca escrita a mano) con una fecha de cierre opcional; se crea el código para sus participantes.",
         prioridad: "alta",
         estado: "implementado",
-        origen: "generateCode en src/lib/actions.ts, tabla activity_codes",
+        origen: "assignActivity en src/lib/actions.ts, src/app/admin/(portal)/asignar/page.tsx, src/components/admin/AssignForm.tsx, tabla activity_codes",
         notas:
-          "Formato PREFIJO-EMPRESA-XXXXXX: sufijo de 6 caracteres con crypto (sin 0/O ni 1/I), ~1.000 millones de combinaciones; antes eran 2 dígitos y bastaban 89 intentos. Se reintenta hasta 10 veces si choca con el UNIQUE. El admin de empresa solo genera para la suya: el campo del formulario se ignora.",
+          "Formato PREFIJO-EMPRESA-XXXXXX: sufijo de 6 caracteres con crypto (sin 0/O ni 1/I), ~1.000 millones de combinaciones; antes eran 2 dígitos y bastaban 89 intentos. Se reintenta hasta 10 veces si choca con el UNIQUE. Desde el 2026-09-25 solo asigna el superadmin (antes un nombre mal escrito creaba una empresa nueva sin avisar) y una serie se asigna completa desde su primera estación.",
         relacionados: ["RF-004", "RF-302"],
       },
       {
         id: "RF-302",
-        titulo: "Listado de códigos con estado derivado",
-        descripcion: "La configuración lista todos los códigos visibles con su actividad, empresa, fecha, participantes y estado.",
+        titulo: "Códigos de cada empresa: estado, pausa y fecha de cierre",
+        descripcion:
+          "La página de cada empresa muestra sus códigos con estado, fecha de cierre y participantes, un botón para copiarlos, y permite pausarlos, reanudarlos y cambiar la fecha de cierre.",
         prioridad: "media",
-        estado: "parcial",
-        origen: "listAllCodes en src/lib/queries.ts",
+        estado: "implementado",
+        origen: "listCompanyAssignments en src/lib/queries.ts, setCodePaused y setCodeExpiry en src/lib/actions.ts, src/components/admin/CopyCode.tsx",
         notas:
-          "El estado 'vencido' se deriva de expires_at (src/lib/expiry.ts): el día elegido sirve completo y vence al terminar ese día en hora de Colombia, no a medianoche UTC (antes vencía la tarde del día anterior). Falta poder pausar, reactivar o cambiar el vencimiento de un código ya creado.",
+          "El estado 'vencido' se deriva de expires_at (src/lib/expiry.ts): el día elegido sirve completo y vence al terminar ese día en hora de Colombia, no a medianoche UTC (antes vencía la tarde del día anterior).",
         relacionados: ["RNF-10"],
       },
       {
         id: "RF-303",
-        titulo: "Gestión de empresas y grupos",
-        descripcion: "El superadmin crea, edita y elimina empresas; eliminar una borra en cascada sus códigos, participaciones y marca.",
-        prioridad: "media",
+        titulo: "Empresas como centro del portal",
+        descripcion:
+          "El menú gira alrededor de la empresa: Empresas lista las activas y las archivadas, y la página de cada una reúne sus actividades con avance, resultados, informe PDF, códigos y su marca. El admin de empresa solo ve la suya.",
+        prioridad: "alta",
         estado: "implementado",
-        origen: "saveCompanyBrand en src/lib/brand-actions.ts, deleteCompany en src/lib/actions.ts",
-        notas: "Crear una empresa abre el editor de marca (RF-307). El borrado pide confirmación explícita en la interfaz (ConfirmDeleteButton).",
-        relacionados: ["RF-307"],
+        origen:
+          "src/app/admin/(portal)/empresas/page.tsx, src/app/admin/(portal)/empresas/[id]/page.tsx, saveCompanyBrand en src/lib/brand-actions.ts, listCompaniesWithBrand en src/lib/company-brand.ts",
+        notas:
+          "Reorganizado el 2026-09-25 porque asignar, ver el avance por empresa o borrar estaba repartido entre Actividades, Biblioteca y Configuración. Configuración se retiró: los textos legales y el historial quedaron en Ajustes (src/app/admin/(portal)/ajustes/page.tsx) y /admin/config redirige.",
+        relacionados: ["RF-307", "RF-309"],
+      },
+      {
+        id: "RF-309",
+        titulo: "Archivar empresas y quitar actividades sin perder resultados",
+        descripcion:
+          "Archivar una empresa la saca de las listas, sus códigos dejan de aceptar participantes y su admin pierde el acceso; quitar una actividad deja su código sin efecto y fuera de los informes. Nada se borra y ambos se restauran.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "archiveCompany, restoreCompany, archiveCode y restoreCode en src/lib/actions.ts, LIVE_CODE en src/lib/scope.ts, tablas company_archive y activity_code_archive en db/schema.sql",
+        notas:
+          "Reemplaza al borrado en cascada (deleteCompany), que eliminaba en silencio los resultados de los participantes. Decisión del usuario (2026-09-25): archivar, no borrar. Producción necesita scripts/migrate.mjs para las tablas nuevas.",
+        relacionados: ["RF-303", "RF-004"],
       },
       {
         id: "RF-307",
@@ -276,7 +296,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "src/components/admin/brand/BrandEditor.tsx, src/lib/brand-palette.ts, src/lib/company-brand.ts, tabla company_branding",
         verificacion: "src/lib/brand-palette.test.mts y src/lib/logo-file.test.mts.",
         notas:
-          "El superadmin edita cualquier empresa; el admin de empresa, la suya desde Configuración › Mi marca. El editor recorta y comprime el logo en el navegador (máx. 200 KB), sugiere colores leídos del logo y muestra la vista previa en vivo. De cada color se derivan todos los tonos con contraste AA garantizado: si el botón no se lee, se oscurece y se avisa. Un logo pensado para el fondo contrario se muestra sobre una placa. Sin marca configurada todo se ve como antes.",
+          "El superadmin edita cualquier empresa; el admin de empresa, la suya desde Mi empresa › Logo y colores (src/app/admin/(portal)/empresas/[id]/marca/page.tsx). El editor recorta y comprime el logo en el navegador (máx. 200 KB), sugiere colores leídos del logo y muestra la vista previa en vivo. De cada color se derivan todos los tonos con contraste AA garantizado: si el botón no se lee, se oscurece y se avisa. Un logo pensado para el fondo contrario se muestra sobre una placa. Sin marca configurada todo se ve como antes.",
         relacionados: ["RF-303", "RF-308"],
       },
       {
@@ -651,11 +671,12 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         id: "RF-902",
         titulo: "Usar una experiencia con una empresa",
         descripcion:
-          "El superadmin convierte la experiencia en actividad y genera el código para una empresa. La experiencia reutiliza códigos, participaciones, avance, puntaje y exportación de las misiones.",
+          "Desde la biblioteca, \"Asignar a una empresa\" abre el formulario de asignación con la experiencia elegida. La experiencia reutiliza códigos, participaciones, avance, puntaje y exportación de las misiones.",
         prioridad: "alta",
         estado: "implementado",
-        origen: "adoptExperience en src/lib/experience-actions.ts, tabla mission_experiences en db/schema.sql",
-        notas: "La misión de cada experiencia tiene id fijo (exp-<clave>): crearla dos veces no duplica nada.",
+        origen: "ensureExperienceMission en src/lib/experience-data.ts, assignActivity en src/lib/actions.ts, tabla mission_experiences en db/schema.sql",
+        notas:
+          "La misión de cada experiencia tiene id fijo (exp-<clave>): crearla dos veces no duplica nada. Una serie de varias estaciones lleva el nombre de la serie (\"Ruta del café\"), no el de su primera estación.",
         relacionados: ["RF-301", "RF-001"],
       },
       {
@@ -703,7 +724,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "La actividad de una escena muestra, por riesgo, qué porcentaje lo encontró, cuántos acertaron a la primera y el error más común. El admin prueba cualquier escena a pantalla completa sin guardar respuestas.",
         prioridad: "media",
         estado: "implementado",
-        origen: "experienceRiskStats en src/lib/experience-data.ts, src/app/admin/(portal)/actividades/[id]/page.tsx, src/app/admin/escena/[key]/page.tsx",
+        origen: "experienceRiskStats en src/lib/experience-data.ts, src/components/admin/ActivityResults.tsx, src/app/admin/escena/[key]/page.tsx",
         notas: "El admin de empresa solo ve las respuestas de su empresa (companyFilter).",
         relacionados: ["RF-202", "RF-904"],
       },

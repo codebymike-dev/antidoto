@@ -33,7 +33,9 @@ export default function DealGrid({
         if (firstVisitThisSession(storageKey)) {
           // El ancho final ya viene inline del servidor; se parte de 0 y se vuelve a él.
           // Sin clearProps: borraría también el ancho que puso React.
-          gsap.set(grid.querySelectorAll("[data-bar]"), { width: 0 });
+          // (Biblioteca y juegos no tienen barras: GSAP avisa si el objetivo está vacío.)
+          const bars = grid.querySelectorAll("[data-bar]");
+          if (bars.length) gsap.set(bars, { width: 0 });
           const tl = gsap.timeline();
           tl.from(cards, {
             y: 34,
