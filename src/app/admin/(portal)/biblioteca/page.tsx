@@ -72,7 +72,7 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                       <h3 style={{ ...calSans, fontSize: 18, margin: 0, color: colors.ink }}>
                         Estación {def.station} · {def.title}
                       </h3>
-                      <p style={{ fontSize: 13, color: colors.muted, margin: 0, lineHeight: 1.5 }}>{def.description}</p>
+                      <p style={description}>{def.description}</p>
                       <div style={stats}>
                         <span>{def.risks.length} riesgos</span>
                         <span>{def.minutes}</span>
@@ -101,21 +101,21 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                             Resultados
                           </Link>
                         )}
-                        {isSuper && def.station > 1 && (
-                          <span style={{ fontSize: 12, color: colors.muted, maxWidth: 150, lineHeight: 1.35 }}>
-                            Se juega con el código de la estación 1, al terminarla.
-                          </span>
-                        )}
-                        {isSuper && def.station === 1 && (
+                      </div>
+                      {isSuper &&
+                        (def.station === 1 ? (
                           <Link
                             href={`/admin/asignar?actividad=${def.key}`}
                             className="btn-filled"
-                            style={{ ...filledButton, height: 36, padding: "0 14px", fontSize: 13, display: "inline-flex", alignItems: "center" }}
+                            style={{ ...filledButton, ...footerSecondRow, justifyContent: "center", fontSize: 13 }}
                           >
                             Asignar a una empresa
                           </Link>
-                        )}
-                      </div>
+                        ) : (
+                          <span style={{ ...footerSecondRow, fontSize: 12, color: colors.muted, lineHeight: 1.35 }}>
+                            Se juega con el código de la estación 1, al terminarla.
+                          </span>
+                        ))}
                     </div>
                   </article>
                 ))}
@@ -161,22 +161,7 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                     <div style={cardBody}>
                       <span style={tagChip}>{g.company_id === null ? "GLOBAL" : g.company_name?.toUpperCase()}</span>
                       <h3 style={{ ...calSans, fontSize: 18, margin: 0, color: colors.ink }}>{g.title}</h3>
-                      {g.description && (
-                        <p
-                          style={{
-                            fontSize: 13,
-                            color: colors.muted,
-                            margin: 0,
-                            lineHeight: 1.5,
-                            display: "-webkit-box",
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
-                          {g.description}
-                        </p>
-                      )}
+                      <p style={description}>{g.description || "Sin descripción."}</p>
                       <div style={stats}>
                         <span>{g.questions === 1 ? "1 pregunta" : `${g.questions} preguntas`}</span>
                         <span>{g.matches === 1 ? "1 partida" : `${g.matches} partidas`}</span>
@@ -267,6 +252,22 @@ function GameThumb({ questions }: { questions: number }) {
     </div>
   );
 }
+
+/** Cuatro líneas fijas: así los datos y el pie quedan a la misma altura en toda la fila. */
+const description = {
+  fontSize: 13,
+  color: colors.muted,
+  margin: 0,
+  lineHeight: 1.5,
+  minHeight: "6em",
+  display: "-webkit-box",
+  WebkitLineClamp: 4,
+  WebkitBoxOrient: "vertical" as const,
+  overflow: "hidden",
+};
+
+/** Segunda fila del pie: asignar (estación 1) o la nota de las demás, siempre con la misma altura. */
+const footerSecondRow = { display: "flex", alignItems: "center", height: 36, marginTop: -2 };
 
 const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 };
 

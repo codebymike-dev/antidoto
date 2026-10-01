@@ -244,7 +244,7 @@ export default async function EmpresaPage({
                 {codes.length === 1 ? "este código." : "uno de estos códigos."}
               </div>
               {codes.map((a) => (
-                <CodeRow key={a.id} a={a} canManage={isSuper && !company.archived} showCount={codes.length > 1} />
+                <CodeRow key={a.id} a={a} canManage={isSuper && !company.archived} showCount={codes.length > 1} companyArchived={company.archived} />
               ))}
             </div>
           </section>
@@ -366,15 +366,16 @@ function ParticipantRow({ x }: { x: Participant }) {
 }
 
 /** El estado del código dicho como se lo explicarías a alguien. */
-function codeStatus(a: Assignment) {
+function codeStatus(a: Assignment, companyArchived: boolean) {
+  if (companyArchived) return { dot: colors.mutedLight, text: "No funciona: la empresa está archivada" };
   const fecha = a.expira ? formatExpiryDate(a.expira) : null;
   if (a.estado === "vencido") return { dot: colors.danger, text: `Cerró el ${fecha}: ya no se puede entrar` };
   if (a.estado === "pausado") return { dot: "#E0A100", text: "Pausado: nadie puede jugar por ahora" };
   return { dot: "#1F8A4C", text: fecha ? `Abierto hasta el ${fecha}` : "Abierto, sin fecha de cierre" };
 }
 
-function CodeRow({ a, canManage, showCount }: { a: Assignment; canManage: boolean; showCount: boolean }) {
-  const status = codeStatus(a);
+function CodeRow({ a, canManage, showCount, companyArchived }: { a: Assignment; canManage: boolean; showCount: boolean; companyArchived: boolean }) {
+  const status = codeStatus(a, companyArchived);
   return (
     <div style={{ padding: "10px 0 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
