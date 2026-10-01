@@ -76,7 +76,19 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                       <div style={stats}>
                         <span>{def.risks.length} riesgos</span>
                         <span>{def.minutes}</span>
-                        <span>{participantes === 1 ? "1 participante" : `${participantes} participantes`}</span>
+                        {missionId ? (
+                          <Link
+                            href={`/admin/actividades/${missionId}`}
+                            className="btn-text"
+                            title="Ver resultados"
+                            style={{ display: "inline-flex", alignItems: "center", gap: 2, fontWeight: 600, color: colors.accent }}
+                          >
+                            {participantes === 1 ? "1 participante" : `${participantes} participantes`}
+                            <ArrowRightIcon />
+                          </Link>
+                        ) : (
+                          <span>{participantes === 1 ? "1 participante" : `${participantes} participantes`}</span>
+                        )}
                         {edited > 0 && <span style={{ color: colors.accentDark, fontWeight: 600 }}>{edited} textos editados</span>}
                       </div>
                       <div style={cardFooter}>
@@ -91,16 +103,6 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                           {isSuper ? "Editar textos" : "Ver riesgos"}
                           <ArrowRightIcon />
                         </Link>
-                        <div style={{ flex: 1 }} />
-                        {missionId && (
-                          <Link
-                            href={`/admin/actividades/${missionId}`}
-                            className="btn-text"
-                            style={{ fontSize: 13, fontWeight: 600, color: colors.muted }}
-                          >
-                            Resultados
-                          </Link>
-                        )}
                       </div>
                       {isSuper &&
                         (def.station === 1 ? (
@@ -253,18 +255,7 @@ function GameThumb({ questions }: { questions: number }) {
   );
 }
 
-/** Cuatro líneas fijas: así los datos y el pie quedan a la misma altura en toda la fila. */
-const description = {
-  fontSize: 13,
-  color: colors.muted,
-  margin: 0,
-  lineHeight: 1.5,
-  minHeight: "6em",
-  display: "-webkit-box",
-  WebkitLineClamp: 4,
-  WebkitBoxOrient: "vertical" as const,
-  overflow: "hidden",
-};
+const description = { fontSize: 13, color: colors.muted, margin: 0, lineHeight: 1.5 };
 
 /** Segunda fila del pie: asignar (estación 1) o la nota de las demás, siempre con la misma altura. */
 const footerSecondRow = { display: "flex", alignItems: "center", height: 36, marginTop: -2 };
