@@ -2,19 +2,21 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { getCompany, listCompanyAssignments, type Assignment } from "@/lib/queries";
+import { getCompany, listCompanyAssignments, listCompanyParticipants, type Assignment } from "@/lib/queries";
 import { getCompanyBrand } from "@/lib/company-brand";
 import { archiveCode, archiveCompany, restoreCode, restoreCompany, setCodeExpiry, setCodePaused } from "@/lib/actions";
 import { formatExpiryDate } from "@/lib/expiry";
 import { brandPalette } from "@/lib/brand-palette";
-import { ESTADO_STYLES } from "@/lib/data";
+import { lugar } from "@/lib/colombia";
 import { colors, calSans } from "@/lib/theme";
 import { card, filledButton, secondaryButton } from "@/lib/styles";
 import BrandLogo from "@/components/BrandLogo";
 import ConfirmDeleteButton from "@/components/admin/ConfirmDeleteButton";
 import CopyCode from "@/components/admin/CopyCode";
+import DropdownMenu from "@/components/admin/DropdownMenu";
+import ExpandableList from "@/components/admin/ExpandableList";
 import SavedToast from "@/components/admin/SavedToast";
-import { ArrowRightIcon, InboxIcon, UsersIcon } from "@/components/icons";
+import { ArrowRightIcon, GearIcon, InboxIcon, UsersIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +52,10 @@ export default async function EmpresaPage({
   const live = assignments.filter((a) => !a.archivado);
   const removed = assignments.filter((a) => a.archivado);
   const activities = byActivity(live);
+  // La lista de quién entró, por actividad. Una empresa archivada no muestra resultados.
+  const participantsByActivity = company.archived
+    ? activities.map(() => [])
+    : await Promise.all(activities.map((codes) => listCompanyParticipants(codes[0].mission_id, companyId)));
   const participantes = live.reduce((s, a) => s + a.participantes, 0);
   const justAssigned = asignada ? live.find((a) => a.codigo === asignada) : undefined;
   const host = (await headers()).get("host");
@@ -276,71 +282,163 @@ export default async function EmpresaPage({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+type Participant = Awaited<ReturnType<typeof listCompanyParticipants>>[number];
+
+/** Cuántas personas se ven de entrada; el resto se abre con "Ver los N". */
+const PREVIEW = 8;
+const PEOPLE_COLUMNS = "minmax(0, 1fr) minmax(110px, 170px) 64px 104px";
+
+function ParticipantsList({ people }: { people: Participant[] }) {
+  const rows = (list: Participant[]) => list.map((x, i) => <ParticipantRow key={`${x.codigo}-${x.nombre}-${i}`} x={x} />);
   return (
-    <div>
-      <div style={{ fontSize: 12, fontWeight: 600, color: colors.muted }}>{label}</div>
-      <div style={{ ...calSans, fontSize: 24, color: colors.ink, marginTop: 2 }}>{value}</div>
+    <div style={{ overflowX: "auto" }}>
+      <div style={{ minWidth: 520 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: PEOPLE_COLUMNS,
+            gap: 14,
+            padding: "0 0 8px",
+            borderBottom: `1px solid ${colors.accentTint}`,
+            fontSize: 11,
+            fontWeight: 700,
+            color: colors.muted,
+            letterSpacing: 0.6,
+            textTransform: "uppercase",
+          }}
+        >
+          <span>Participante</span>
+          <span>Avance</span>
+          <span style={{ textAlign: "right" }}>Puntaje</span>
+          <span>Estado</span>
+        </div>
+        {people.length > PREVIEW ? (
+          <ExpandableList visible={rows(people.slice(0, PREVIEW))} hidden={rows(people.slice(PREVIEW))} total={people.length} />
+        ) : (
+          rows(people)
+        )}
+      </div>
     </div>
   );
 }
 
-function CodeRow({ a, canManage }: { a: Assignment; canManage: boolean }) {
-  const est = ESTADO_STYLES[a.estado] ?? ESTADO_STYLES.activo;
-  const cierre = a.expira ? `${a.estado === "vencido" ? "Cerró" : "Cierra"} el ${formatExpiryDate(a.expira)}` : "Sin fecha de cierre";
+function ParticipantRow({ x }: { x: Participant }) {
+  const municipio = lugar(x.municipio)?.municipio;
+  const detail = [x.cargo, municipio].filter(Boolean).join(" · ");
+  const state = x.completed_at
+    ? { label: "Terminó", color: "#1F8A4C", bg: "#E0F7EA" }
+    : x.avance > 0
+      ? { label: "En curso", color: colors.accentDark, bg: colors.accentTint }
+      : { label: "Sin empezar", color: colors.muted, bg: "#EEF3F5" };
   return (
-    <div style={{ padding: "12px 22px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-        <CopyCode code={a.codigo} />
-        <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 100, color: est.color, background: est.bg }}>{est.label}</span>
-        <span style={{ fontSize: 12.5, color: colors.muted }}>{cierre}</span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: colors.muted }}>
-          <UsersIcon />
-          {a.participantes}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: PEOPLE_COLUMNS,
+        gap: 14,
+        alignItems: "center",
+        padding: "10px 0",
+        borderBottom: `1px solid ${colors.accentTint}`,
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: colors.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.nombre}</div>
+        {detail && (
+          <div style={{ fontSize: 12, color: colors.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{detail}</div>
+        )}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ flex: 1, height: 7, borderRadius: 7, background: colors.accentTint, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${x.avance}%`, background: colors.buttonGradient, borderRadius: 7 }} />
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 600, color: colors.inkSoft, width: 34, textAlign: "right" }}>{x.avance}%</span>
+      </div>
+      <span style={{ fontSize: 14, fontWeight: 600, color: x.puntaje === null ? colors.mutedLight : colors.ink, textAlign: "right" }}>
+        {x.puntaje === null ? "–" : x.puntaje.toFixed(1).replace(".", ",")}
+      </span>
+      <span>
+        <span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 9px", borderRadius: 100, color: state.color, background: state.bg, whiteSpace: "nowrap" }}>
+          {state.label}
         </span>
+      </span>
+    </div>
+  );
+}
+
+/** El estado del código dicho como se lo explicarías a alguien. */
+function codeStatus(a: Assignment) {
+  const fecha = a.expira ? formatExpiryDate(a.expira) : null;
+  if (a.estado === "vencido") return { dot: colors.danger, text: `Cerró el ${fecha}: ya no se puede entrar` };
+  if (a.estado === "pausado") return { dot: "#E0A100", text: "Pausado: nadie puede jugar por ahora" };
+  return { dot: "#1F8A4C", text: fecha ? `Abierto hasta el ${fecha}` : "Abierto, sin fecha de cierre" };
+}
+
+function CodeRow({ a, canManage, showCount }: { a: Assignment; canManage: boolean; showCount: boolean }) {
+  const status = codeStatus(a);
+  return (
+    <div style={{ padding: "10px 0 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <CopyCode code={a.codigo} size={17} />
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, color: colors.inkSoft }}>
+          <span aria-hidden style={{ width: 8, height: 8, borderRadius: 8, background: status.dot }} />
+          {status.text}
+        </span>
+        {showCount && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: colors.muted }}>
+            <UsersIcon />
+            {a.participantes} {a.participantes === 1 ? "persona" : "personas"}
+          </span>
+        )}
       </div>
       {canManage && (
-        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        // La key cambia al guardar: el menú se vuelve a montar cerrado.
+        <DropdownMenu
+          key={`${a.estado}-${a.expira ?? "sin-fecha"}`}
+          label={
+            <>
+              Opciones del código <span aria-hidden style={{ fontSize: 10 }}>▾</span>
+            </>
+          }
+          summaryClassName="btn-text"
+          summaryStyle={textButton}
+          width={270}
+        >
           {a.estado !== "vencido" && (
-            <form action={setCodePaused}>
-              <input type="hidden" name="codeId" value={a.id} />
-              <input type="hidden" name="paused" value={a.estado === "pausado" ? "0" : "1"} />
-              <button type="submit" className="btn-text" style={textButton} title={a.estado === "pausado" ? undefined : "Quien entre verá un aviso y no podrá jugar hasta que la reanudes"}>
-                {a.estado === "pausado" ? "Reanudar" : "Pausar"}
-              </button>
-            </form>
+            <>
+              <form action={setCodePaused}>
+                <input type="hidden" name="codeId" value={a.id} />
+                <input type="hidden" name="paused" value={a.estado === "pausado" ? "0" : "1"} />
+                <button type="submit" className="report-menu-item" style={menuButton}>
+                  {a.estado === "pausado" ? "Reanudar: que puedan volver a jugar" : "Pausar: que nadie pueda jugar por ahora"}
+                </button>
+              </form>
+              <div style={menuDivider} />
+            </>
           )}
-          {/* La key cambia al guardar: el menú se vuelve a montar cerrado. */}
-          <details key={a.expira ?? "sin-fecha"} className="report-menu" style={{ position: "relative" }}>
-            <summary className="btn-text" style={{ ...textButton, listStyle: "none" }}>
-              Cambiar fecha de cierre
-            </summary>
-            <form
-              action={setCodeExpiry}
-              style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 20, background: "#fff", borderRadius: 12, padding: 14, boxShadow: "0 16px 40px rgba(15,24,29,0.16)", display: "flex", flexDirection: "column", gap: 10, width: 240 }}
-            >
-              <input type="hidden" name="codeId" value={a.id} />
-              <label style={{ fontSize: 12, fontWeight: 600, color: colors.accentDark }} htmlFor={`expira-${a.id}`}>
-                Último día para jugar
-              </label>
-              <input
-                id={`expira-${a.id}`}
-                name="expira"
-                type="date"
-                defaultValue={a.expira ?? ""}
-                style={{ height: 40, borderRadius: 10, border: `1.5px solid ${colors.border}`, padding: "0 10px", fontSize: 13.5 }}
-              />
-              <span style={{ fontSize: 11.5, color: colors.muted, lineHeight: 1.4 }}>Déjalo vacío para que no cierre nunca.</span>
-              <button type="submit" className="btn-filled" style={{ ...filledButton, height: 38, fontSize: 13 }}>
-                Guardar fecha
-              </button>
-            </form>
-          </details>
-          <form action={archiveCode}>
+          <form action={setCodeExpiry} style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 8 }}>
             <input type="hidden" name="codeId" value={a.id} />
-            <ConfirmDeleteButton confirmLabel="Sí, quitar">Quitar</ConfirmDeleteButton>
+            <label style={{ fontSize: 12, fontWeight: 600, color: colors.accentDark }} htmlFor={`expira-${a.id}`}>
+              Último día para jugar
+            </label>
+            <input
+              id={`expira-${a.id}`}
+              name="expira"
+              type="date"
+              defaultValue={a.expira ?? ""}
+              style={{ height: 40, borderRadius: 10, border: `1.5px solid ${colors.border}`, padding: "0 10px", fontSize: 13.5 }}
+            />
+            <span style={{ fontSize: 11.5, color: colors.muted, lineHeight: 1.4 }}>Déjalo vacío para que no cierre nunca.</span>
+            <button type="submit" className="btn-filled" style={{ ...filledButton, height: 36, fontSize: 13 }}>
+              Guardar fecha
+            </button>
           </form>
-        </div>
+          <div style={menuDivider} />
+          <form action={archiveCode} style={{ padding: "8px 10px" }}>
+            <input type="hidden" name="codeId" value={a.id} />
+            <ConfirmDeleteButton confirmLabel="Sí, quitar">Quitar este código</ConfirmDeleteButton>
+            <p style={menuHint}>Deja de funcionar y sale de los informes. Los resultados se guardan y se puede restaurar.</p>
+          </form>
+        </DropdownMenu>
       )}
     </div>
   );
@@ -351,7 +449,29 @@ const textButton = {
   border: "none",
   padding: 0,
   cursor: "pointer",
-  fontSize: 12.5,
+  fontSize: 13,
   fontWeight: 600,
   color: colors.accent,
 } as const;
+
+const menuItem = {
+  display: "block",
+  padding: "9px 10px",
+  borderRadius: 8,
+  fontSize: 13.5,
+  fontWeight: 600,
+  color: colors.ink,
+} as const;
+
+const menuButton = {
+  ...menuItem,
+  width: "100%",
+  textAlign: "left",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+} as const;
+
+const menuDivider = { height: 1, background: colors.accentTint, margin: "4px 6px" } as const;
+
+const menuHint = { margin: "6px 0 0", fontSize: 11.5, color: colors.muted, lineHeight: 1.4 } as const;
