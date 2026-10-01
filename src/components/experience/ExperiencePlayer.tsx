@@ -212,8 +212,7 @@ function StationPlayer({
   // No se puede seguir jugando (pausa, vencimiento, sesión): ventana propia con lo que sigue.
   const [blocked, setBlocked] = useState<Blocked | null>(null);
   // Fallo de red al enviar una respuesta: la pregunta sigue abierta y se recuerda la opción elegida.
-  const [askError, setAskError] = useState<string | null>(null);
-  const [tried, setTried] = useState<number | null>(null);
+  const [fail, setFail] = useState<{ riskId: string; option: number; text: string } | null>(null);
   const online = useOnline();
   // Paso del tutorial; null = sin tutorial o ya terminado.
   const [coach, setCoach] = useState<number | null>(null);
@@ -547,8 +546,7 @@ function StationPlayer({
   async function choose(option: number) {
     if (!ask || pending) return;
     setPending(true);
-    setAskError(null);
-    setTried(option);
+    setFail(null);
     let result: RiskResult | null = null;
     if (mode === "preview" && previewTexts) {
       const t = previewTexts[ask.riskId];
@@ -571,14 +569,17 @@ function StationPlayer({
         // La pregunta sigue abierta. Reintentar es seguro: si la primera sí llegó al servidor,
         // vale esa y la respuesta de vuelta trae el mismo resultado.
         setPending(false);
-        setAskError(networkMessage("Tu respuesta no se perdió: se enviará sola al volver la señal, o toca tu opción de nuevo."));
+        setFail({
+          riskId: ask.riskId,
+          option,
+          text: networkMessage("Tu respuesta no se perdió: se enviará sola al volver la señal, o toca tu opción de nuevo."),
+        });
         return;
       }
       if (!out.ok) return reportBlocked(out);
       result = out.result;
     }
     setPending(false);
-    setTried(null);
     helpLevel.current = 0;
     misses.current = 0;
     setClueRisk(null);
@@ -600,10 +601,11 @@ function StationPlayer({
   useEffect(() => {
     chooseRef.current = choose;
   });
+  const askFail = fail && fail.riskId === ask?.riskId ? fail : null;
   const retryRef = useRef<number | null>(null);
   useEffect(() => {
-    retryRef.current = askError ? tried : null;
-  }, [askError, tried]);
+    retryRef.current = askFail ? askFail.option : null;
+  }, [askFail]);
   useEffect(() => {
     if (online && retryRef.current !== null) void chooseRef.current(retryRef.current);
   }, [online]);
@@ -625,12 +627,6 @@ function StationPlayer({
     // reportBlocked solo usa setters y showToast, estables.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [askId, mode]);
-
-  // Una pregunta nueva empieza sin el error de la anterior.
-  useEffect(() => {
-    setAskError(null);
-    setTried(null);
-  }, [askId]);
 
   function closeOutcome() {
     setOutcome(null);
@@ -823,7 +819,7 @@ function StationPlayer({
                           key={i}
                           type="button"
                           autoFocus={i === 0}
-                          className={`${styles.button} ${styles.option} ${askError && tried === i ? styles.optionTried : ""}`}
+                          className={`${styles.button} ${styles.option} ${askFail?.option === i ? styles.optionTried : ""}`}
                           onClick={() => choose(i)}
                           disabled={pending}
                         >
@@ -836,9 +832,9 @@ function StationPlayer({
                           Enviando tu respuesta...
                         </p>
                       )}
-                      {askError && (
+                      {askFail && (
                         <p role="alert" className={styles.netError}>
-                          {askError}
+                          {askFail.text}
                         </p>
                       )}
                     </div>
