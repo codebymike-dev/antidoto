@@ -770,6 +770,36 @@ export function seriesEntry(def: ExperienceDef): ExperienceDef {
   return EXPERIENCES.filter((e) => e.series === def.series).sort((a, b) => a.station - b.station)[0];
 }
 
+/**
+ * Cada serie es UNA actividad: sus estaciones son partes de ella, no actividades sueltas.
+ * La biblioteca muestra una tarjeta por serie y las estaciones al entrar.
+ */
+export interface ExperienceActivity {
+  /** La clave de la primera estación: con ella se asigna y se abre la actividad. */
+  key: string;
+  name: string;
+  description: string;
+  tag: string;
+  stations: ExperienceDef[];
+}
+
+const SERIES_DESCRIPTION: Record<string, string> = {
+  "Ruta del café":
+    "De la finca a la taza, una estación por cada eslabón de la cadena del café. Se juega completa con un solo código: al terminar una estación se abre la siguiente.",
+};
+
+export function experienceActivities(): ExperienceActivity[] {
+  const names = [...new Set(EXPERIENCES.map((e) => e.series))];
+  return names.map((name) => {
+    const stations = EXPERIENCES.filter((e) => e.series === name).sort((a, b) => a.station - b.station);
+    return { key: stations[0].key, name, description: SERIES_DESCRIPTION[name] ?? "", tag: stations[0].tag, stations };
+  });
+}
+
+export function getExperienceActivity(key: string): ExperienceActivity | null {
+  return experienceActivities().find((a) => a.key === key) ?? null;
+}
+
 /** Id fijo de la misión que representa a cada experiencia en actividades y códigos. */
 export function experienceMissionId(key: string): string {
   return `exp-${key}`;
