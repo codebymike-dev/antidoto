@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { requireSuper } from "@/lib/admin-guard";
-import { getLegalTexts, listAuditLog } from "@/lib/queries";
+import { portalLoginUrl, requireSuper } from "@/lib/admin-guard";
+import { getLegalTexts, listAuditLog, listPortalUsers } from "@/lib/queries";
 import { updateLegalText } from "@/lib/actions";
 import { colors, calSans } from "@/lib/theme";
 import { filledButton, tabButton, tabButtonActive } from "@/lib/styles";
 import type { AdminUser } from "@/lib/auth";
+import PortalUsersPanel from "@/components/admin/users/PortalUsersPanel";
 
 export const dynamic = "force-dynamic";
 
 const TABS = [
   { key: "legal", label: "Textos legales" },
+  { key: "superadmins", label: "Superadmins" },
   { key: "historial", label: "Historial de cambios" },
 ] as const;
 
@@ -20,11 +22,11 @@ function formatDate(iso: string | null) {
   return date.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-/** Lo que no es del día a día: textos legales e historial. Solo superadmin. */
+/** Lo que no es del día a día: textos legales, superadmins e historial. Solo superadmin. */
 export default async function AjustesPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const user = await requireSuper();
   const { tab } = await searchParams;
-  const active = tab === "historial" ? "historial" : "legal";
+  const active = TABS.find((t) => t.key === tab)?.key ?? "legal";
 
   return (
     <div>
@@ -49,6 +51,7 @@ export default async function AjustesPage({ searchParams }: { searchParams: Prom
       </div>
 
       {active === "legal" && <LegalTab />}
+      {active === "superadmins" && <SupersTab user={user} />}
       {active === "historial" && <AuditTab user={user} />}
     </div>
   );
@@ -94,6 +97,24 @@ async function LegalTab() {
       <span style={{ fontSize: 12, color: colors.muted }}>
         Este texto se muestra a los participantes desde el enlace de política en la pantalla de ingreso.
       </span>
+    </div>
+  );
+}
+
+// Los admins de cada empresa se gestionan en la página de su empresa.
+async function SupersTab({ user }: { user: AdminUser }) {
+  const [users, loginUrl] = await Promise.all([listPortalUsers(null), portalLoginUrl()]);
+  return (
+    <div style={{ maxWidth: 680 }}>
+      <PortalUsersPanel
+        title="Superadmins"
+        intro="Tienen acceso total: todas las empresas, la biblioteca, los ajustes y la documentación. Los admins de cada empresa se dan de alta en la página de su empresa."
+        users={users}
+        companyId={null}
+        currentUserId={user.id}
+        loginUrl={loginUrl}
+        canCreate
+      />
     </div>
   );
 }

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { getCompany, listCompanyAssignments, listCompanyParticipants, type Assignment } from "@/lib/queries";
+import { getCompany, listCompanyAssignments, listCompanyParticipants, listPortalUsers, type Assignment } from "@/lib/queries";
+import { portalLoginUrl } from "@/lib/admin-guard";
 import { getCompanyBrand } from "@/lib/company-brand";
 import { archiveCode, archiveCompany, restoreCode, restoreCompany, setCodeExpiry, setCodePaused } from "@/lib/actions";
 import { formatExpiryDate } from "@/lib/expiry";
@@ -16,6 +17,7 @@ import CopyCode from "@/components/admin/CopyCode";
 import DropdownMenu from "@/components/admin/DropdownMenu";
 import ExpandableList from "@/components/admin/ExpandableList";
 import SavedToast from "@/components/admin/SavedToast";
+import PortalUsersPanel from "@/components/admin/users/PortalUsersPanel";
 import { ArrowRightIcon, GearIcon, InboxIcon, UsersIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -42,10 +44,13 @@ export default async function EmpresaPage({
   if (!isSuper && user.company_id !== companyId) notFound();
 
   const { asignada, guardada } = await searchParams;
-  const [company, brand, assignments] = await Promise.all([
+  const [company, brand, assignments, portalUsers, loginUrl] = await Promise.all([
     getCompany(companyId),
     getCompanyBrand(companyId),
     listCompanyAssignments(companyId),
+    // Quién entra al portal por la empresa: solo lo gestiona el superadmin.
+    isSuper ? listPortalUsers(companyId) : [],
+    isSuper ? portalLoginUrl() : "",
   ]);
   if (!company) notFound();
 
@@ -251,6 +256,18 @@ export default async function EmpresaPage({
           </section>
         );
       })}
+
+      {isSuper && (
+        <PortalUsersPanel
+          title="Personas con acceso al portal"
+          intro={`Ven solo lo de ${company.name} (avance, resultados e informes) y pueden lanzar sus propios juegos en vivo. No asignan actividades ni cambian códigos.`}
+          users={portalUsers}
+          companyId={company.id}
+          currentUserId={user.id}
+          loginUrl={loginUrl}
+          canCreate={!company.archived}
+        />
+      )}
 
       {removed.length > 0 && (
         <details style={{ ...card, boxShadow: "none", border: `1px solid ${colors.accentTint}`, padding: "14px 20px" }}>

@@ -49,7 +49,8 @@ export default function ResetPasswordForm({ userId, loginUrl }: { userId: number
         </button>
       </form>
       {state && (
-        <div style={{ flexBasis: "100%" }}>
+        // order: 1 la manda al final de la fila, debajo de los botones.
+        <div style={{ flexBasis: "100%", order: 1 }}>
           {state.ok ? (
             <Credentials username={state.username} password={state.password} loginUrl={loginUrl} />
           ) : (
