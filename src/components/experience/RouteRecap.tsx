@@ -32,7 +32,7 @@ export function RecapSummary({ recap, pal }: { recap: Recap; pal: BrandPalette }
   );
 
   return (
-    <div data-pass-item style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: "left" }}>
+    <div data-pass-item style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: "left", paddingBottom: 18 }}>
       <div style={{ display: "flex", gap: 8 }}>
         {stat(`${recap.correct}/${recap.total}`, "a la primera")}
         {stat(`${recap.found}/${recap.total}`, "encontrados")}

@@ -1023,10 +1023,9 @@
 }
 
 .offlineBanner {
-  position: fixed;
+  /* En el flujo (no tapa la barra superior con "Salir") y pegado arriba al hacer scroll. */
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 60;
   padding: 7px 14px;
   text-align: center;

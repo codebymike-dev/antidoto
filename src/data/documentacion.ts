@@ -155,12 +155,26 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       {
         id: "RF-104",
         titulo: "Gestión de usuarios del portal",
-        descripcion: "El superadmin crea, desactiva y restablece la contraseña de otros administradores desde el portal.",
+        descripcion:
+          "El superadmin da acceso a los admins de cada empresa desde la página de la empresa y a otros superadmins desde Ajustes. La contraseña inicial se genera y se muestra una sola vez; también puede generar otra o desactivar a alguien, y en ambos casos se le cierran las sesiones.",
         prioridad: "media",
-        estado: "planeado",
+        estado: "implementado",
+        origen: "src/lib/user-actions.ts, src/components/admin/users/PortalUsersPanel.tsx, tabla admin_user_disabled",
+        verificacion: "src/lib/admin-users.test.mts cubre usuario, contraseña mínima y la contraseña generada.",
         notas:
-          "Hoy solo el seed crea el primer superadmin; los demás se insertan a mano en admin_users con el hash scrypt.",
-        relacionados: ["RF-103", "RNF-01"],
+          "Desactivar no borra: el nombre sigue en el historial y en las partidas. Nadie se desactiva a sí mismo ni al último superadmin activo. El admin de empresa no gestiona usuarios.",
+        relacionados: ["RF-103", "RF-105", "RNF-01"],
+      },
+      {
+        id: "RF-105",
+        titulo: "Cambiar la propia contraseña",
+        descripcion:
+          "Cada administrador cambia su contraseña en Mi cuenta escribiendo la actual; sus otras sesiones abiertas se cierran.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "src/app/admin/(portal)/cuenta/page.tsx, changeOwnPassword en src/lib/user-actions.ts",
+        notas: "Mínimo 10 caracteres y límite de 5 intentos cada 15 minutos, como el login.",
+        relacionados: ["RF-104", "RNF-01"],
       },
     ],
   },
@@ -860,6 +874,36 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         notas:
           "Decisión del usuario (2026-10-01): la ayuda es gratis, no resta granos, y el botón Pista se conserva. Las pistas viven en el código, no en la base: cambiarlas es un cambio de código y no requiere migración. La estrella dibujada en la escena mide pocos píxeles y casi no se veía en celular, por eso se le suma un anillo HTML que sigue a la zona. Quedaron descartados por ahora los marcadores permanentes sobre todas las zonas, porque convertirían la búsqueda en juzgar zonas ya marcadas.",
         relacionados: ["RF-908", "RF-912", "RNF-18"],
+      },
+      {
+        id: "RF-916",
+        titulo: "La escena aguanta mala conexión, pausas y vencimientos",
+        descripcion:
+          "Si la señal se corta o se cuelga al responder, la pregunta sigue abierta, se marca la opción elegida y se avisa con un mensaje claro; al volver la señal la respuesta se reenvía sola, o se puede tocar de nuevo. Un aviso fijo arriba dice \"Sin conexión\" mientras no haya red. Al abrir una pregunta se comprueba que la actividad siga abierta: si se pausó, venció o terminó la sesión, una ventana lo explica antes de elegir (la pausa deja \"Comprobar de nuevo\"; las demás, volver al inicio). \"Terminar la ruta\", \"Ya no encuentro más\" y guardar la ficha de bienvenida avisan y dejan reintentar en vez de congelarse.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "choose, recheck, reportBlocked y el efecto de comprobación en src/components/experience/ExperiencePlayer.tsx, src/components/experience/connection.tsx, src/components/experience/FinishRouteButton.tsx, src/lib/with-timeout.ts, checkActivity, completeExperience y BlockReason en src/lib/experience-actions.ts",
+        verificacion:
+          "src/lib/with-timeout.test.mts. Revisión en Chromium (escritorio y celular) con la red cortada y restaurada: aviso, pregunta abierta, reenvío automático y respuesta guardada una sola vez; pausa y vencimiento durante el juego con la ventana correcta.",
+        notas:
+          "Reintentar es seguro porque el servidor guarda la primera respuesta de cada riesgo (INSERT OR IGNORE) y devuelve la guardada. Pasados 20 s sin respuesta se trata como fallo; la petición original no se cancela. Antes, un corte de red dejaba la ventana de la pregunta congelada y una pausa solo se sabía después de elegir. completeExperience reemplaza a finishExperience: devuelve un resultado en vez de redirigir y el cliente navega al cierre.",
+        relacionados: ["RF-912", "RF-915", "RNF-18"],
+      },
+      {
+        id: "RF-917",
+        titulo: "Cierre personal de la ruta y repaso",
+        descripcion:
+          "Al terminar la ruta, la pantalla de misión cumplida muestra el resultado de la persona: riesgos a la primera, encontrados, granos, las insignias de las estaciones y hasta 3 prácticas de lo que no le salió a la primera (primero lo que no encontró) bajo \"Llévate a tu turno\". Debajo, \"Repasa lo que viste\" despliega cada estación con todos sus riesgos: cómo le fue, lo que eligió frente a lo correcto, la explicación y la práctica. Las misiones que no son de escenas siguen como antes.",
+        prioridad: "media",
+        estado: "implementado",
+        origen:
+          "buildRecap en src/lib/experiences/recap.ts, participationRecap en src/lib/experience-data.ts, src/components/experience/RouteRecap.tsx, src/app/mision/completada/page.tsx",
+        verificacion:
+          "src/lib/experiences.test.mts (resumen personal: clasificación, orden de prácticas, textos editados). Revisión en Chromium en escritorio y celular con una participación de 35 respuestas mezcladas.",
+        notas:
+          "El repaso usa <details>, sin JavaScript, para cargar rápido con señal débil. Usa los textos vigentes (los que edita el superadmin). No es un certificado ni la encuesta antes/después, que siguen descartados por ahora.",
+        relacionados: ["RF-912", "RF-913"],
       },
     ],
   },
