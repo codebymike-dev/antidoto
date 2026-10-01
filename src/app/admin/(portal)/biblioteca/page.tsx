@@ -6,7 +6,7 @@ import { listGames } from "@/lib/live-games";
 import { createGame, launchMatch } from "@/lib/live-games-actions";
 import { canEditGame } from "@/lib/scope";
 import { colors, calSans } from "@/lib/theme";
-import { card, filledButton, secondaryButton, tabButton, tabButtonActive } from "@/lib/styles";
+import { card, filledButton, tabButton, tabButtonActive } from "@/lib/styles";
 import { ArrowRightIcon, PlayIcon } from "@/components/icons";
 import SceneThumb from "@/components/experience/SceneThumb";
 import DealGrid from "@/components/motion/DealGrid";
@@ -101,13 +101,6 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                     )}
                   </div>
                   <div style={cardFooter}>
-                    <Link
-                      href={`/admin/escena/${key}`}
-                      className="btn-secondary"
-                      style={{ ...secondaryButton, height: 36, display: "inline-flex", alignItems: "center" }}
-                    >
-                      Probar
-                    </Link>
                     <Link href={`/admin/biblioteca/actividad/${key}`} className="btn-text" style={textLink}>
                       Ver estaciones
                       <ArrowRightIcon />
@@ -119,7 +112,7 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                         className="btn-filled"
                         style={{ ...filledButton, height: 36, padding: "0 14px", fontSize: 13, display: "inline-flex", alignItems: "center" }}
                       >
-                        Asignar
+                        Asignar a una empresa
                       </Link>
                     )}
                   </div>
