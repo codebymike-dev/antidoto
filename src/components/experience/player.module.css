@@ -659,6 +659,18 @@
   background-size: 16px 16px;
 }
 
+/* Firma de Juan Valdez en transparencia, arriba a la izquierda, donde no hay estaciones. */
+.mapSignature {
+  position: absolute;
+  top: 5%;
+  left: 3%;
+  width: clamp(110px, 19%, 230px);
+  height: auto;
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
+
 .mapRoad {
   position: absolute;
   inset: 0;

@@ -5,6 +5,7 @@
 // máquina de espresso y el molino. Todo por código.
 
 import { CLEAR, PixelBuffer, hex, mix } from "../pixel/buffer.ts";
+import { drawLogo } from "../pixel/logo.ts";
 import * as finca from "./finca-art.ts";
 import { C as T, P, drawRoom as drawShell, floorShadow, isoBox, onFront, type BoxColors, type Pt } from "./trilladora-art.ts";
 
@@ -180,6 +181,8 @@ export function stripPoint(wet: boolean): Pt {
 // --- Barra ---------------------------------------------------------------------------
 
 export const BAR = { i0: 0.9, i1: 6.7, j0: 2.15, j1: 2.9, h: 30 };
+/** Dónde va la firma en el frente de la barra: desde qué i, a qué altura y qué ancho en px. */
+const LOGO = { i: 2.1, z: 24, w: 88 };
 export const ESPRESSO = { i0: 4.2, i1: 5.4, j0: 2.25, j1: 2.85, h: 22 };
 export const WAND = { i: 5.47, j: 2.62, z0: 46, z1: 36 };
 
@@ -199,6 +202,9 @@ export function drawBar(buf: PixelBuffer, s: BarState) {
     if (i < B.i0 || i > B.i1 || z < 2 || z > B.h - 3) return CLEAR;
     return Math.floor((i - B.i0) * 5) % 2 === 0 ? C.woodStoreLit : CLEAR;
   });
+  // La firma de la marca en el frente de la barra, como en las tiendas de verdad.
+  const sig = P(LOGO.i, B.j1, LOGO.z);
+  drawLogo(buf, { x: sig.x, y: sig.y, width: LOGO.w, slope: 0.5, color: C.cup, opacity: 0.8 });
 
   // Caja registradora.
   isoBox(buf, 1.25, 2.3, B.h, 0.55, 0.45, 8, { top: C.chromeDark, front: hex("#3b4046"), side: hex("#2b2f33"), line: C.outline });

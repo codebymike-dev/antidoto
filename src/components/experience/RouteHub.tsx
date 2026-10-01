@@ -305,6 +305,9 @@ function RouteMap({
 
   return (
     <div className={styles.map}>
+      {/* La firma de la marca pintada en el pasto, de fondo: la ruta es la de Juan Valdez. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/experiencias/juan-valdez.png" alt="" aria-hidden className={styles.mapSignature} />
       <svg className={styles.mapRoad} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
         <path d={d} className={styles.mapRoadEdge} vectorEffect="non-scaling-stroke" />
         <path d={d} className={styles.mapRoadDirt} vectorEffect="non-scaling-stroke" />
