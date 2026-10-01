@@ -16,7 +16,8 @@ interface Props {
   sceneKey: SceneKey;
   onScene: (scene: PlayScene) => void;
   onSay: (text: string) => void;
-  onTap: (x: number, y: number, touch: boolean) => void;
+  /** `scale`: píxeles de pantalla por píxel de la escena (en un celular ronda 0,9). */
+  onTap: (x: number, y: number, touch: boolean, scale: number) => void;
   /** Alto máximo disponible en px (para que la escena quepa sin scroll en escritorio). */
   maxHeight: number;
   label: string;
@@ -40,6 +41,7 @@ export default function SceneCanvas({ sceneKey, onScene, onSay, onTap, maxHeight
     const scene = createScene(sceneKey, { say: (t) => sayRef.current(t) });
     sceneRef.current = scene;
     onScene(scene);
+    (window as unknown as { __scene?: PlayScene }).__scene = scene; // TEMP-MOVIL
 
     const buf = new PixelBuffer(scene.width, scene.height);
     const ctx = canvas.getContext("2d")!;
@@ -98,7 +100,7 @@ export default function SceneCanvas({ sceneKey, onScene, onSay, onTap, maxHeight
             const rect = e.currentTarget.getBoundingClientRect();
             const x = ((e.clientX - rect.left) / rect.width) * 400;
             const y = ((e.clientY - rect.top) / rect.height) * 250;
-            onTap(x, y, e.pointerType === "touch");
+            onTap(x, y, e.pointerType === "touch", rect.width / 400);
           }}
           style={{ display: "block", width: "100%", height: "100%", cursor: "zoom-in", touchAction: "manipulation" }}
         />

@@ -140,6 +140,7 @@
 }
 
 .iconButton {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -345,12 +346,15 @@
 }
 
 .bubble {
+  --bw: min(78%, 360px);
   position: absolute;
+  /* Centrada sobre el que habla (--bx), pero sin salirse del escenario por los lados. */
+  left: clamp(calc(var(--bw) / 2 + 6px), var(--bx, 50%), calc(100% - var(--bw) / 2 - 6px));
   transform: translate(-50%, -100%);
   display: flex;
   align-items: center;
   gap: 6px;
-  max-width: min(78%, 360px);
+  max-width: var(--bw);
   padding: 3px 9px 3px 3px;
   border-radius: 6px;
   background: #fff;
@@ -659,7 +663,7 @@
   pointer-events: auto;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 720px), (max-height: 520px) and (pointer: coarse) {
   .questionWin,
   .dialogCenter {
     position: fixed;
@@ -1427,7 +1431,7 @@
 
 /* Celular: barra superior en dos filas y herramientas que bajan de línea. Va al final
    para ganarle a las reglas de arriba. */
-@media (max-width: 720px) {
+@media (max-width: 720px), (max-height: 520px) and (pointer: coarse) {
   .topbar {
     gap: 8px;
     padding: 8px;
@@ -1473,7 +1477,7 @@
 
 /* Celular: el mapa pasa a una columna con el camino a la izquierda y los diálogos quedan
    abajo, fijos, como las demás ventanas. */
-@media (max-width: 720px) {
+@media (max-width: 720px), (max-height: 520px) and (pointer: coarse) {
   .map {
     aspect-ratio: auto;
     min-height: 0;
@@ -1577,7 +1581,7 @@
 }
 
 /* Celular: las pestañas de momento ocupan todo el ancho y se reparten el espacio, con el contador visible. */
-@media (max-width: 720px) {
+@media (max-width: 720px), (max-height: 520px) and (pointer: coarse) {
   .moments {
     width: 100%;
     order: 2;
@@ -1600,5 +1604,76 @@
     min-width: 28px;
     padding: 0 3px;
     font-size: 13px;
+  }
+}
+
+
+/* --- Dedos --------------------------------------------------------------------------
+   En pantallas táctiles todo lo que se toca mide al menos 44 px, que es lo que un dedo
+   acierta sin errar (WCAG 2.5.5). Con mouse se conserva el tamaño compacto de siempre. */
+@media (pointer: coarse) {
+  .iconButton {
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .moment {
+    height: 44px;
+  }
+
+  .button {
+    min-height: 44px;
+  }
+
+  .textButton {
+    min-height: 44px;
+    padding: 10px 8px;
+  }
+
+  .select {
+    min-height: 44px;
+  }
+
+  /* La X mide 36 px a la vista y 44 px de zona tocable, para que quepa en el encabezado. */
+  .close {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .close::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+  }
+}
+
+/* --- Celular acostado -----------------------------------------------------------------
+   Con ~390 px de alto el escenario queda en ~240 px: una ventana dentro de él no deja ver
+   las tres opciones. Las ventanas pasan a ser paneles fijos a un lado, con todo el alto de
+   la pantalla (y scroll si hace falta), como el lado que ya eligió la pregunta. */
+@media (max-height: 520px) and (pointer: coarse) {
+  .questionWin {
+    position: fixed;
+    top: 8px;
+    bottom: auto;
+    width: min(380px, 46vw);
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    z-index: 30;
+  }
+
+  .dialogCenter {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    width: min(460px, calc(100vw - 24px));
+    max-height: calc(100vh - 16px);
+    transform: translate(-50%, -50%);
+    overflow-y: auto;
+    z-index: 30;
   }
 }

@@ -15,6 +15,7 @@ import type { PublicExperience, RiskResult, RiskTexts } from "@/lib/experiences/
 import { GRAINS_CORRECT, GRAINS_FOUND } from "@/lib/experiences/texts";
 import { answerExperienceRisk, checkActivity, revealExperienceRisks, type AnswerOutcome, type Blocked } from "@/lib/experience-actions";
 import { withTimeout } from "@/lib/with-timeout";
+import { touchTolerance } from "./touch";
 import FinishRouteButton from "./FinishRouteButton";
 import { ConnectionBanner, networkMessage, useOnline } from "./connection";
 import { brandPalette, INK, mix, type PublicBrand } from "@/lib/brand-palette";
@@ -494,13 +495,15 @@ function StationPlayer({
     showToast(map.ok[zone.id] ?? "Aquí todo está bien. Sigue buscando.");
   }
 
-  function onTap(x: number, y: number, touch: boolean) {
+  function onTap(x: number, y: number, touch: boolean, scale: number) {
     if (!scene || phase !== "juego" || scene.busy || ask || outcome || zoneList || confirmReveal || coaching || blocked) return;
     scene.ripple(x, y);
     setActivity((a) => a + 1);
     setNudge(null);
-    // Con el dedo la zona de toque es más generosa que con el mouse.
-    const zone = scene.hitTest(x, y, touch ? 11 : 3);
+    // Con el dedo la zona de toque es más generosa que con el mouse: en pantalla debe medir al
+    // menos ~44 px aun para la zona más pequeña (radio 5 en la escena). En un celular la escena
+    // se ve a ~0,9x, así que hace falta más tolerancia que en una pantalla grande.
+    const zone = scene.hitTest(x, y, touch ? touchTolerance(scale) : 3);
     const hitsRisk = !!zone && !!map.riskZones[moment][zone.id];
     if (hitsRisk) misses.current = 0;
     else misses.current++;
@@ -750,7 +753,7 @@ function StationPlayer({
                     key={b.id}
                     className={`${styles.bubble} ${i > 0 ? styles.bubbleOld : ""}`}
                     style={{
-                      left: `${Math.min(78, Math.max(22, (bubbles[0].x / 400) * 100))}%`,
+                      ["--bx" as string]: `${Math.min(100, Math.max(0, (bubbles[0].x / 400) * 100))}%`,
                       top: `${Math.max(16, (bubbles[0].y / 250) * 100)}%`,
                       transform: `translate(-50%, calc(-100% - ${i * 40}px))`,
                       opacity: i === 0 ? 1 : 0.8 - i * 0.25,
