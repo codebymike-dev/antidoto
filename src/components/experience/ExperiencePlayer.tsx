@@ -473,6 +473,7 @@ function StationPlayer({
 
   function closeWindows() {
     setAsk(null);
+    setFail(null);
     setOutcome(null);
     setZoneList(null);
     setConfirmReveal(false);
@@ -808,7 +809,7 @@ function StationPlayer({
                       <span className={styles.winTitle} id="xp-ask-title">
                         {map.zoneLabels[ask.zone] ?? "¿Qué ves?"}
                       </span>
-                      <button type="button" className={styles.close} onClick={() => setAsk(null)} aria-label="Cerrar">
+                      <button type="button" className={styles.close} onClick={closeWindows} aria-label="Cerrar">
                         ✕
                       </button>
                     </div>
