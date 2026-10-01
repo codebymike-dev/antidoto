@@ -59,6 +59,9 @@ interface Props {
 
 const OPTION_KEYS = ["A", "B", "C"];
 
+/** Pasos del tutorial de la primera estación; el último es la práctica (la escena queda tocable). */
+const COACH_STEPS = 5;
+
 /** El tutorial sale una vez por navegador; sin almacenamiento, sale siempre que no haya avance. */
 const TUTORIAL_KEY = "antidoto:tutorial-escena";
 
@@ -197,6 +200,19 @@ function StationPlayer({
   const [maxHeight, setMaxHeight] = useState(560);
   const ids = useRef(0);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const waitTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const laterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  // Ayuda que llega sola: nivel 0 = aún no se ha dado ninguna, 1 = estrella, 2 = estrella y pista escrita.
+  const helpLevel = useRef(0);
+  const misses = useRef(0);
+  const autoHelpRef = useRef<() => void>(() => {});
+  // Cada toque o cambio de momento reinicia la espera antes de ayudar.
+  const [activity, setActivity] = useState(0);
+  // Momento cuya pestaña late porque ahí quedan riesgos por encontrar.
+  const [nudge, setNudge] = useState<Moment | null>(null);
+  // Riesgo del panel cuya pista escrita está abierta.
+  const [clueRisk, setClueRisk] = useState<string | null>(null);
 
   const total = experience.risks.length;
   const riskById = useMemo(() => new Map(experience.risks.map((r) => [r.id, r])), [experience.risks]);
@@ -208,6 +224,14 @@ function StationPlayer({
   const { grains } = routeProgress(stations, results);
   const allDone = found >= total;
   const next = stations[stations.indexOf(experience) + 1] ?? null;
+  // Cuántos riesgos se pueden encontrar en cada momento (un riesgo puede verse en varios).
+  const momentStats = map.moments.map((m) => {
+    const ids = [...risksInMoment(map, m.id)];
+    return { id: m.id, total: ids.length, found: ids.filter((id) => results.has(id)).length };
+  });
+  const here = momentStats.find((m) => m.id === moment)!;
+  const coaching = coach !== null && coach < COACH_STEPS - 1;
+  const windowOpen = !!(ask || outcome || zoneList || confirmReveal || coaching);
 
   useEffect(() => {
     const fit = () => setMaxHeight(Math.max(260, window.innerHeight - 150));
@@ -232,9 +256,22 @@ function StationPlayer({
   useEffect(
     () => () => {
       if (hintTimer.current) clearTimeout(hintTimer.current);
+      if (waitTimer.current) clearInterval(waitTimer.current);
+      if (laterTimer.current) clearTimeout(laterTimer.current);
     },
     [],
   );
+
+  useEffect(() => {
+    autoHelpRef.current = autoHelp;
+  });
+
+  // Ayuda que llega sola: si pasa un rato sin tocar nada, la escena ayuda sin que nadie la pida.
+  useEffect(() => {
+    if (phase !== "juego" || !scene || windowOpen || coach !== null || found >= total) return;
+    const t = setTimeout(() => autoHelpRef.current(), helpLevel.current === 0 ? 15000 : 12000);
+    return () => clearTimeout(t);
+  }, [phase, scene, windowOpen, coach, found, total, moment, activity]);
 
   const showToast = useCallback((text: string, good = false) => {
     const id = ++ids.current;
@@ -283,14 +320,13 @@ function StationPlayer({
 
   const coachSteps = [
     `Esta es la escena. Aquí hay ${total} errores escondidos en lo que hace ${experience.character}.`,
-    "La historia tiene 3 momentos: cámbialos aquí abajo. Cada uno esconde errores distintos.",
-    "¿Te quedaste sin ideas? Pista marca un error con una estrella y Zonas te deja elegir de una lista.",
-    "En este panel llevas la cuenta. Toca un riesgo ya encontrado para volver a leer la explicación.",
+    "La historia tiene 3 momentos: cámbialos aquí abajo. El número de cada uno dice cuántos errores llevas encontrados ahí.",
+    "¿Sin ideas? Espera un momento y una estrella te ayuda sola. También puedes usar Pista y Zonas.",
+    "En este panel está la lista de riesgos. Toca uno con la bombilla para ver una pista de dónde mirar.",
     "Ahora tú: toca donde brilla la estrella.",
   ];
   const coachSpot = coach === null ? null : (["stage", "moments", "help", "quest", "stage"] as const)[coach];
   // Mientras Ramiro explica no se puede tocar la escena; en el último paso, sí.
-  const coaching = coach !== null && coach < coachSteps.length - 1;
 
   function coachNext() {
     if (coach === null) return;
@@ -323,8 +359,87 @@ function StationPlayer({
     if (!scene || phase !== "juego") return;
     if (scene.setMoment(m)) {
       setMoment(m);
+      setNudge(null);
+      setActivity((a) => a + 1);
       sfx("step");
     }
+  }
+
+  /** El momento donde se puede ver el riesgo: el actual si ahí está, si no el primero que lo tenga. */
+  function momentWith(riskId: string): Moment {
+    if (risksInMoment(map, moment).has(riskId)) return moment;
+    return map.moments.find((m) => risksInMoment(map, m.id).has(riskId))?.id ?? moment;
+  }
+
+  /** Enciende la estrella sobre el riesgo; si está en otro momento, cambia a ese momento primero. */
+  function showStar(riskId: string, seconds = 6) {
+    if (!scene) return;
+    const target = momentWith(riskId);
+    const apply = () => {
+      const zone = Object.entries(map.riskZones[target]).find(([, r]) => r === riskId)?.[0];
+      if (!zone) return;
+      scene.setHint(zone);
+      if (hintTimer.current) clearTimeout(hintTimer.current);
+      hintTimer.current = setTimeout(() => scene.setHint(null), seconds * 1000);
+    };
+    if (target === moment) return apply();
+    if (!scene.setMoment(target)) return;
+    setMoment(target);
+    setNudge(null);
+    sfx("step");
+    // El cambio de momento se anima: la estrella sale cuando la escena queda quieta.
+    if (waitTimer.current) clearInterval(waitTimer.current);
+    let tries = 0;
+    waitTimer.current = setInterval(() => {
+      if (!scene.busy || ++tries > 40) {
+        if (waitTimer.current) clearInterval(waitTimer.current);
+        apply();
+      }
+    }, 150);
+  }
+
+  /** La escena ayuda sola: estrella sobre un riesgo pendiente y, si sigue sin salir, también la pista escrita. */
+  function autoHelp() {
+    if (!scene || phase !== "juego") return;
+    // Si la escena está en medio de una animación, se vuelve a intentar en un rato.
+    if (scene.busy) return setActivity((a) => a + 1);
+    helpLevel.current = Math.min(2, helpLevel.current + 1);
+    const pending = [...risksInMoment(map, moment)].find((id) => !results.has(id));
+    if (pending) {
+      showStar(pending, helpLevel.current >= 2 ? 10 : 6);
+      showToast(helpLevel.current >= 2 ? `Pista: ${riskById.get(pending)!.clue}` : "Mira donde brilla la estrella.");
+    } else {
+      const other = map.moments.find((m) => [...risksInMoment(map, m.id)].some((id) => !results.has(id)));
+      if (other) {
+        setNudge(other.id);
+        showToast(`Aquí ya encontraste todo. Mira el momento ${other.id}: ${other.label}.`);
+      }
+    }
+    sfx("ok");
+    setActivity((a) => a + 1);
+  }
+
+  /** Pista escrita desde el panel: dice dónde mirar y hace brillar la zona. */
+  function openClue(riskId: string) {
+    sfx("open");
+    if (clueRisk === riskId) {
+      setClueRisk(null);
+      return;
+    }
+    setClueRisk(riskId);
+    if (phase === "juego" && !windowOpen && scene && !scene.busy) {
+      showStar(riskId, 8);
+      stageRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
+
+  /** Un riesgo pendiente del momento actual queda cerca del toque (para decir "estás cerca"). */
+  function nearPending(x: number, y: number): boolean {
+    if (!scene) return false;
+    return scene.zones().some((z) => {
+      const riskId = map.riskZones[moment][z.id];
+      return !!riskId && !results.has(riskId) && Math.hypot(z.x - x, z.y - y) <= z.r + 34;
+    });
   }
 
   function closeWindows() {
@@ -352,13 +467,27 @@ function StationPlayer({
   function onTap(x: number, y: number, touch: boolean) {
     if (!scene || phase !== "juego" || scene.busy || ask || outcome || zoneList || confirmReveal || coaching) return;
     scene.ripple(x, y);
-    const zone = scene.hitTest(x, y, touch ? 6 : 2);
+    setActivity((a) => a + 1);
+    setNudge(null);
+    // Con el dedo la zona de toque es más generosa que con el mouse.
+    const zone = scene.hitTest(x, y, touch ? 11 : 3);
+    const hitsRisk = !!zone && !!map.riskZones[moment][zone.id];
+    if (hitsRisk) misses.current = 0;
+    else misses.current++;
+    const stuck = misses.current >= 3;
+    if (stuck) misses.current = 0;
     if (!zone) {
       sfx("tap");
-      showToast(map.miss);
+      if (stuck) autoHelp();
+      else showToast(nearPending(x, y) ? "¡Estás cerca! Mira un poco más por aquí." : map.miss);
       return;
     }
     openZone(zone);
+    // Tras varios toques en zonas donde todo está bien, la ayuda llega después de leer el aviso.
+    if (stuck && !hitsRisk) {
+      if (laterTimer.current) clearTimeout(laterTimer.current);
+      laterTimer.current = setTimeout(() => autoHelpRef.current(), 2600);
+    }
   }
 
   async function choose(option: number) {
@@ -389,6 +518,10 @@ function StationPlayer({
       result = out.result;
     }
     setPending(false);
+    helpLevel.current = 0;
+    misses.current = 0;
+    setClueRisk(null);
+    scene?.setHint(null);
     setResults((prev) => new Map(prev).set(result.id, result));
     setAsk(null);
     setOutcome(result);
@@ -488,7 +621,6 @@ function StationPlayer({
   });
 
   const askRisk = ask ? riskById.get(ask.riskId) : null;
-  const windowOpen = !!(ask || outcome || zoneList || confirmReveal || coaching);
   const momentInfo = map.moments.find((m) => m.id === moment)!;
   const sceneLabel = `Escena en pixel art: ${map.place} ${momentInfo.hint}`;
 
@@ -508,7 +640,7 @@ function StationPlayer({
 
       <main className={styles.main}>
         <div className={styles.stageCol}>
-          <div className={`${styles.stageFrame} ${coachSpot === "stage" ? styles.spot : ""}`}>
+          <div ref={stageRef} className={`${styles.stageFrame} ${coachSpot === "stage" ? styles.spot : ""}`}>
             <SceneCanvas sceneKey={experience.scene} onScene={begin} onSay={onSay} onTap={onTap} maxHeight={maxHeight} label={sceneLabel}>
               <div className={styles.overlay}>
                 {bubbles.map((b, i) => (
@@ -835,18 +967,22 @@ function StationPlayer({
                   <PixelIcon name="repetir" size={16} />
                 </button>
                 <div className={`${styles.moments} ${coachSpot === "moments" ? styles.spot : ""}`} role="group" aria-label="Momentos de la escena">
-                  {map.moments.map((m) => (
+                  {map.moments.map((m, i) => (
                     <button
                       key={m.id}
                       type="button"
-                      className={`${styles.moment} ${moment === m.id ? styles.momentOn : ""}`}
+                      className={`${styles.moment} ${moment === m.id ? styles.momentOn : ""} ${nudge === m.id ? styles.momentNudge : ""}`}
                       aria-pressed={moment === m.id}
+                      aria-label={`Momento ${m.id}: ${m.label}, ${momentStats[i].found} de ${momentStats[i].total} encontrados`}
                       onClick={() => goMoment(m.id)}
                       disabled={phase !== "juego"}
                       title={m.hint}
                     >
                       <span className={styles.momentNum}>{m.id}</span>
                       {m.label}
+                      <span className={`${styles.momentCount} ${momentStats[i].found >= momentStats[i].total ? styles.momentDone : ""}`} aria-hidden>
+                        {momentStats[i].found >= momentStats[i].total ? <PixelIcon name="check" size={12} /> : `${momentStats[i].found}/${momentStats[i].total}`}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -866,7 +1002,10 @@ function StationPlayer({
                 >
                   <PixelIcon name="zonas" size={16} /> Zonas
                 </button>
-                <span className={styles.toolbarHint}>{momentInfo.hint}</span>
+                <span className={styles.toolbarHint}>
+                  {momentInfo.hint}{" "}
+                  {here.total - here.found > 0 ? `Faltan ${here.total - here.found} por encontrar aquí.` : "Aquí ya encontraste todo."}
+                </span>
               </>
             )}
           </nav>
@@ -885,20 +1024,38 @@ function StationPlayer({
                 <div className={styles.progressFill} style={{ width: `${(found / total) * 100}%` }} />
               </div>
               <ul className={styles.questList}>
-                {experience.risks.map((r) => {
+                {experience.risks.map((r, k) => {
                   const res = results.get(r.id);
                   if (!res) {
+                    const open = clueRisk === r.id;
+                    const m = map.moments.find((x) => x.id === momentWith(r.id))!;
                     return (
                       <li key={r.id}>
-                        <div className={`${styles.questItem} ${styles.questLocked}`}>
-                          <span className={styles.questBadge} style={{ background: "#c6d6dc", borderColor: "#9fb8c2" }}>
-                            <PixelIcon name="candado" size={14} />
+                        <button
+                          type="button"
+                          className={`${styles.questItem} ${styles.questLocked} ${open ? styles.questOpen : ""}`}
+                          onClick={() => openClue(r.id)}
+                          aria-expanded={open}
+                        >
+                          <span className={styles.questBadge} style={{ background: "#fff3c4", borderColor: "#d9b13a" }}>
+                            <PixelIcon name="pista" size={16} />
                           </span>
                           <span className={styles.questText}>
-                            ???
-                            <span className={styles.questCat}>Por encontrar</span>
+                            Riesgo {k + 1}
+                            <span className={styles.questCat}>{open ? "Toca para cerrar" : "Por encontrar · toca para ver una pista"}</span>
                           </span>
-                        </div>
+                        </button>
+                        {open && (
+                          <p className={styles.questClue} role="status">
+                            <b>Pista:</b> {r.clue}
+                            {m.id !== moment && (
+                              <>
+                                {" "}
+                                Está en el momento {m.id}: {m.label}.
+                              </>
+                            )}
+                          </p>
+                        )}
                       </li>
                     );
                   }

@@ -259,6 +259,40 @@
     0 0 0 1px #000;
 }
 
+/* Cuántos errores lleva encontrados ese momento (o un check si ya los tiene todos). */
+.momentCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 14px;
+}
+
+.momentDone {
+  background: #52b862;
+}
+
+/* El momento donde quedan riesgos late para que se vea a dónde ir. */
+.momentNudge {
+  animation: nudge 0.9s ease-in-out infinite;
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 10px 2px rgba(255, 210, 63, 0.55);
+}
+
+@keyframes nudge {
+  50% {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 2px var(--gold),
+      0 0 3px 1px rgba(255, 210, 63, 0.3);
+  }
+}
+
 .momentNum {
   display: inline-flex;
   align-items: center;
@@ -1202,13 +1236,25 @@
 }
 
 .questLocked {
-  cursor: default;
-  color: #9fb8c2;
+  color: #5c7680;
   background: repeating-linear-gradient(45deg, #f4f8f9 0 6px, #eaf0f2 6px 12px);
 }
 
-.questLocked:hover {
-  background: repeating-linear-gradient(45deg, #f4f8f9 0 6px, #eaf0f2 6px 12px);
+.questLocked:hover,
+.questOpen {
+  background: #fff8dc;
+}
+
+/* La pista escrita se despliega bajo el riesgo: corta y en letra grande. */
+.questClue {
+  margin: 4px 0 2px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid #d9b13a;
+  background: #fff8dc;
+  font-size: 14.5px;
+  line-height: 1.45;
+  animation: winIn 0.18s ease-out;
 }
 
 .questBadge {
@@ -1311,6 +1357,8 @@
   .purseBump,
   .nodeHere,
   .nodeThumb,
+  .momentNudge,
+  .questClue,
   .spot {
     animation: none !important;
   }
