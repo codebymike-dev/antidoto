@@ -211,6 +211,8 @@ function StationPlayer({
   const [activity, setActivity] = useState(0);
   // Momento cuya pestaña late porque ahí quedan riesgos por encontrar.
   const [nudge, setNudge] = useState<Moment | null>(null);
+  // Zona señalada con la estrella (y el anillo grande encima de ella).
+  const [starZone, setStarZone] = useState<string | null>(null);
   // Riesgo del panel cuya pista escrita está abierta.
   const [clueRisk, setClueRisk] = useState<string | null>(null);
 
@@ -273,10 +275,10 @@ function StationPlayer({
     return () => clearTimeout(t);
   }, [phase, scene, windowOpen, coach, found, total, moment, activity]);
 
-  const showToast = useCallback((text: string, good = false) => {
+  const showToast = useCallback((text: string, good = false, ms = 3400) => {
     const id = ++ids.current;
     setToast({ id, text, good });
-    setTimeout(() => setToast((t) => (t?.id === id ? null : t)), 3400);
+    setTimeout(() => setToast((t) => (t?.id === id ? null : t)), ms);
   }, []);
 
   const onSay = useCallback(
@@ -335,7 +337,7 @@ function StationPlayer({
     if (coachSpot === "help") questRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     if (to === coachSteps.length - 1 && scene) {
       const zone = Object.entries(map.riskZones[moment]).find(([, r]) => !results.has(r))?.[0];
-      if (zone) scene.setHint(zone);
+      if (zone) star(zone);
     }
     setCoach(to);
   }
@@ -343,7 +345,7 @@ function StationPlayer({
   function endCoach() {
     setCoach(null);
     markTutorialSeen();
-    scene?.setHint(null);
+    star(null);
   }
 
   function replay() {
@@ -365,6 +367,12 @@ function StationPlayer({
     }
   }
 
+  /** Señala una zona con la estrella de la escena y el anillo que se ve de lejos; null la quita. */
+  function star(zone: string | null) {
+    scene?.setHint(zone);
+    setStarZone(zone);
+  }
+
   /** El momento donde se puede ver el riesgo: el actual si ahí está, si no el primero que lo tenga. */
   function momentWith(riskId: string): Moment {
     if (risksInMoment(map, moment).has(riskId)) return moment;
@@ -378,9 +386,9 @@ function StationPlayer({
     const apply = () => {
       const zone = Object.entries(map.riskZones[target]).find(([, r]) => r === riskId)?.[0];
       if (!zone) return;
-      scene.setHint(zone);
+      star(zone);
       if (hintTimer.current) clearTimeout(hintTimer.current);
-      hintTimer.current = setTimeout(() => scene.setHint(null), seconds * 1000);
+      hintTimer.current = setTimeout(() => star(null), seconds * 1000);
     };
     if (target === moment) return apply();
     if (!scene.setMoment(target)) return;
@@ -407,12 +415,13 @@ function StationPlayer({
     const pending = [...risksInMoment(map, moment)].find((id) => !results.has(id));
     if (pending) {
       showStar(pending, helpLevel.current >= 2 ? 10 : 6);
-      showToast(helpLevel.current >= 2 ? `Pista: ${riskById.get(pending)!.clue}` : "Mira donde brilla la estrella.");
+      if (helpLevel.current >= 2) showToast(`Pista: ${riskById.get(pending)!.clue}`, false, 8000);
+      else showToast("Mira donde brilla la estrella.");
     } else {
       const other = map.moments.find((m) => [...risksInMoment(map, m.id)].some((id) => !results.has(id)));
       if (other) {
         setNudge(other.id);
-        showToast(`Aquí ya encontraste todo. Mira el momento ${other.id}: ${other.label}.`);
+        showToast(`Aquí ya encontraste todo. Mira el momento ${other.id}: ${other.label}.`, false, 6000);
       }
     }
     sfx("ok");
@@ -521,7 +530,7 @@ function StationPlayer({
     helpLevel.current = 0;
     misses.current = 0;
     setClueRisk(null);
-    scene?.setHint(null);
+    star(null);
     setResults((prev) => new Map(prev).set(result.id, result));
     setAsk(null);
     setOutcome(result);
@@ -552,11 +561,11 @@ function StationPlayer({
     }
     const riskId = here[Math.floor(Math.random() * here.length)];
     const zone = Object.entries(map.riskZones[moment]).find(([, r]) => r === riskId)![0];
-    scene.setHint(zone);
+    star(zone);
     sfx("ok");
     showToast("Mira donde brilla la estrella.");
     if (hintTimer.current) clearTimeout(hintTimer.current);
-    hintTimer.current = setTimeout(() => scene.setHint(null), 5000);
+    hintTimer.current = setTimeout(() => star(null), 5000);
   }
 
   function openZones() {
@@ -643,6 +652,8 @@ function StationPlayer({
           <div ref={stageRef} className={`${styles.stageFrame} ${coachSpot === "stage" ? styles.spot : ""}`}>
             <SceneCanvas sceneKey={experience.scene} onScene={begin} onSay={onSay} onTap={onTap} maxHeight={maxHeight} label={sceneLabel}>
               <div className={styles.overlay}>
+                {scene && starZone && phase === "juego" && <StarRing scene={scene} zoneId={starZone} />}
+
                 {bubbles.map((b, i) => (
                   // Como en Habbo: la burbuja nueva aparece sobre el que habla y empuja
                   // hacia arriba a las anteriores, que se van apagando.
@@ -1094,6 +1105,38 @@ function StationPlayer({
         </aside>
       </main>
     </>
+  );
+}
+
+/**
+ * Anillo pulsante sobre la zona señalada. La estrella dibujada en la escena mide unos
+ * pocos píxeles y en un celular casi no se ve: este anillo se ve de lejos. Sigue a la
+ * zona porque algunas se mueven con el personaje.
+ */
+function StarRing({ scene, zoneId }: { scene: PlayScene; zoneId: string }) {
+  const [at, setAt] = useState<{ x: number; y: number; r: number } | null>(null);
+  useEffect(() => {
+    const read = () => {
+      const z = scene.zones().find((zz) => zz.id === zoneId);
+      setAt((prev) => (z ? (prev && prev.x === z.x && prev.y === z.y ? prev : { x: z.x, y: z.y, r: z.r }) : null));
+    };
+    read();
+    const t = setInterval(read, 120);
+    return () => clearInterval(t);
+  }, [scene, zoneId]);
+  if (!at) return null;
+  const size = Math.max(46, (at.r + 10) * 2);
+  return (
+    <span
+      className={styles.ring}
+      aria-hidden
+      style={{
+        left: `${(at.x / scene.width) * 100}%`,
+        top: `${(at.y / scene.height) * 100}%`,
+        width: `${(size / scene.width) * 100}%`,
+        aspectRatio: "1",
+      }}
+    />
   );
 }
 

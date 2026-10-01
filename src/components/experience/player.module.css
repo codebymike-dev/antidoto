@@ -319,6 +319,31 @@
   pointer-events: none;
 }
 
+/* Anillo de la ayuda: dorado, grande y pulsante, con borde oscuro para verse sobre cualquier fondo. */
+.ring {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 4px solid var(--gold);
+  box-shadow:
+    0 0 0 2px #000,
+    inset 0 0 0 2px #000,
+    0 0 18px 4px rgba(255, 210, 63, 0.7);
+  pointer-events: none;
+  animation: ring 1s ease-out infinite;
+}
+
+@keyframes ring {
+  from {
+    transform: translate(-50%, -50%) scale(1.35);
+    opacity: 0.55;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
 .bubble {
   position: absolute;
   transform: translate(-50%, -100%);
@@ -1359,6 +1384,7 @@
   .nodeThumb,
   .momentNudge,
   .questClue,
+  .ring,
   .spot {
     animation: none !important;
   }
@@ -1516,5 +1542,32 @@
     right: 8px;
     width: auto;
     transform: none;
+  }
+}
+
+/* Celular: las pestañas de momento ocupan todo el ancho y se reparten el espacio, con el contador visible. */
+@media (max-width: 720px) {
+  .moments {
+    width: 100%;
+    order: 2;
+  }
+
+  .moment {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 4px;
+    font-size: 15px;
+  }
+
+  .momentNum {
+    display: none;
+  }
+
+  .momentCount {
+    min-width: 28px;
+    padding: 0 3px;
+    font-size: 13px;
   }
 }

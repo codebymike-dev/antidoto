@@ -846,6 +846,21 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "Mismo alcance que la página: el admin de empresa solo ve y exporta la suya, y ?empresa= limita el CSV a una sola. El municipio manda sobre el departamento si llegan los dos. El CSV usa BOM UTF-8 y csvCell, como RF-204.",
         relacionados: ["RF-204", "RF-906", "RF-913"],
       },
+      {
+        id: "RF-915",
+        titulo: "Ayudas para encontrar los errores de la escena",
+        descripcion:
+          "La escena ayuda sin que el participante tenga que pedirlo. Si pasan 15 segundos sin tocar nada, o fallan 3 toques seguidos, un anillo dorado pulsante señala un riesgo pendiente del momento actual; si sigue sin salir, 12 segundos después se suma la pista escrita. Si en el momento actual ya encontró todo, late la pestaña del momento que aún tiene pendientes. Cada pestaña de momento muestra cuántos riesgos lleva encontrados (o un check). Los riesgos por encontrar del panel se tocan: despliegan una pista corta de dónde mirar, cambian la escena al momento donde está el riesgo y lo señalan. Un toque junto a un riesgo avisa \"Estás cerca\" y en pantallas táctiles la zona de toque es más generosa.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "autoHelp, showStar, openClue, nearPending y StarRing en src/components/experience/ExperiencePlayer.tsx, campo clue de RiskDef en src/lib/experiences/types.ts y sus 35 textos en src/lib/experiences/catalog.ts, estilos .ring, .momentCount, .momentNudge y .questClue en player.module.css",
+        verificacion:
+          "src/lib/experiences.test.mts: cada riesgo trae una pista de 15 a 90 caracteres que no repite la respuesta correcta. Revisión en Chromium en escritorio y celular: ayuda tras 3 toques fallidos y tras 14 s de inactividad, segundo nivel con pista escrita, pista del panel, aviso de cercanía y pestaña del siguiente momento.",
+        notas:
+          "Decisión del usuario (2026-10-01): la ayuda es gratis, no resta granos, y el botón Pista se conserva. Las pistas viven en el código, no en la base: cambiarlas es un cambio de código y no requiere migración. La estrella dibujada en la escena mide pocos píxeles y casi no se veía en celular, por eso se le suma un anillo HTML que sigue a la zona. Quedaron descartados por ahora los marcadores permanentes sobre todas las zonas, porque convertirían la búsqueda en juzgar zonas ya marcadas.",
+        relacionados: ["RF-908", "RF-912", "RNF-18"],
+      },
     ],
   },
 ];
