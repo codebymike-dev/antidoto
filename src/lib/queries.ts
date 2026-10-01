@@ -352,3 +352,22 @@ export async function getCompany(companyId: number) {
   );
   return row ? { ...row, id: Number(row.id), archived: row.archived_at !== null } : null;
 }
+
+export interface PortalUser {
+  id: number;
+  username: string;
+  created_at: string;
+  disabled: boolean;
+}
+
+/** Quién entra al portal: los admins de una empresa, o los superadmins si companyId es null. */
+export async function listPortalUsers(companyId: number | null): Promise<PortalUser[]> {
+  const rows = await all<{ id: number; username: string; created_at: string; disabled_at: string | null }>(
+    `SELECT u.id, u.username, u.created_at, d.disabled_at
+     FROM admin_users u LEFT JOIN admin_user_disabled d ON d.admin_user_id = u.id
+     WHERE ${companyId === null ? "u.role = 'super'" : "u.role = 'empresa' AND u.company_id = ?"}
+     ORDER BY d.disabled_at IS NOT NULL, u.username`,
+    companyId === null ? [] : [companyId]
+  );
+  return rows.map((r) => ({ id: Number(r.id), username: r.username, created_at: r.created_at, disabled: r.disabled_at !== null }));
+}

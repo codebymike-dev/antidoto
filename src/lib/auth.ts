@@ -90,7 +90,8 @@ export async function currentUser(): Promise<AdminUser | null> {
      JOIN admin_users u ON u.id = s.admin_user_id
      LEFT JOIN companies c ON c.id = u.company_id
      WHERE s.token_hash = ? AND s.expires_at > ?
-       AND NOT EXISTS (SELECT 1 FROM company_archive ca WHERE ca.company_id = u.company_id)`,
+       AND NOT EXISTS (SELECT 1 FROM company_archive ca WHERE ca.company_id = u.company_id)
+       AND NOT EXISTS (SELECT 1 FROM admin_user_disabled d WHERE d.admin_user_id = u.id)`,
     [hashToken(token), new Date().toISOString()]
   );
 
@@ -99,9 +100,11 @@ export async function currentUser(): Promise<AdminUser | null> {
 
 export async function login(username: string, password: string): Promise<AdminUser | null> {
   const user = await one<{ id: number; password_hash: string }>(
-    // El admin de una empresa archivada ya no entra.
+    // El admin de una empresa archivada o un usuario desactivado ya no entra.
     `SELECT id, password_hash FROM admin_users u
-     WHERE username = ? AND NOT EXISTS (SELECT 1 FROM company_archive ca WHERE ca.company_id = u.company_id)`,
+     WHERE username = ?
+       AND NOT EXISTS (SELECT 1 FROM company_archive ca WHERE ca.company_id = u.company_id)
+       AND NOT EXISTS (SELECT 1 FROM admin_user_disabled d WHERE d.admin_user_id = u.id)`,
     [username.trim().toLowerCase()]
   );
   if (!user || !(await verifyPassword(password, user.password_hash))) return null;
@@ -110,6 +113,19 @@ export async function login(username: string, password: string): Promise<AdminUs
   // Sin esto la tabla crece para siempre. El login es raro, así que el costo no se nota.
   await purgeExpiredSessions();
   return currentUser();
+}
+
+/**
+ * Cierra las sesiones de un usuario: al desactivarlo o cambiarle la contraseña, quien
+ * la conocía no debe seguir dentro. keepCurrent deja abierta la de este navegador.
+ */
+export async function endSessions(adminUserId: number, keepCurrent = false): Promise<void> {
+  const token = keepCurrent ? (await cookies()).get(SESSION_COOKIE)?.value : undefined;
+  if (token) {
+    await run("DELETE FROM sessions WHERE admin_user_id = ? AND token_hash <> ?", [adminUserId, hashToken(token)]);
+  } else {
+    await run("DELETE FROM sessions WHERE admin_user_id = ?", [adminUserId]);
+  }
 }
 
 export async function purgeExpiredSessions(): Promise<void> {
