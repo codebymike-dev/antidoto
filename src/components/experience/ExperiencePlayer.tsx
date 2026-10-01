@@ -13,7 +13,10 @@ import { routeProgress, type Results } from "./progress";
 import { risksInMoment, type Moment, type PlayScene, type Zone } from "./scenes/types";
 import type { PublicExperience, RiskResult, RiskTexts } from "@/lib/experiences/types";
 import { GRAINS_CORRECT, GRAINS_FOUND } from "@/lib/experiences/texts";
-import { answerExperienceRisk, finishExperience, revealExperienceRisks } from "@/lib/experience-actions";
+import { answerExperienceRisk, checkActivity, revealExperienceRisks, type AnswerOutcome, type Blocked } from "@/lib/experience-actions";
+import { withTimeout } from "@/lib/with-timeout";
+import FinishRouteButton from "./FinishRouteButton";
+import { ConnectionBanner, networkMessage, useOnline } from "./connection";
 import { brandPalette, INK, mix, type PublicBrand } from "@/lib/brand-palette";
 import type { ProfileConfig } from "@/lib/profile";
 
@@ -58,6 +61,17 @@ interface Props {
 }
 
 const OPTION_KEYS = ["A", "B", "C"];
+
+/** Con señal débil una petición puede colgarse: pasado este tiempo se avisa y se deja reintentar. */
+const REQUEST_TIMEOUT_MS = 20000;
+
+/** Qué dice la ventana cuando no se puede seguir jugando, según el motivo que da el servidor. */
+const BLOCK_COPY: Record<Exclude<Blocked["reason"], "other">, { title: string; body: string }> = {
+  paused: { title: "Actividad en pausa", body: "Tu avance está guardado. Cuando tu administrador la reactive, podrás seguir donde ibas." },
+  expired: { title: "La actividad venció", body: "Lo que ya respondiste quedó guardado, pero ya no se pueden enviar más respuestas." },
+  session: { title: "Tu sesión terminó", body: "Vuelve a entrar con tu código para seguir." },
+  done: { title: "Ya terminaste esta actividad", body: "No hace falta responder nada más." },
+};
 
 /** Pasos del tutorial de la primera estación; el último es la práctica (la escena queda tocable). */
 const COACH_STEPS = 5;
@@ -118,6 +132,7 @@ export default function ExperiencePlayer(props: Props) {
 
   return (
     <div className={`${styles.root} ${pixel.variable}`} style={brand ? brandSkin(brand) : undefined}>
+      <ConnectionBanner />
       {view.kind === "mapa" ? (
         <RouteHub
           stations={stations}
@@ -194,6 +209,12 @@ function StationPlayer({
   const [toast, setToast] = useState<Toast | null>(null);
   const [zoneList, setZoneList] = useState<Zone[] | null>(null);
   const [confirmReveal, setConfirmReveal] = useState(false);
+  // No se puede seguir jugando (pausa, vencimiento, sesión): ventana propia con lo que sigue.
+  const [blocked, setBlocked] = useState<Blocked | null>(null);
+  // Fallo de red al enviar una respuesta: la pregunta sigue abierta y se recuerda la opción elegida.
+  const [askError, setAskError] = useState<string | null>(null);
+  const [tried, setTried] = useState<number | null>(null);
+  const online = useOnline();
   // Paso del tutorial; null = sin tutorial o ya terminado.
   const [coach, setCoach] = useState<number | null>(null);
   const questRef = useRef<HTMLElement>(null);
@@ -233,7 +254,7 @@ function StationPlayer({
   });
   const here = momentStats.find((m) => m.id === moment)!;
   const coaching = coach !== null && coach < COACH_STEPS - 1;
-  const windowOpen = !!(ask || outcome || zoneList || confirmReveal || coaching);
+  const windowOpen = !!(ask || outcome || zoneList || confirmReveal || coaching || blocked);
 
   useEffect(() => {
     const fit = () => setMaxHeight(Math.max(260, window.innerHeight - 150));
@@ -474,7 +495,7 @@ function StationPlayer({
   }
 
   function onTap(x: number, y: number, touch: boolean) {
-    if (!scene || phase !== "juego" || scene.busy || ask || outcome || zoneList || confirmReveal || coaching) return;
+    if (!scene || phase !== "juego" || scene.busy || ask || outcome || zoneList || confirmReveal || coaching || blocked) return;
     scene.ripple(x, y);
     setActivity((a) => a + 1);
     setNudge(null);
@@ -499,9 +520,35 @@ function StationPlayer({
     }
   }
 
+  /** Pausa, vencimiento o sesión: se explica en una ventana. Cualquier otro fallo, un aviso corto. */
+  function reportBlocked(out: Blocked) {
+    setPending(false);
+    setAsk(null);
+    if (out.reason === "other") showToast(out.error);
+    else setBlocked(out);
+  }
+
+  /** "Comprobar de nuevo" en la ventana de pausa: si ya se reactivó, se sigue jugando. */
+  async function recheck() {
+    try {
+      const r = await withTimeout(checkActivity(), REQUEST_TIMEOUT_MS);
+      if (r.ok) {
+        setBlocked(null);
+        showToast("Listo, puedes seguir.", true);
+      } else {
+        setBlocked(r);
+        showToast(r.error);
+      }
+    } catch {
+      showToast(networkMessage("Inténtalo de nuevo."));
+    }
+  }
+
   async function choose(option: number) {
     if (!ask || pending) return;
     setPending(true);
+    setAskError(null);
+    setTried(option);
     let result: RiskResult | null = null;
     if (mode === "preview" && previewTexts) {
       const t = previewTexts[ask.riskId];
@@ -517,16 +564,21 @@ function StationPlayer({
         practice: t.practice,
       };
     } else {
-      const out = await answerExperienceRisk(ask.riskId, option);
-      if (!out.ok) {
+      let out: AnswerOutcome;
+      try {
+        out = await withTimeout(answerExperienceRisk(ask.riskId, option), REQUEST_TIMEOUT_MS);
+      } catch {
+        // La pregunta sigue abierta. Reintentar es seguro: si la primera sí llegó al servidor,
+        // vale esa y la respuesta de vuelta trae el mismo resultado.
         setPending(false);
-        setAsk(null);
-        showToast(out.error);
+        setAskError(networkMessage("Tu respuesta no se perdió: se enviará sola al volver la señal, o toca tu opción de nuevo."));
         return;
       }
+      if (!out.ok) return reportBlocked(out);
       result = out.result;
     }
     setPending(false);
+    setTried(null);
     helpLevel.current = 0;
     misses.current = 0;
     setClueRisk(null);
@@ -542,6 +594,43 @@ function StationPlayer({
       showToast(`Lo encontraste, pero no era esa. +${GRAINS_FOUND} granos`);
     }
   }
+
+  // Al volver la señal, la respuesta que no salió se reenvía sola.
+  const chooseRef = useRef(choose);
+  useEffect(() => {
+    chooseRef.current = choose;
+  });
+  const retryRef = useRef<number | null>(null);
+  useEffect(() => {
+    retryRef.current = askError ? tried : null;
+  }, [askError, tried]);
+  useEffect(() => {
+    if (online && retryRef.current !== null) void chooseRef.current(retryRef.current);
+  }, [online]);
+
+  // Al abrir una pregunta se confirma que la actividad sigue abierta: si se pausó o venció
+  // mientras jugaba, se entera antes de leer y elegir, no después. Sin red no dice nada.
+  const askId = ask?.riskId ?? null;
+  useEffect(() => {
+    if (mode !== "play" || !askId) return;
+    let live = true;
+    checkActivity()
+      .then((r) => {
+        if (live && !r.ok && r.reason !== "other") reportBlocked(r);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+    // reportBlocked solo usa setters y showToast, estables.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [askId, mode]);
+
+  // Una pregunta nueva empieza sin el error de la anterior.
+  useEffect(() => {
+    setAskError(null);
+    setTried(null);
+  }, [askId]);
 
   function closeOutcome() {
     setOutcome(null);
@@ -598,11 +687,14 @@ function StationPlayer({
         return next;
       });
     } else {
-      const out = await revealExperienceRisks(experience.key);
-      if (!out.ok) {
-        showToast(out.error);
+      let out: Awaited<ReturnType<typeof revealExperienceRisks>>;
+      try {
+        out = await withTimeout(revealExperienceRisks(experience.key), REQUEST_TIMEOUT_MS);
+      } catch {
+        showToast(networkMessage("No pudimos mostrarte los riesgos. Inténtalo de nuevo."), false, 6000);
         return;
       }
+      if (!out.ok) return reportBlocked(out);
       setResults(new Map(out.results.map((r) => [r.id, r])));
     }
     setPhase("completo");
@@ -731,7 +823,7 @@ function StationPlayer({
                           key={i}
                           type="button"
                           autoFocus={i === 0}
-                          className={`${styles.button} ${styles.option}`}
+                          className={`${styles.button} ${styles.option} ${askError && tried === i ? styles.optionTried : ""}`}
                           onClick={() => choose(i)}
                           disabled={pending}
                         >
@@ -739,8 +831,50 @@ function StationPlayer({
                           <span>{o}</span>
                         </button>
                       ))}
+                      {pending && (
+                        <p className={styles.muted} role="status">
+                          Enviando tu respuesta...
+                        </p>
+                      )}
+                      {askError && (
+                        <p role="alert" className={styles.netError}>
+                          {askError}
+                        </p>
+                      )}
                     </div>
                   </section>
+                )}
+
+                {blocked && blocked.reason !== "other" && (
+                  <>
+                    <div className={styles.dim} />
+                    <section className={`${styles.window} ${styles.dialogCenter}`} role="alertdialog" aria-labelledby="xp-blocked-title" aria-describedby="xp-blocked-body">
+                      <div className={`${styles.winHead} ${styles.winHeadWarn}`}>
+                        <span className={styles.winTitle} id="xp-blocked-title">
+                          {BLOCK_COPY[blocked.reason].title}
+                        </span>
+                      </div>
+                      <div className={styles.winBody}>
+                        <p id="xp-blocked-body">{BLOCK_COPY[blocked.reason].body}</p>
+                        {blocked.reason === "paused" ? (
+                          <>
+                            <button type="button" autoFocus className={`${styles.button} ${styles.go}`} onClick={recheck}>
+                              Comprobar de nuevo
+                            </button>
+                            <button type="button" className={styles.button} onClick={onBack}>
+                              Volver al mapa
+                            </button>
+                          </>
+                        ) : exitAction ? (
+                          <form action={exitAction}>
+                            <button type="submit" autoFocus className={`${styles.button} ${styles.go}`} style={{ width: "100%" }}>
+                              Volver al inicio
+                            </button>
+                          </form>
+                        ) : null}
+                      </div>
+                    </section>
+                  </>
                 )}
 
                 {outcome && (
@@ -924,11 +1058,7 @@ function StationPlayer({
                           )}
                         </p>
                         {!next && mode === "play" ? (
-                          <form action={finishExperience}>
-                            <button type="submit" autoFocus className={`${styles.button} ${styles.go}`} style={{ width: "100%" }}>
-                              Terminar la ruta
-                            </button>
-                          </form>
+                          <FinishRouteButton autoFocus />
                         ) : (
                           <button type="button" autoFocus className={`${styles.button} ${styles.go}`} style={{ width: "100%" }} onClick={onBack}>
                             {next ? `Volver a la ruta y seguir a la estación ${next.station}` : "Volver a la ruta"}

@@ -1006,6 +1006,38 @@
   color: #1e6b3a;
 }
 
+/* Fallos de red: se dicen dentro de la ventana donde ocurrieron, con lo que se puede hacer. */
+.netError {
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: #fdecea;
+  color: #9a2e22;
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.optionTried {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+.offlineBanner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  padding: 7px 14px;
+  text-align: center;
+  background: #fff3d6;
+  color: #7a4f00;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
 .pausedNote {
   padding: 8px 10px;
   border-radius: 7px;

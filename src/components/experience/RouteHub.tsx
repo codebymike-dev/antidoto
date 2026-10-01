@@ -10,7 +10,10 @@ import { SCENE_MAPS } from "./scenes";
 import { routeProgress, totalMinutes, type Results } from "./progress";
 import type { PublicExperience } from "@/lib/experiences/types";
 import { GRAINS_CORRECT, GRAINS_FOUND } from "@/lib/experiences/texts";
-import { finishExperience, saveWelcome } from "@/lib/experience-actions";
+import { saveWelcome } from "@/lib/experience-actions";
+import { withTimeout } from "@/lib/with-timeout";
+import FinishRouteButton from "./FinishRouteButton";
+import { networkMessage } from "./connection";
 import { DEPARTAMENTOS } from "@/lib/colombia";
 import type { ParticipantProfile, ProfileConfig } from "@/lib/profile";
 import type { PublicBrand } from "@/lib/brand-palette";
@@ -176,11 +179,7 @@ export default function RouteHub(props: Props) {
               </ul>
               {allDone &&
                 (mode === "play" ? (
-                  <form action={finishExperience}>
-                    <button type="submit" className={`${styles.button} ${styles.go}`} style={{ width: "100%" }}>
-                      Terminar la ruta
-                    </button>
-                  </form>
+                  <FinishRouteButton />
                 ) : (
                   <button type="button" className={`${styles.button} ${styles.go}`} onClick={props.onRestart}>
                     Volver a empezar
@@ -463,7 +462,14 @@ function Welcome({
     if (mode === "play") {
       setPending(true);
       setError(null);
-      const out = await saveWelcome(profile);
+      let out: Awaited<ReturnType<typeof saveWelcome>>;
+      try {
+        out = await withTimeout(saveWelcome(profile), 20000);
+      } catch {
+        setPending(false);
+        setError(networkMessage("Inténtalo de nuevo."));
+        return;
+      }
       setPending(false);
       if (!out.ok) {
         setError(out.error);
