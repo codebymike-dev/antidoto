@@ -17,6 +17,8 @@ export interface RiskTexts {
 export interface RiskDef {
   id: string;
   category: RiskCategory;
+  /** Dónde mirar, sin decir qué está mal: es lo que se ve al pedir una pista del panel. */
+  clue: string;
   defaults: RiskTexts;
 }
 
@@ -42,6 +44,7 @@ export interface ExperienceDef {
 export interface PublicRisk {
   id: string;
   category: RiskCategory;
+  clue: string;
   prompt: string;
   options: [string, string, string];
 }

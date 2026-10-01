@@ -12,6 +12,16 @@ import type { SceneMap } from "../components/experience/scenes/types.ts";
 const MAPS: Record<string, SceneMap> = { finca: FINCA_MAP, transporte: TRANSPORTE_MAP, trilladora: TRILLADORA_MAP, tostion: TOSTION_MAP, tienda: TIENDA_MAP };
 
 describe("catálogo", () => {
+  test("cada riesgo trae una pista corta que no repite la respuesta", () => {
+    for (const def of EXPERIENCES) {
+      for (const risk of def.risks) {
+        const { clue, defaults } = risk;
+        assert.ok(clue.length >= 15 && clue.length <= 90, `${risk.id}: pista de ${clue.length} caracteres`);
+        assert.ok(!clue.includes(defaults.options[defaults.correct]), `${risk.id}: la pista dice la respuesta`);
+      }
+    }
+  });
+
   test("los textos de fábrica pasan la misma validación que el editor", () => {
     for (const def of EXPERIENCES) {
       for (const risk of def.risks) {

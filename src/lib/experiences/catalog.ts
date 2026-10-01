@@ -24,6 +24,7 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
     {
       id: "espalda",
       category: "Biomecánico",
+      clue: "Mira cómo se agacha Ramiro para agarrar el bulto.",
       defaults: {
         title: "Espalda doblada, piernas rectas",
         prompt: "¿Qué está mal en la forma en que Ramiro se agacha?",
@@ -42,6 +43,7 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
     {
       id: "carga-lejos",
       category: "Biomecánico",
+      clue: "Fíjate en los brazos de Ramiro y en qué tan cerca tiene el bulto.",
       defaults: {
         title: "Carga lejos del cuerpo",
         prompt: "Mira sus brazos y el bulto. ¿Qué error ves?",
@@ -59,6 +61,7 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
     {
       id: "sobrepeso",
       category: "Biomecánico",
+      clue: "Mira el tamaño del bulto y lo lleno que está.",
       defaults: {
         title: "Bulto demasiado pesado",
         prompt: "Fíjate en el bulto. ¿Cuál es el problema?",
@@ -76,6 +79,7 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
     {
       id: "torsion",
       category: "Biomecánico",
+      clue: "Fíjate en la cintura de Ramiro cuando sube el bulto.",
       defaults: {
         title: "Gira la cintura con la carga",
         prompt: "Al subir el bulto, ¿qué hace mal con su cuerpo?",
@@ -93,6 +97,7 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
     {
       id: "mula",
       category: "Biomecánico",
+      clue: "Busca a quien podría ayudarle a cargar.",
       defaults: {
         title: "No usa la ayuda disponible",
         prompt: "En la finca hay algo que le podría ayudar. ¿Qué pasa?",
@@ -110,6 +115,7 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
     {
       id: "calzado",
       category: "Locativo",
+      clue: "Mira lo que Ramiro lleva puesto en los pies.",
       defaults: {
         title: "Chanclas en terreno con barro",
         prompt: "Mira sus pies y el suelo. ¿Qué riesgo ves?",
@@ -127,6 +133,7 @@ export const RUTA_CAFE_FINCA: ExperienceDef = {
     {
       id: "cuello",
       category: "Biomecánico",
+      clue: "Fíjate en dónde apoya Ramiro el bulto mientras camina.",
       defaults: {
         title: "Carga sobre la nuca",
         prompt: "Mira cómo lleva el bulto. ¿Qué está mal?",
@@ -164,6 +171,7 @@ export const RUTA_CAFE_TRANSPORTE: ExperienceDef = {
     {
       id: "sobrecarga",
       category: "Tránsito",
+      clue: "Mira la carga que va encima del yipao.",
       defaults: {
         title: "Carga alta y sin amarrar",
         prompt: "Mira la carga del yipao. ¿Qué está mal?",
@@ -182,6 +190,7 @@ export const RUTA_CAFE_TRANSPORTE: ExperienceDef = {
     {
       id: "pasajero",
       category: "Tránsito",
+      clue: "Busca a Toño, el ayudante, y fíjate dónde va.",
       defaults: {
         title: "Un pasajero encima de la carga",
         prompt: "¿Qué pasa con Toño, el ayudante?",
@@ -199,6 +208,7 @@ export const RUTA_CAFE_TRANSPORTE: ExperienceDef = {
     {
       id: "llanta",
       category: "Tránsito",
+      clue: "Mira la llanta de adelante del yipao.",
       defaults: {
         title: "Llanta lisa y desinflada",
         prompt: "Mira la llanta delantera. ¿Qué ves?",
@@ -217,6 +227,7 @@ export const RUTA_CAFE_TRANSPORTE: ExperienceDef = {
     {
       id: "celular",
       category: "Tránsito",
+      clue: "Fíjate en lo que Ramiro tiene en las manos mientras maneja.",
       defaults: {
         title: "Habla por celular al manejar",
         prompt: "Mira las manos de Ramiro. ¿Qué error ves?",
@@ -235,6 +246,7 @@ export const RUTA_CAFE_TRANSPORTE: ExperienceDef = {
     {
       id: "cinturon",
       category: "Tránsito",
+      clue: "Mira el pecho de Ramiro mientras maneja.",
       defaults: {
         title: "Sin cinturón de seguridad",
         prompt: "Fíjate en el pecho de Ramiro. ¿Qué le falta?",
@@ -249,6 +261,7 @@ export const RUTA_CAFE_TRANSPORTE: ExperienceDef = {
     {
       id: "fatiga",
       category: "Psicosocial",
+      clue: "Mira la cara de Ramiro mientras maneja.",
       defaults: {
         title: "Maneja con sueño",
         prompt: "Mira la cara de Ramiro. ¿Qué te dice?",
@@ -267,6 +280,7 @@ export const RUTA_CAFE_TRANSPORTE: ExperienceDef = {
     {
       id: "freno",
       category: "Tránsito",
+      clue: "Mira cómo dejó Ramiro el yipao al descargar, sobre todo las ruedas.",
       defaults: {
         title: "En bajada sin freno ni tacos",
         prompt: "Ramiro se bajó a descargar. ¿Qué hizo mal con el yipao?",
@@ -304,6 +318,7 @@ export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
     {
       id: "saco",
       category: "Biomecánico",
+      clue: "Mira lo que Fabio lleva cargado.",
       defaults: {
         title: "Saco de 70 kg al hombro",
         prompt: "Mira lo que carga Fabio. ¿Qué está mal?",
@@ -322,6 +337,7 @@ export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
     {
       id: "arrume",
       category: "Locativo",
+      clue: "Fíjate en la pila de sacos y en cómo está armada.",
       defaults: {
         title: "Arrume alto y ladeado",
         prompt: "Fíjate en la pila de sacos. ¿Qué riesgo ves?",
@@ -340,6 +356,7 @@ export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
     {
       id: "montacargas",
       category: "Mecánico",
+      clue: "Mira por dónde pasan el montacargas y Fabio.",
       defaults: {
         title: "Montacargas sin carril marcado",
         prompt: "¿Qué pasa entre el montacargas y Fabio?",
@@ -358,6 +375,7 @@ export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
     {
       id: "ruido",
       category: "Físico",
+      clue: "Mira las orejas de Fabio cerca de la máquina.",
       defaults: {
         title: "Ruido sin protección auditiva",
         prompt: "Mira las orejas de Fabio junto a la trilladora. ¿Qué le falta?",
@@ -376,6 +394,7 @@ export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
     {
       id: "polvo",
       category: "Químico",
+      clue: "Fíjate en la cara de Fabio y en el aire que hay.",
       defaults: {
         title: "Polvo de café sin tapabocas",
         prompt: "¿Qué está respirando Fabio?",
@@ -394,6 +413,7 @@ export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
     {
       id: "guarda",
       category: "Mecánico",
+      clue: "Mira la correa de la máquina y la mano de Fabio.",
       defaults: {
         title: "Correa sin guarda",
         prompt: "Mira la mano de Fabio y la correa de la máquina. ¿Qué está mal?",
@@ -412,6 +432,7 @@ export const RUTA_CAFE_TRILLADORA: ExperienceDef = {
     {
       id: "bloqueo",
       category: "Mecánico",
+      clue: "Fíjate en qué hace Fabio con la máquina atascada.",
       defaults: {
         title: "Destraba la máquina encendida",
         prompt: "La salida se atascó. ¿Qué hace mal Fabio?",
@@ -449,6 +470,7 @@ export const RUTA_CAFE_TOSTION: ExperienceDef = {
     {
       id: "gas",
       category: "Tecnológico",
+      clue: "Mira lo que Luz hace con el cilindro de gas.",
       defaults: {
         title: "Busca la fuga de gas con una llama",
         prompt: "Mira lo que hace Luz con el cilindro de gas. ¿Qué está mal?",
@@ -467,6 +489,7 @@ export const RUTA_CAFE_TOSTION: ExperienceDef = {
     {
       id: "cable",
       category: "Eléctrico",
+      clue: "Sigue con la vista el cable que cruza la planta.",
       defaults: {
         title: "Extensión regada por el piso",
         prompt: "Sigue el cable que cruza la planta. ¿Qué riesgo ves?",
@@ -484,6 +507,7 @@ export const RUTA_CAFE_TOSTION: ExperienceDef = {
     {
       id: "cascarilla",
       category: "Tecnológico",
+      clue: "Mira el colector de cascarilla junto a la tostadora.",
       defaults: {
         title: "Cascarilla acumulada junto al fuego",
         prompt: "Fíjate en el colector de cascarilla. ¿Cuál es el problema?",
@@ -501,6 +525,7 @@ export const RUTA_CAFE_TOSTION: ExperienceDef = {
     {
       id: "humo",
       category: "Químico",
+      clue: "Fíjate en el aire de la planta mientras Luz tuesta.",
       defaults: {
         title: "Humo de la tostión sin extracción",
         prompt: "Mira el aire de la planta mientras Luz tuesta. ¿Qué pasa?",
@@ -518,6 +543,7 @@ export const RUTA_CAFE_TOSTION: ExperienceDef = {
     {
       id: "quemadura",
       category: "Físico",
+      clue: "Mira las manos de Luz cuando saca la muestra del tambor.",
       defaults: {
         title: "Saca la muestra sin guantes",
         prompt: "Luz saca una muestra del tambor. ¿Qué está mal?",
@@ -535,6 +561,7 @@ export const RUTA_CAFE_TOSTION: ExperienceDef = {
     {
       id: "pelo",
       category: "Mecánico",
+      clue: "Fíjate en la cabeza de Luz cuando se inclina sobre la bandeja.",
       defaults: {
         title: "Pelo suelto sobre las aspas",
         prompt: "Luz se inclina sobre la bandeja de enfriamiento. ¿Qué riesgo ves?",
@@ -552,6 +579,7 @@ export const RUTA_CAFE_TOSTION: ExperienceDef = {
     {
       id: "granos",
       category: "Locativo",
+      clue: "Mira el piso alrededor de la bandeja.",
       defaults: {
         title: "Granos regados en el piso",
         prompt: "Mira el piso alrededor de la bandeja. ¿Qué pasa?",
@@ -589,6 +617,7 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
     {
       id: "chanclas",
       category: "Locativo",
+      clue: "Mira los pies de Sara mientras trapea.",
       defaults: {
         title: "Chanclas para trapear",
         prompt: "Mira los pies de Sara mientras trapea. ¿Qué está mal?",
@@ -606,6 +635,7 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
     {
       id: "piso",
       category: "Locativo",
+      clue: "Fíjate en el piso por donde entran los clientes.",
       defaults: {
         title: "Piso mojado sin aviso",
         prompt: "Fíjate en el piso donde entran los clientes. ¿Qué riesgo ves?",
@@ -623,6 +653,7 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
     {
       id: "enchufe",
       category: "Eléctrico",
+      clue: "Mira la regleta que está junto al lavaplatos.",
       defaults: {
         title: "Regleta mojada junto al lavaplatos",
         prompt: "Mira la regleta al lado del lavaplatos. ¿Cuál es el problema?",
@@ -640,6 +671,7 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
     {
       id: "vapor",
       category: "Físico",
+      clue: "Fíjate en la mano de Sara cuando purga el vapor.",
       defaults: {
         title: "La mano bajo el vapor",
         prompt: "Sara purga la lanceta de vapor. ¿Qué hace mal?",
@@ -657,6 +689,7 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
     {
       id: "cuchillo",
       category: "Mecánico",
+      clue: "Mira dentro del lavaplatos.",
       defaults: {
         title: "Cuchillo escondido en el lavaplatos",
         prompt: "Mira dentro del lavaplatos. ¿Qué peligro hay?",
@@ -674,6 +707,7 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
     {
       id: "silla",
       category: "Locativo",
+      clue: "Fíjate en cómo alcanza Sara los vasos del estante alto.",
       defaults: {
         title: "Se sube a un butaco",
         prompt: "Se acabaron los vasos. ¿Qué hace mal Sara para alcanzarlos?",
@@ -691,6 +725,7 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
     {
       id: "estres",
       category: "Psicosocial",
+      clue: "Mira la fila de clientes y a Sara en la hora pico.",
       defaults: {
         title: "Sola en la hora pico",
         prompt: "Mira la fila y a Sara. ¿Qué pasa?",

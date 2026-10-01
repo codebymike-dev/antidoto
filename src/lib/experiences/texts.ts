@@ -37,7 +37,7 @@ export function publicExperience(def: ExperienceDef, overrides: TextOverrides): 
     minutes: def.minutes,
     risks: def.risks.map((r) => {
       const t = riskTexts(r, overrides);
-      return { id: r.id, category: r.category, prompt: t.prompt, options: t.options };
+      return { id: r.id, category: r.category, clue: r.clue, prompt: t.prompt, options: t.options };
     }),
   };
 }
