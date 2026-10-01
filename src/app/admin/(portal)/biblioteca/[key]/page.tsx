@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { getExperience } from "@/lib/experiences/catalog";
+import { getExperience, seriesEntry } from "@/lib/experiences/catalog";
 import { loadOverrides } from "@/lib/experience-data";
 import { riskTexts } from "@/lib/experiences/texts";
 import { colors, calSans } from "@/lib/theme";
@@ -22,8 +22,8 @@ export default async function ExperienciaPage({ params }: { params: Promise<{ ke
 
   return (
     <div>
-      <Link href="/admin/biblioteca" style={{ fontSize: 13, color: colors.accentDark, fontWeight: 600 }}>
-        ‹ Biblioteca
+      <Link href={`/admin/biblioteca/actividad/${seriesEntry(def).key}`} style={{ fontSize: 13, color: colors.accentDark, fontWeight: 600 }}>
+        ‹ {def.series}
       </Link>
       <div
         style={{
