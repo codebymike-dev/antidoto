@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { listGames } from "@/lib/live-games";
-import { archiveGame, createGame, duplicateGame, launchMatch, restoreGame } from "@/lib/live-games-actions";
+import { archiveGame, createGame, deleteGame, duplicateGame, launchMatch, restoreGame } from "@/lib/live-games-actions";
 import { canEditGame } from "@/lib/scope";
 import { colors, calSans } from "@/lib/theme";
 import { card, filledButton, tabButton, tabButtonActive } from "@/lib/styles";
 import { ArrowRightIcon, CopyIcon, InboxIcon, PlayIcon, SearchIcon } from "@/components/icons";
+import DeleteGameButton from "@/components/admin/live/DeleteGameButton";
 import DealGrid from "@/components/motion/DealGrid";
 
 export const dynamic = "force-dynamic";
@@ -221,6 +222,7 @@ export default async function JuegosPage({
                       </button>
                     </form>
                   )}
+                  {editable && archived && <DeleteGameButton id={g.id} action={deleteGame} matches={g.matches} />}
                   <form action={duplicateGame}>
                     <input type="hidden" name="id" value={g.id} />
                     <button

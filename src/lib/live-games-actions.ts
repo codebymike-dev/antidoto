@@ -137,6 +137,28 @@ export async function restoreGame(formData: FormData) {
   await setArchived(formData, false);
 }
 
+/** Borra un juego ya archivado, con sus partidas y resultados. No se puede deshacer. */
+export async function deleteGame(formData: FormData) {
+  const user = await requireUser();
+  const game = await getGame(Number(formData.get("id")), user);
+  if (!game || !game.canEdit) return;
+  const archivedRow = await one("SELECT 1 FROM live_games WHERE id = ? AND archived_at IS NOT NULL", [game.id]);
+  if (!archivedRow) return;
+
+  const tx = await db().transaction("write");
+  try {
+    // live_matches.game_id no tiene cascada; las partidas arrastran jugadores, respuestas y retos.
+    await tx.execute({ sql: "DELETE FROM live_matches WHERE game_id = ?", args: [game.id] });
+    await tx.execute({ sql: "DELETE FROM live_games WHERE id = ?", args: [game.id] });
+    await tx.commit();
+  } finally {
+    tx.close();
+  }
+
+  await audit(`Juego en vivo "${game.title}" eliminado.`, user, game.company_id);
+  revalidatePath("/admin/juegos");
+}
+
 /** Abre una partida del juego y lleva al host a la pantalla del proyector. */
 export async function launchMatch(formData: FormData) {
   const user = await requireUser();
