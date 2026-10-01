@@ -4,8 +4,11 @@ import { useState } from "react";
 import { colors } from "@/lib/theme";
 import { CheckIcon, CopyIcon } from "@/components/icons";
 
-/** El código de actividad en grande, con un botón para copiarlo y compartirlo. */
-export default function CopyCode({ code, size = 15 }: { code: string; size?: number }) {
+/**
+ * El código de actividad en grande, con un botón para copiarlo y compartirlo. También
+ * sirve para un usuario o una contraseña: label dice qué se copia al lector de pantalla.
+ */
+export default function CopyCode({ code, size = 15, label }: { code: string; size?: number; label?: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -27,8 +30,8 @@ export default function CopyCode({ code, size = 15 }: { code: string; size?: num
         type="button"
         onClick={copy}
         className="btn-icon"
-        aria-label={copied ? "Código copiado" : `Copiar el código ${code}`}
-        title={copied ? "Copiado" : "Copiar código"}
+        aria-label={copied ? "Copiado" : label ?? `Copiar el código ${code}`}
+        title={copied ? "Copiado" : label ?? "Copiar código"}
         style={{
           display: "inline-flex",
           alignItems: "center",

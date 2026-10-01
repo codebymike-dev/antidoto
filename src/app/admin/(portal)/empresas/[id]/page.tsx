@@ -196,7 +196,7 @@ export default async function EmpresaPage({
         const total = codes.reduce((s, a) => s + a.participantes, 0);
         const done = codes.reduce((s, a) => s + a.completaron, 0);
         return (
-          <section key={first.mission_id} style={{ ...card, padding: 0, overflow: "hidden" }} aria-labelledby={`act-${first.mission_id}`}>
+          <section key={first.mission_id} style={{ ...card, padding: 0 }} aria-labelledby={`act-${first.mission_id}`}>
             <div style={{ padding: "20px 22px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
               <div style={{ minWidth: 0 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: colors.accent, letterSpacing: 0.8 }}>{first.tag}</span>
@@ -238,7 +238,8 @@ export default async function EmpresaPage({
               </div>
             )}
 
-            <div style={{ background: "#F7FBFC", borderTop: `1px solid ${colors.accentTint}`, padding: "14px 22px 6px" }}>
+            {/* Sin overflow hidden en la tarjeta: el menú "Opciones del código" se sale de ella. */}
+            <div style={{ background: "#F7FBFC", borderTop: `1px solid ${colors.accentTint}`, borderRadius: "0 0 18px 18px", padding: "14px 22px 6px" }}>
               <div style={{ fontSize: 13, color: colors.inkSoft, lineHeight: 1.5 }}>
                 <b style={{ color: colors.ink }}>Para entrar:</b> cada persona va a <b style={{ color: colors.ink }}>{host ?? "la página de inicio"}</b> y escribe{" "}
                 {codes.length === 1 ? "este código." : "uno de estos códigos."}
