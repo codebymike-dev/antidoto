@@ -5,6 +5,7 @@ import { companyFilter, LIVE_CODE } from "./scope";
 import { EXPERIENCES, experienceMissionId, getExperience, seriesEntry, seriesFrom } from "./experiences/catalog";
 import { parseStoredTexts, riskResult, riskTexts, score, type AnswerRow, type TextOverrides } from "./experiences/texts";
 import type { ExperienceDef, RiskResult } from "./experiences/types";
+import { buildRecap, type Recap } from "./experiences/recap";
 
 /** Qué experiencia usa una misión; null si es una misión común. */
 export async function missionExperience(missionId: string): Promise<ExperienceDef | null> {
@@ -80,6 +81,14 @@ export function resultsFor(stations: ExperienceDef[], overrides: Map<string, Tex
     out.push({ ...result, correct: row.is_correct === 1 });
   }
   return out;
+}
+
+/** El resumen personal de quien terminó una ruta; null si la misión no es de escenas. */
+export async function participationRecap(participationId: string, missionId: string): Promise<Recap | null> {
+  const stations = await missionStations(missionId);
+  if (!stations) return null;
+  const [overrides, answers] = await Promise.all([loadAllOverrides(stations), participationAnswers(participationId)]);
+  return buildRecap(stations, overrides, answers);
 }
 
 /** Recalcula avance y puntaje de la participación desde sus respuestas, sobre toda la serie. */

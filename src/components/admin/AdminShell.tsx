@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions";
 import { colors, LOGO_SRC } from "@/lib/theme";
-import { BuildingIcon, DocIcon, GearIcon, HomeIcon, LibraryIcon, LogoutIcon, PlayIcon } from "@/components/icons";
+import { BuildingIcon, DocIcon, GearIcon, HomeIcon, KeyIcon, LibraryIcon, LogoutIcon, PlayIcon } from "@/components/icons";
 import NavPill from "@/components/motion/NavPill";
 import NotificationsBell from "./NotificationsBell";
 
@@ -25,12 +25,13 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, ownCompa
   const navGamesOn = pathname.startsWith("/admin/juegos");
   const navDocsOn = pathname.startsWith("/admin/docs");
   const navSettingsOn = pathname.startsWith("/admin/ajustes");
+  const navAccountOn = pathname.startsWith("/admin/cuenta");
   // Los resultados de una actividad en todas las empresas se abren desde la biblioteca.
   const navLibraryOn =
     pathname.startsWith("/admin/biblioteca") || (!isEmpresa && pathname.startsWith("/admin/actividades"));
   const navCompaniesOn =
     pathname.startsWith("/admin/empresas") || pathname.startsWith("/admin/asignar") || (isEmpresa && pathname.startsWith("/admin/actividades"));
-  const navHomeOn = !navGamesOn && !navDocsOn && !navSettingsOn && !navLibraryOn && !navCompaniesOn;
+  const navHomeOn = !navGamesOn && !navDocsOn && !navSettingsOn && !navLibraryOn && !navCompaniesOn && !navAccountOn;
   const roleInitial = roleSubtitle === "Acceso total" ? "S" : roleSubtitle.charAt(0).toUpperCase();
 
   function navStyle(active: boolean) {
@@ -190,6 +191,10 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, ownCompa
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
+          <Link href="/admin/cuenta" className={navAccountOn ? "btn-navlink-active" : "btn-navlink"} style={navStyle(navAccountOn)}>
+            <KeyIcon />
+            Mi cuenta
+          </Link>
           <form action={logoutAction}>
             <button
               type="submit"

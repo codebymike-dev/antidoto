@@ -2,6 +2,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { EXPERIENCES, RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA, RUTA_CAFE_TOSTION, RUTA_CAFE_TIENDA, seriesEntry, seriesFrom } from "./experiences/catalog.ts";
 import { LIMITS, parseStoredTexts, publicExperience, riskResult, score, validateRiskTexts } from "./experiences/texts.ts";
+import { buildRecap, MAX_TAKEAWAYS } from "./experiences/recap.ts";
 import { FINCA_MAP } from "../components/experience/scenes/finca-map.ts";
 import { TRANSPORTE_MAP } from "../components/experience/scenes/transporte-map.ts";
 import { TRILLADORA_MAP } from "../components/experience/scenes/trilladora-map.ts";
@@ -176,5 +177,60 @@ describe("edición de textos", () => {
     const row = { title: "t", prompt: "p", options: "{", correct: 0, explanation: "e", practice: "b" };
     assert.equal(parseStoredTexts(row), null);
     assert.ok(parseStoredTexts({ ...row, options: JSON.stringify(["a", "b", "c"]) }));
+  });
+});
+
+describe("resumen personal", () => {
+  const stations = seriesFrom(RUTA_CAFE_FINCA);
+  const risks = stations.flatMap((d) => d.risks);
+  const first = (r: (typeof risks)[number]) => ({ risk_id: r.id, option_index: r.defaults.correct as number | null, is_correct: 1 });
+  const wrong = (r: (typeof risks)[number]) => ({ risk_id: r.id, option_index: ((r.defaults.correct + 1) % 3) as number | null, is_correct: 0 });
+  const revealed = (r: (typeof risks)[number]) => ({ risk_id: r.id, option_index: null, is_correct: 0 });
+
+  test("sin fallos: todo a la primera y nada que destacar", () => {
+    const recap = buildRecap(stations, new Map(), risks.map(first));
+    assert.equal(recap.total, risks.length);
+    assert.equal(recap.correct, risks.length);
+    assert.equal(recap.found, risks.length);
+    assert.equal(recap.takeaways.length, 0);
+    assert.ok(recap.stations.every((s) => s.risks.every((r) => r.status === "primera")));
+  });
+
+  test("clasifica a la primera, otra opción y revelado, con el texto de cada opción", () => {
+    const [a, b, c] = risks;
+    const rows = [first(a), wrong(b), revealed(c)];
+    const recap = buildRecap(stations, new Map(), rows);
+    const byId = new Map(recap.stations.flatMap((s) => s.risks).map((r) => [r.id, r]));
+    assert.equal(byId.get(a.id)!.status, "primera");
+    assert.equal(byId.get(b.id)!.status, "otra");
+    assert.equal(byId.get(b.id)!.yours, b.defaults.options[(b.defaults.correct + 1) % 3]);
+    assert.equal(byId.get(b.id)!.correct, b.defaults.options[b.defaults.correct]);
+    assert.equal(byId.get(c.id)!.status, "revelado");
+    assert.equal(byId.get(c.id)!.yours, null);
+    // Encontrados = todos menos el revelado.
+    assert.equal(recap.found, 2);
+    assert.equal(recap.correct, 1);
+  });
+
+  test("las prácticas destacadas ponen primero lo revelado y se limitan", () => {
+    const rows = [wrong(risks[0]), wrong(risks[1]), wrong(risks[2]), revealed(risks[3]), first(risks[4])];
+    const recap = buildRecap(stations, new Map(), rows);
+    assert.equal(recap.takeaways.length, MAX_TAKEAWAYS);
+    assert.equal(recap.takeaways[0].id, risks[3].id);
+    assert.ok(!recap.takeaways.some((t) => t.id === risks[4].id));
+  });
+
+  test("usa los textos editados, no los de fábrica", () => {
+    const r = risks[0];
+    const edited = { ...r.defaults, title: "Título editado", practice: "Práctica editada" };
+    const recap = buildRecap(stations, new Map([[stations[0].key, new Map([[r.id, edited]])]]), [wrong(r)]);
+    assert.equal(recap.stations[0].risks[0].title, "Título editado");
+    assert.equal(recap.takeaways[0].practice, "Práctica editada");
+  });
+
+  test("una estación sin respuestas queda sin riesgos", () => {
+    const recap = buildRecap(stations, new Map(), []);
+    assert.ok(recap.stations.every((s) => s.risks.length === 0));
+    assert.equal(recap.found, 0);
   });
 });

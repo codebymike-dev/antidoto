@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { one, run } from "./db";
 import { PARTICIPATION_COOKIE } from "./participation";
@@ -24,7 +23,15 @@ import { validateProfile } from "./profile";
 
 // --- Participante --------------------------------------------------------------
 
-export type AnswerOutcome = { ok: true; result: RiskResult; grains: number } | { ok: false; error: string };
+/**
+ * Por qué no se puede seguir jugando. El jugador lo usa para explicarlo con claridad
+ * (pausa: se espera; vencida o sin sesión: se vuelve al inicio) en vez de un aviso suelto.
+ */
+export type BlockReason = "paused" | "expired" | "session" | "done" | "other";
+
+export type Blocked = { ok: false; error: string; reason: BlockReason };
+
+export type AnswerOutcome = { ok: true; result: RiskResult; grains: number } | Blocked;
 
 interface PlayerContext {
   participationId: string;
@@ -33,10 +40,10 @@ interface PlayerContext {
 }
 
 /** La participación de la cookie, si es de una experiencia abierta y sin terminar. */
-async function playerContext(): Promise<PlayerContext | { error: string }> {
+async function playerContext(): Promise<PlayerContext | { error: string; reason: BlockReason }> {
   const jar = await cookies();
   const id = jar.get(PARTICIPATION_COOKIE)?.value;
-  if (!id) return { error: "Tu sesión terminó. Vuelve a entrar con tu código." };
+  if (!id) return { error: "Tu sesión terminó. Vuelve a entrar con tu código.", reason: "session" };
 
   const row = await one<{ mission_id: string; estado: string; expires_at: string | null; completed_at: string | null }>(
     `SELECT ac.mission_id, ac.estado, ac.expires_at, p.completed_at
@@ -44,21 +51,31 @@ async function playerContext(): Promise<PlayerContext | { error: string }> {
      WHERE p.id = ?`,
     [id],
   );
-  if (!row) return { error: "Tu sesión terminó. Vuelve a entrar con tu código." };
-  if (row.completed_at) return { error: "Ya terminaste esta actividad." };
-  if (row.estado === "pausado") return { error: "Esta actividad está pausada por tu administrador." };
-  if (isExpired(row.expires_at)) return { error: "Esta actividad ya venció." };
+  if (!row) return { error: "Tu sesión terminó. Vuelve a entrar con tu código.", reason: "session" };
+  if (row.completed_at) return { error: "Ya terminaste esta actividad.", reason: "done" };
+  if (row.estado === "pausado") return { error: "Esta actividad está pausada por tu administrador.", reason: "paused" };
+  if (isExpired(row.expires_at)) return { error: "Esta actividad ya venció.", reason: "expired" };
 
   const stations = await missionStations(row.mission_id);
-  if (!stations) return { error: "Esta actividad no es una escena interactiva." };
+  if (!stations) return { error: "Esta actividad no es una escena interactiva.", reason: "other" };
   return { participationId: id, stations };
+}
+
+/**
+ * ¿Se puede seguir jugando? El jugador lo pregunta al abrir una pregunta, para avisar de una
+ * pausa o un vencimiento antes de que la persona lea y elija, no después. Solo lee.
+ */
+export async function checkActivity(): Promise<{ ok: true } | Blocked> {
+  const ctx = await playerContext();
+  if ("error" in ctx) return { ok: false, error: ctx.error, reason: ctx.reason };
+  return { ok: true };
 }
 
 export async function answerExperienceRisk(riskId: string, option: number): Promise<AnswerOutcome> {
   const ctx = await playerContext();
-  if ("error" in ctx) return { ok: false, error: ctx.error };
+  if ("error" in ctx) return { ok: false, error: ctx.error, reason: ctx.reason };
   const found = stationRisks(ctx.stations).find((x) => x.risk.id === riskId);
-  if (!found || ![0, 1, 2].includes(option)) return { ok: false, error: "Respuesta no válida." };
+  if (!found || ![0, 1, 2].includes(option)) return { ok: false, error: "Respuesta no válida.", reason: "other" };
   const { def, risk } = found;
 
   const texts = riskTexts(risk, await loadOverrides(def.key));
@@ -80,11 +97,11 @@ export async function answerExperienceRisk(riskId: string, option: number): Prom
  */
 export async function revealExperienceRisks(
   stationKey: string,
-): Promise<{ ok: true; results: RiskResult[] } | { ok: false; error: string }> {
+): Promise<{ ok: true; results: RiskResult[] } | Blocked> {
   const ctx = await playerContext();
-  if ("error" in ctx) return { ok: false, error: ctx.error };
+  if ("error" in ctx) return { ok: false, error: ctx.error, reason: ctx.reason };
   const station = ctx.stations.find((d) => d.key === stationKey);
-  if (!station) return { ok: false, error: "Estación no válida." };
+  if (!station) return { ok: false, error: "Estación no válida.", reason: "other" };
   const done = new Set((await participationAnswers(ctx.participationId)).map((r) => r.risk_id));
   for (const risk of station.risks) {
     if (done.has(risk.id)) continue;
@@ -126,17 +143,21 @@ export async function saveWelcome(input: { cargo: string | null; municipio: stri
   return { ok: true };
 }
 
-export async function finishExperience() {
+/**
+ * Cierra la ruta. Devuelve un resultado en vez de redirigir para que el jugador pueda
+ * avisar si no hubo conexión y reintentar; si todo sale bien, él mismo navega al cierre.
+ */
+export async function completeExperience(): Promise<{ ok: true } | Blocked> {
   const ctx = await playerContext();
-  if ("error" in ctx) redirect("/mision");
+  if ("error" in ctx) return { ok: false, error: ctx.error, reason: ctx.reason };
   const s = await refreshParticipationScore(ctx.participationId, ctx.stations);
   // Solo se termina con todos los riesgos de todas las estaciones resueltos (encontrados o revelados).
-  if (s.answered < s.total) redirect("/mision");
+  if (s.answered < s.total) return { ok: false, error: "Aún te faltan riesgos por resolver.", reason: "other" };
   await run("UPDATE participations SET completed_at = datetime('now'), avance = 100 WHERE id = ? AND completed_at IS NULL", [
     ctx.participationId,
   ]);
   revalidatePath("/mision");
-  redirect("/mision/completada");
+  return { ok: true };
 }
 
 // --- Biblioteca (admin) --------------------------------------------------------------
