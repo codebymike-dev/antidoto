@@ -300,6 +300,13 @@ CREATE TABLE IF NOT EXISTS activity_code_archive (
   archived_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Un usuario del portal desactivado: no puede entrar y sus sesiones se cierran. Se
+-- reactiva borrando la fila; su nombre sigue en el historial y en las partidas.
+CREATE TABLE IF NOT EXISTS admin_user_disabled (
+  admin_user_id INTEGER PRIMARY KEY REFERENCES admin_users(id) ON DELETE CASCADE,
+  disabled_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- --- Bienvenida y perfil del participante ----------------------------------------------
 -- Cada código decide qué datos pide al entrar, siempre de listas cerradas para que los
 -- reportes se puedan filtrar sin textos escritos a mano. Sin fila = no pide datos extra.
