@@ -115,21 +115,45 @@ export default async function EmpresaPage({
             </p>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Link
-            href={`/admin/empresas/${company.id}/marca`}
-            className="btn-secondary"
-            style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
-          >
-            {brand ? "Logo y colores" : "Ponerle logo y colores"}
-          </Link>
-          {isSuper && !company.archived && (
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          {isSuper && !company.archived ? (
+            <>
+              <DropdownMenu
+                label={
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <GearIcon />
+                    Ajustes de la empresa <span aria-hidden style={{ fontSize: 10 }}>▾</span>
+                  </span>
+                }
+                summaryClassName="btn-text"
+                summaryStyle={{ ...textButton, fontSize: 13.5, color: colors.inkSoft }}
+                width={280}
+              >
+                <Link href={`/admin/empresas/${company.id}/marca`} className="report-menu-item" style={menuItem}>
+                  {brand ? "Cambiar logo y colores" : "Ponerle logo y colores"}
+                </Link>
+                <div style={menuDivider} />
+                <form action={archiveCompany} style={{ padding: "8px 10px" }}>
+                  <input type="hidden" name="companyId" value={company.id} />
+                  <ConfirmDeleteButton confirmLabel="Sí, archivar">Archivar empresa</ConfirmDeleteButton>
+                  <p style={menuHint}>Para cuando ya no trabajas con ella: sus códigos dejan de funcionar. No se borra nada y se puede restaurar.</p>
+                </form>
+              </DropdownMenu>
+              <Link
+                href={`/admin/asignar?empresa=${company.id}`}
+                className="btn-filled"
+                style={{ ...filledButton, display: "inline-flex", alignItems: "center" }}
+              >
+                ＋ Asignar actividad
+              </Link>
+            </>
+          ) : (
             <Link
-              href={`/admin/asignar?empresa=${company.id}`}
-              className="btn-filled"
-              style={{ ...filledButton, display: "inline-flex", alignItems: "center" }}
+              href={`/admin/empresas/${company.id}/marca`}
+              className="btn-secondary"
+              style={{ ...secondaryButton, display: "inline-flex", alignItems: "center" }}
             >
-              ＋ Asignar actividad
+              {brand ? "Logo y colores" : "Ponerle logo y colores"}
             </Link>
           )}
         </div>
@@ -160,61 +184,61 @@ export default async function EmpresaPage({
         </section>
       )}
 
-      {activities.map((codes) => {
+      {activities.map((codes, i) => {
         const first = codes[0];
+        const people = participantsByActivity[i];
         const total = codes.reduce((s, a) => s + a.participantes, 0);
         const done = codes.reduce((s, a) => s + a.completaron, 0);
-        const avance = total ? Math.round(codes.reduce((s, a) => s + a.avance * a.participantes, 0) / total) : 0;
         return (
           <section key={first.mission_id} style={{ ...card, padding: 0, overflow: "hidden" }} aria-labelledby={`act-${first.mission_id}`}>
-            <div style={{ padding: "20px 22px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ padding: "20px 22px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
               <div style={{ minWidth: 0 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: colors.accent, letterSpacing: 0.8 }}>{first.tag}</span>
                 <h2 id={`act-${first.mission_id}`} style={{ ...calSans, fontSize: 20, margin: "2px 0 0", color: colors.ink }}>
                   {first.title}
                 </h2>
+                <p style={{ margin: "6px 0 0", fontSize: 14, color: colors.inkSoft }}>
+                  {total === 0 ? (
+                    "Nadie ha entrado todavía."
+                  ) : (
+                    <>
+                      <b style={{ color: colors.ink }}>{total}</b> {total === 1 ? "persona entró" : "personas entraron"} ·{" "}
+                      <b style={{ color: colors.ink }}>{done}</b> {done === 1 ? "terminó" : "terminaron"}
+                    </>
+                  )}
+                </p>
               </div>
               {!company.archived && (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <Link
-                  href={`/admin/reporte/actividad/${first.mission_id}/${company.id}`}
-                  className="btn-secondary"
-                  style={{ ...secondaryButton, height: 38, display: "inline-flex", alignItems: "center" }}
-                >
-                  Informe PDF
-                </Link>
                 <Link
                   href={`/admin/empresas/${company.id}/actividades/${first.mission_id}`}
-                  className="btn-filled"
-                  style={{ ...filledButton, height: 38, padding: "0 16px", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
+                  className="btn-secondary"
+                  style={{ ...secondaryButton, height: 40, display: "inline-flex", alignItems: "center", gap: 6 }}
                 >
-                  Ver resultados
+                  Ver resultados e informe
                   <ArrowRightIcon />
                 </Link>
-              </div>
               )}
             </div>
 
-            <div style={{ padding: "0 22px 18px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 18, alignItems: "end" }}>
-              <Stat label="Participantes" value={String(total)} />
-              <Stat label="Terminaron" value={total ? `${done} de ${total}` : "–"} />
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 600, color: colors.muted, marginBottom: 6 }}>
-                  <span>Avance promedio</span>
-                  <span style={{ color: colors.ink, fontWeight: 700 }}>{avance}%</span>
-                </div>
-                <div style={{ height: 8, borderRadius: 8, background: colors.accentTint, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${avance}%`, background: colors.buttonGradient, borderRadius: 8 }} />
-                </div>
+            {!company.archived && (
+              <div style={{ padding: "16px 22px 20px" }}>
+                {people.length === 0 ? (
+                  <div style={{ padding: "18px 16px", borderRadius: 12, background: "#F7FBFC", fontSize: 13.5, color: colors.muted, textAlign: "center" }}>
+                    Cuando alguien entre con el código, aparecerá aquí con su avance.
+                  </div>
+                ) : (
+                  <ParticipantsList people={people} />
+                )}
               </div>
-            </div>
+            )}
 
-            <div style={{ background: "#F7FBFC", borderTop: `1px solid ${colors.accentTint}` }}>
-              <div style={{ padding: "12px 22px 4px", fontSize: 11, fontWeight: 700, color: colors.muted, letterSpacing: 0.6, textTransform: "uppercase" }}>
-                {codes.length === 1 ? "Código para los participantes" : `${codes.length} códigos para los participantes`}
+            <div style={{ background: "#F7FBFC", borderTop: `1px solid ${colors.accentTint}`, padding: "14px 22px 6px" }}>
+              <div style={{ fontSize: 13, color: colors.inkSoft, lineHeight: 1.5 }}>
+                <b style={{ color: colors.ink }}>Para entrar:</b> cada persona va a <b style={{ color: colors.ink }}>{host ?? "la página de inicio"}</b> y escribe{" "}
+                {codes.length === 1 ? "este código." : "uno de estos códigos."}
               </div>
               {codes.map((a) => (
-                <CodeRow key={a.id} a={a} canManage={isSuper && !company.archived} />
+                <CodeRow key={a.id} a={a} canManage={isSuper && !company.archived} showCount={codes.length > 1} />
               ))}
             </div>
           </section>
@@ -248,18 +272,6 @@ export default async function EmpresaPage({
         </details>
       )}
 
-      {isSuper && !company.archived && (
-        <section style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 13, color: colors.muted, maxWidth: 560, lineHeight: 1.5 }}>
-            <b style={{ color: colors.inkSoft }}>¿Ya no trabajas con {company.name}?</b> Archívala: sale de las listas, sus códigos dejan de funcionar y su admin
-            ya no entra. No se borra nada y la puedes restaurar desde Empresas &gt; Archivadas.
-          </div>
-          <form action={archiveCompany}>
-            <input type="hidden" name="companyId" value={company.id} />
-            <ConfirmDeleteButton confirmLabel="Sí, archivar">Archivar empresa</ConfirmDeleteButton>
-          </form>
-        </section>
-      )}
     </div>
   );
 }
