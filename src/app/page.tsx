@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { getLegalTexts } from "@/lib/queries";
+import { currentParticipation } from "@/lib/participation";
 import LandingScreen from "@/components/LandingScreen";
 import PassBackdrop from "@/components/motion/PassBackdrop";
 
@@ -46,7 +48,19 @@ async function legalTextsConRespaldo() {
   }
 }
 
+// Quien ya entró en este dispositivo (por el enlace o el ícono instalado) vuelve a su
+// misión en vez de registrarse otra vez y empezar de cero.
+async function tieneParticipacion() {
+  try {
+    return !!(await currentParticipation());
+  } catch (error) {
+    console.error("[landing] no se pudo leer la participación:", error);
+    return false;
+  }
+}
+
 export default async function Home() {
+  if (await tieneParticipacion()) redirect("/mision");
   const legal = await legalTextsConRespaldo();
   return (
     <>
