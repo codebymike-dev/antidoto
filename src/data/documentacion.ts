@@ -413,7 +413,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       {
         id: "RF-406",
         titulo: "Archivar y restaurar juegos",
-        descripcion: "El admin archiva juegos que ya no usa y puede restaurarlos o, ya archivados, eliminarlos del todo.",
+        descripcion: "El admin archiva juegos que ya no usa (con un segundo toque para confirmar) y puede restaurarlos o, ya archivados, eliminarlos del todo.",
         prioridad: "baja",
         estado: "implementado",
         origen: "archiveGame, restoreGame, deleteGame en src/lib/live-games-actions.ts, src/components/admin/live/DeleteGameButton.tsx",
@@ -1181,6 +1181,21 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
         verificacion:
           "split-flap.test.mts y guilloche.test.mts; capturas con Playwright en 1440x900 y 390x844, con y sin movimiento reducido.",
         notas: "Unos 31 KB gz de JS en la entrada y 28 KB gz en el portal, casi todo GSAP. Las repeticiones de la sesión solo hacen un fundido corto.",
+      },
+      {
+        id: "RNF-29",
+        titulo: "El portal responde a cada acción",
+        descripcion:
+          "Al navegar, el portal muestra un esqueleto de carga dentro del menú en vez de quedarse quieto; un error de una sección se muestra ahí mismo con \"Intentar de nuevo\". Pausar, reanudar, cambiar la fecha, quitar o restaurar un código, archivar o restaurar juegos y empresas y guardar los textos legales terminan con un aviso flotante que dice qué cambió.",
+        prioridad: "media",
+        estado: "implementado",
+        origen:
+          "src/app/admin/(portal)/loading.tsx, src/app/admin/(portal)/error.tsx, src/components/admin/ActionForm.tsx, src/components/admin/Toaster.tsx",
+        verificacion:
+          "Probado en navegador el 2026-10-06: cada aviso con su acción guardada en la base, y el esqueleto con el build de producción (en desarrollo Next no precarga y no se alcanza a ver).",
+        notas:
+          "Las acciones que se quedan en la página avisan desde el formulario, sin recargar ni mover el scroll. Las que redirigen (archivar o restaurar una empresa) dejan ?aviso= en el destino y el Toaster lo quita de la URL para que recargar no lo repita.",
+        relacionados: ["RNF-18"],
       },
     ],
   },

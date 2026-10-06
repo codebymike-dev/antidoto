@@ -14,7 +14,7 @@ import { absMaterial, metalMaterial, transMaterial, type Tier } from "../materia
 export const TIER_DETAIL: Record<Tier, { bevelSegments: number; studSegments: number; studArc: number }> = {
   bajo: { bevelSegments: 1, studSegments: 8, studArc: 1 },
   medio: { bevelSegments: 1, studSegments: 10, studArc: 1 },
-  alto: { bevelSegments: 2, studSegments: 16, studArc: 3 },
+  alto: { bevelSegments: 2, studSegments: 12, studArc: 2 },
   ultra: { bevelSegments: 2, studSegments: 20, studArc: 3 },
 };
 

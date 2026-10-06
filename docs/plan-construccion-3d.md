@@ -93,6 +93,23 @@ Lógica pura en `src/lib/bricks/`, sin React ni three, con tests `*.test.mts`.
 - Ocupación por voxel, rayo DDA, `proposePlacement`, apoyo, grafo de conectividad con detección
   de grupos flotantes, operaciones con deshacer y rehacer, codec binario.
 
+**Estado (2026-10-06)**: hecho, con 13 tests en `src/lib/bricks/engine.test.mts`.
+
+- `parts.ts`: 38 piezas (ladrillos, placas, tejas, 4 inclinadas, redondas, cilindro, ventanas y
+  puerta) con máscara de studs arriba y abajo por celda. El `id` es lo que se serializa.
+- `world.ts`: `BrickWorld` con ocupación por celda, choques, apoyo (base, encima o colgando
+  debajo), encajes y piezas sueltas tras quitar algo. Rotación en cuartos de vuelta que gira la
+  pieza dentro de su caja con la esquina mínima fija.
+- `ray.ts`: rayo DDA por la grilla con la base como plano.
+- `place.ts`: propuesta para el fantasma (arriba, de lado, por debajo, con ancla bajo el dedo y
+  subida de hasta dos ladrillos si choca), siempre con motivo si no cabe.
+- `ops.ts`: operaciones con deshacer y rehacer; un lote (mover) es todo o nada; en equipo, un
+  deshacer que ya no aplica se descarta.
+- `codec.ts`: formato binario versión 1, 6 bytes de cabecera más 9 por pieza.
+
+La geometría de cada pieza especial llega en la fase 4; el motor ya las entiende. Al hacer la
+vista (fase 3) hay que fijar con un test que la rotación del dibujo coincide con `localCell`.
+
 ### Fase 3: constructor individual jugable
 
 El corazón del producto. Se prueba con 5 personas sin explicación antes de seguir.

@@ -94,6 +94,12 @@ fecha y pueden haberse movido.
      varias "Camila Ríos" en Prueba Movil). Producción puede tenerlas. Fusionarlas o
      limpiarlas es aparte y toca datos reales: decidir antes de hacerlo.
 
+5. **Carga y avisos en el portal.** `loading.tsx` (esqueleto dentro del menú) y `error.tsx`
+   (error de la sección con "Intentar de nuevo") en `src/app/admin/(portal)`. Aviso flotante
+   (`Toaster.tsx` + `ActionForm.tsx`) al pausar o reanudar, cambiar la fecha, quitar o restaurar
+   códigos, archivar o restaurar juegos y empresas y guardar los textos legales. "Archivar juego"
+   ahora pide un segundo toque. Probado en navegador; el esqueleto, con el build de producción.
+
 ### Quedó abierto del punto 3
 
 - Quien cierra el navegador sin tocar "Salir" sigue contando como activo: "respondieron todos"
@@ -107,16 +113,12 @@ fecha y pueden haberse movido.
   la prueba automática. Arreglo: reservar el ancho de los controles o no reacomodar el footer.
 - Probar todo en celulares reales, sobre todo el aviso del host con el bloqueo de pantalla.
 
-### Siguiente, en este orden
+### Siguiente
 
-5. **Carga y avisos en el portal.** No hay ningún `loading.tsx` ni `error.tsx` en `src/app/admin`
-   y todo es `force-dynamic`, así que la pantalla se congela al navegar. Faltan avisos tras
-   pausar o reanudar códigos, cambiar la fecha de cierre, quitar o restaurar códigos, archivar o
-   restaurar empresas y juegos, y guardar los textos legales.
+Los cinco puntos acordados están hechos. Lo que queda está abajo, por área.
 
 ### Portal admin
 
-- "Archivar juego" no pide confirmación (`juegos/page.tsx`); el resto de archivados sí.
 - `ConfirmDeleteButton` vuelve solo al estado normal a los 3 s, sin "Cancelar" ni `aria-live`.
 - El menú lateral mide 250 px fijos, sin hamburguesa ni breakpoint: en el celular no se usa bien.
 - Login sin "¿Olvidaste tu contraseña?" ni aviso de a quién pedirla. La contraseña generada no
@@ -177,6 +179,7 @@ porque afecta a toda la app.
 
 Investigación en `docs/investigacion-construccion-3d.md`, plan en `docs/plan-construccion-3d.md`.
 Fase 1 (banco de pruebas de render en `/admin/escena/ladrillos`) hecha en local el 2026-10-06.
+Fase 2 (motor de construcción en `src/lib/bricks/`) hecha el mismo día. Sigue la fase 3.
 
 ### Para cerrar la fase 1
 
@@ -190,9 +193,10 @@ Fase 1 (banco de pruebas de render en `/admin/escena/ladrillos`) hecha en local 
    - Falta decidir cómo abrirla desde el celular: red local con `next dev`
      (`http://<IP-del-PC>:3000/admin/escena/ladrillos`, cifras algo peores que en producción)
      o un preview en Vercel (cifras reales, pero es un despliegue: necesita autorización).
-2. **Bajar el nivel alto.** Con 1.500 ladrillos ya da 969.000 triángulos y el presupuesto es de
-   1 millón con 3.000. La palanca son los studs lejanos (menos segmentos o normal map de studs
-   según la distancia). Medio con 3.000 también da 795.000.
+2. **Nivel alto con muchas piezas.** Ya se bajó a 771.000 triángulos con 1.500 ladrillos, pero
+   con 3.000 da 1,67 millones (presupuesto: 1 millón). El exceso viene de la base gigante de la
+   ciudad de prueba (82x82 studs); el diorama real es de 16x16 a 32x32. Medirlo de nuevo en la
+   fase 3 y, si hace falta, simplificar los studs según la distancia.
 3. **Actualizar `/admin/docs`** (RF/RNF/kanban) al cerrar la fase.
 
 ### Decisiones abiertas
@@ -212,3 +216,10 @@ Fase 1 (banco de pruebas de render en `/admin/escena/ladrillos`) hecha en local 
 - Capturas: `.claude-tmp/lab/shot.mjs` (guarda la sesión en `auth.json`). El login del admin
   permite 5 intentos por usuario cada 15 min y cada intento bloqueado reinicia la ventana.
 - Build local sin tocar la base de producción: `set -a; . ./.env.local; set +a; npx next build`.
+
+## `npm test` no corría todos los tests
+
+Arreglado el 2026-10-06. El script pasaba `src/**/*.test.mts` sin comillas y la shell lo expandía
+con un solo nivel: solo corrían los tests de `src/lib/`. Quedaban fuera
+`src/components/experience/touch.test.mts` y los de `src/lib/bricks/`. Con comillas, Node expande
+el patrón completo: de 176 pasó a 197 tests, todos en verde.
