@@ -37,13 +37,14 @@ import {
 } from "./live-protocol";
 import type { LiveMatchStatus } from "./types";
 import { getCompanyBrand } from "./company-brand";
+import { LIVE_STALE_HOURS } from "./live-report-format";
 
 /** Tope por partida: el plan gratis de Ably admite 200 conexiones simultáneas en total. */
 export const MAX_PLAYERS = 100;
 /** Un desafío no usa Ably: el tope solo protege la base de datos. */
 export const MAX_CHALLENGE_PLAYERS = 2000;
 /** Una partida abierta más de esto se da por abandonada y libera su PIN. */
-const STALE_HOURS = 12;
+const STALE_HOURS = LIVE_STALE_HOURS;
 
 export type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string; status: number };
 const err = (error: string, status = 400): { ok: false; error: string; status: number } => ({ ok: false, error, status });
@@ -669,6 +670,38 @@ export async function playerSnapshot(playerId: string): Promise<Result<{ snapsho
       myAnswer: mine && q ? { optionIndex: mine.option_id === null ? null : q.optionIds.indexOf(mine.option_id), text: mine.text } : null,
     },
   };
+}
+
+/**
+ * Lo mismo que hostTick, pero desde el celular: si el proyector se cerró, la pregunta
+ * igual se cierra cuando vence el reloj. El servidor decide con el suyo.
+ */
+export async function playerTick(playerId: string): Promise<Result> {
+  const player = await getPlayer(playerId);
+  if (!player || player.kicked_at) return err("No estás en ninguna partida.", 401);
+  const match = await getMatch(player.match_id);
+  if (!match || match.closes_at !== null) return { ok: true };
+  await maybeClose(match, Date.now());
+  return { ok: true };
+}
+
+/**
+ * Salir en el lobby borra al jugador: todavía no tiene respuestas, deja de contar como
+ * activo y su apodo queda libre para volver a entrar. Ya empezada la partida, o en un
+ * desafío, se conserva para los reportes.
+ */
+export async function leaveMatch(playerId: string): Promise<void> {
+  const player = await getPlayer(playerId);
+  if (!player) return;
+  const match = await getMatch(player.match_id);
+  if (!match || match.status !== "lobby" || match.closes_at !== null) return;
+  const res = await run(
+    `DELETE FROM live_players WHERE id = ? AND kicked_at IS NULL
+       AND NOT EXISTS (SELECT 1 FROM live_answers WHERE player_id = ?)
+       AND (SELECT status FROM live_matches WHERE id = ?) = 'lobby'`,
+    [player.id, player.id, match.id]
+  );
+  if (res.rowsAffected === 1) after(() => publishPlayers(match.id, match.join_locked === 1));
 }
 
 /** Partida de un jugador, para el token de Ably. null si no existe o fue expulsado. */

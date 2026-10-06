@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { applyPublicEvent, remainingMs } from "@/lib/live-client-state";
+import { ANSWER_GRACE_MS } from "@/lib/live-engine";
 import { useServerNow } from "../useServerNow";
 import type { PlayerSnapshot } from "@/lib/live-protocol";
 import { encouragement, finalHeadline, outcomeOf, standingLine, standingOf } from "@/lib/live-player-view";
@@ -89,6 +90,25 @@ function Connected({
     },
     onResync: () => void resync(),
   });
+
+  // Respaldo del tick del proyector: si nadie tiene abierta la pantalla del host, los
+  // celulares avisan al vencer el reloj. Esperan un poco más que el host y cada uno un
+  // tanto distinto, para que con el proyector abierto casi nunca hagan falta y no
+  // lleguen todos a la vez.
+  const tickDelay = useRef(0);
+  const lastTick = useRef(0);
+  useEffect(() => {
+    const q = state.question;
+    if (state.status !== "question" || !q || q.pausedRemainingMs !== null) return;
+    if (!tickDelay.current) tickDelay.current = 1000 + Math.random() * 2000;
+    const id = setInterval(() => {
+      if (Date.now() + offset < q.endsAt + ANSWER_GRACE_MS + tickDelay.current) return;
+      if (Date.now() - lastTick.current < 4000) return;
+      lastTick.current = Date.now();
+      void fetch("/api/live/tick", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }).catch(() => {});
+    }, 500);
+    return () => clearInterval(id);
+  }, [state.status, state.question, offset]);
 
   // Vibración al conocer el resultado, una sola vez por pregunta.
   const outcome = outcomeOf(state);

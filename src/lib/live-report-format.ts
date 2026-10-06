@@ -45,4 +45,17 @@ export function matchStatusLabel(status: string, startedAt: string | null, close
   return "En curso";
 }
 
+/** Una partida en vivo abierta más de esto se da por abandonada y libera su PIN. */
+export const LIVE_STALE_HOURS = 12;
+
+/**
+ * Si la pantalla del host todavía sirve: partida en vivo (no desafío), sin terminar y sin
+ * pasar del plazo de abandono. Para ofrecer "Volver a la pantalla en vivo".
+ */
+export function liveMatchOpen(status: string, createdAt: string, closesAt: string | null, now = Date.now()): boolean {
+  if (closesAt !== null || status === "finished") return false;
+  const created = Date.parse(createdAt.replace(" ", "T") + "Z");
+  return Number.isFinite(created) && now - created < LIVE_STALE_HOURS * 3600_000;
+}
+
 export const formatSeconds = (ms: number | null) => (ms === null ? "–" : `${(ms / 1000).toFixed(1)} s`);

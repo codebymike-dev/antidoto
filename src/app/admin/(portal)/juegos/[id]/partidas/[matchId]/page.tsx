@@ -3,9 +3,9 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { getMatchReport } from "@/lib/live-reports";
-import { durationMinutes, formatDateTime, formatSeconds, matchStatusLabel } from "@/lib/live-report-format";
+import { durationMinutes, formatDateTime, formatSeconds, liveMatchOpen, matchStatusLabel } from "@/lib/live-report-format";
 import { colors, calSans } from "@/lib/theme";
-import { card, secondaryButton } from "@/lib/styles";
+import { card, filledButton, secondaryButton } from "@/lib/styles";
 import { CheckIcon } from "@/components/icons";
 import AnswerShape, { ANSWER_STYLES } from "@/components/live/AnswerShape";
 import { TYPE_LABELS } from "@/lib/live-validation";
@@ -58,6 +58,15 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {liveMatchOpen(match.status, match.created_at, match.closes_at) && (
+            <Link
+              href={`/admin/vivo/${match.id}`}
+              className="btn-filled"
+              style={{ ...filledButton, height: 44, display: "inline-flex", alignItems: "center" }}
+            >
+              Volver a la pantalla en vivo
+            </Link>
+          )}
           <a
             href={`/admin/juegos/${match.gameId}/partidas/${match.id}/export`}
             className="btn-secondary"

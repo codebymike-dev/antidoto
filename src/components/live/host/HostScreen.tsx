@@ -95,6 +95,16 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
     return () => clearInterval(id);
   }, [state.status, state.question, offset, matchId]);
 
+  // Cerrar el proyector a media partida deja a los celulares esperando: se pide confirmar.
+  // Si igual se cierra, se vuelve desde el historial del juego o el reporte de la partida.
+  const open = state.status !== "finished";
+  useEffect(() => {
+    if (!open) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [open]);
+
   useHostSound(state, offset);
   const [readyRaw, musicRaw, effectsRaw, volumeRaw] = useSoundState().split("|");
   const [soundReady, musicOn, effectsOn] = [readyRaw, musicRaw, effectsRaw].map((v) => v === "true");

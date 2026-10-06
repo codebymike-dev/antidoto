@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { csvCell, durationMinutes, formatDateTime } from "./live-report-format.ts";
+import { csvCell, durationMinutes, formatDateTime, liveMatchOpen } from "./live-report-format.ts";
 
 test("CSV: comillas, comas y saltos de línea según RFC 4180", () => {
   assert.equal(csvCell("Ana"), "Ana");
@@ -31,4 +31,13 @@ test("duración en minutos, al menos 1", () => {
   assert.equal(durationMinutes("2026-09-22 18:00:00", "2026-09-22 18:12:40"), 13);
   assert.equal(durationMinutes("2026-09-22 18:00:00", "2026-09-22 18:00:10"), 1);
   assert.equal(durationMinutes(null, "2026-09-22 18:00:00"), null);
+});
+
+test("partida en vivo abierta: sin terminar, no desafío y dentro del plazo", () => {
+  const now = Date.parse("2026-10-06T15:00:00Z");
+  assert.equal(liveMatchOpen("question", "2026-10-06 14:00:00", null, now), true);
+  assert.equal(liveMatchOpen("lobby", "2026-10-06 03:30:00", null, now), true);
+  assert.equal(liveMatchOpen("finished", "2026-10-06 14:00:00", null, now), false);
+  assert.equal(liveMatchOpen("lobby", "2026-10-06 14:00:00", "2026-10-10 00:00:00", now), false);
+  assert.equal(liveMatchOpen("reveal", "2026-10-06 02:59:00", null, now), false);
 });

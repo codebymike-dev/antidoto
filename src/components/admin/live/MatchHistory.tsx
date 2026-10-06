@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { MatchSummary } from "@/lib/live-reports";
-import { formatDateTime, matchStatusLabel } from "@/lib/live-report-format";
+import { formatDateTime, liveMatchOpen, matchStatusLabel } from "@/lib/live-report-format";
 import { colors, calSans } from "@/lib/theme";
-import { card } from "@/lib/styles";
+import { card, filledButton } from "@/lib/styles";
 import { ArrowRightIcon } from "@/components/icons";
 
 /** Partidas en vivo y desafíos de este juego, con enlace a su reporte. */
@@ -15,11 +15,11 @@ export default function MatchHistory({ gameId, matches }: { gameId: number; matc
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column" }}>
           {matches.map((m, i) => (
-            <li key={m.id} style={{ borderTop: i ? `1px solid ${colors.accentTint}` : "none" }}>
+            <li key={m.id} style={{ borderTop: i ? `1px solid ${colors.accentTint}` : "none", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <Link
                 href={`/admin/juegos/${gameId}/partidas/${m.id}`}
                 className="btn-text"
-                style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", color: colors.ink, flexWrap: "wrap" }}
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", color: colors.ink, flexWrap: "wrap", flex: 1, minWidth: 0 }}
               >
                 <span style={{ fontWeight: 600, fontSize: 14, minWidth: 170 }}>{formatDateTime(m.started_at ?? m.created_at)}</span>
                 <span style={{ fontSize: 13, color: colors.muted, flex: 1 }}>
@@ -30,6 +30,16 @@ export default function MatchHistory({ gameId, matches }: { gameId: number; matc
                   Ver reporte <ArrowRightIcon />
                 </span>
               </Link>
+              {/* El único otro camino a la pantalla del host es el redirect al crear la partida. */}
+              {liveMatchOpen(m.status, m.created_at, m.closes_at) && (
+                <Link
+                  href={`/admin/vivo/${m.id}`}
+                  className="btn-filled"
+                  style={{ ...filledButton, height: 36, fontSize: 13, display: "inline-flex", alignItems: "center" }}
+                >
+                  Volver a la pantalla en vivo
+                </Link>
+              )}
             </li>
           ))}
         </ul>
