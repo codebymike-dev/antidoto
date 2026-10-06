@@ -438,6 +438,37 @@
   }
 }
 
+/* Lupa: abajo a la derecha de la escena, lejos del aviso (arriba) y de las burbujas. */
+.zoomBar {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.zoomBar .iconButton {
+  padding: 0 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* Viñeta de la pregunta: recorte ampliado de lo tocado, con los píxeles nítidos. */
+.loupe {
+  display: block;
+  width: min(100%, 300px);
+  margin: 0 auto;
+  aspect-ratio: 2 / 1;
+  height: auto;
+  image-rendering: pixelated;
+  border: 1px solid #000;
+  border-radius: 6px;
+  background: #000;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
 /* --- Ventanas ------------------------------------------------------------------- */
 
 .window {

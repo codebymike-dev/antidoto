@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Tiny5 } from "next/font/google";
 import styles from "./player.module.css";
-import SceneCanvas from "./SceneCanvas";
+import SceneCanvas, { MAX_ZOOM, sceneLeft, sceneTop, type SceneHandle } from "./SceneCanvas";
 import PixelIcon from "./PixelIcon";
 import { sceneSound } from "./sound";
 import { SCENE_MAPS } from "./scenes";
@@ -224,6 +224,9 @@ function StationPlayer({
   const waitTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const laterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  // Lupa de la escena: la vista se maneja en SceneCanvas; aquí solo el nivel para los botones.
+  const viewRef = useRef<SceneHandle>(null);
+  const [zoom, setZoom] = useState(1);
   // Ayuda que llega sola: nivel 0 = aún no se ha dado ninguna, 1 = estrella, 2 = estrella y pista escrita.
   const helpLevel = useRef(0);
   const misses = useRef(0);
@@ -342,7 +345,7 @@ function StationPlayer({
   }
 
   const coachSteps = [
-    `Esta es la escena. Aquí hay ${total} errores escondidos en lo que hace ${experience.character}.`,
+    `Esta es la escena. Aquí hay ${total} errores escondidos en lo que hace ${experience.character}. Si algo se ve pequeño, acércalo con la lupa o con dos dedos.`,
     "La historia tiene 3 momentos: cámbialos aquí abajo. El número de cada uno dice cuántos errores llevas encontrados ahí.",
     "¿Sin ideas? Espera un momento y una estrella te ayuda sola. También puedes usar Pista y Zonas.",
     "En este panel está la lista de riesgos. Toca uno con la bombilla para ver una pista de dónde mirar.",
@@ -392,6 +395,9 @@ function StationPlayer({
   function star(zone: string | null) {
     scene?.setHint(zone);
     setStarZone(zone);
+    // Con la lupa puesta, la vista va hasta la estrella para que no quede fuera de cuadro.
+    const at = zone ? scene?.zones().find((z) => z.id === zone) : null;
+    if (at) viewRef.current?.focus(at.x, at.y);
   }
 
   /** El momento donde se puede ver el riesgo: el actual si ahí está, si no el primero que lo tenga. */
@@ -722,6 +728,10 @@ function StationPlayer({
   });
 
   const askRisk = ask ? riskById.get(ask.riskId) : null;
+  // El repaso de un riesgo muestra la viñeta si se ve en el momento actual; en el final la
+  // escena ya cambió (es la forma correcta) y el recorte no mostraría el error.
+  const outcomeZone =
+    outcome && phase === "juego" ? (Object.entries(map.riskZones[moment]).find(([, r]) => r === outcome.id)?.[0] ?? null) : null;
   const momentInfo = map.moments.find((m) => m.id === moment)!;
   const sceneLabel = `Escena en pixel art: ${map.place} ${momentInfo.hint}`;
 
@@ -742,7 +752,17 @@ function StationPlayer({
       <main className={styles.main}>
         <div className={styles.stageCol}>
           <div ref={stageRef} className={`${styles.stageFrame} ${coachSpot === "stage" ? styles.spot : ""}`}>
-            <SceneCanvas sceneKey={experience.scene} onScene={begin} onSay={onSay} onTap={onTap} maxHeight={maxHeight} label={sceneLabel}>
+            <SceneCanvas
+              ref={viewRef}
+              sceneKey={experience.scene}
+              onScene={begin}
+              onSay={onSay}
+              onTap={onTap}
+              maxHeight={maxHeight}
+              label={sceneLabel}
+              zoomable={phase === "juego"}
+              onZoom={setZoom}
+            >
               <div className={styles.overlay}>
                 {scene && starZone && phase === "juego" && <StarRing scene={scene} zoneId={starZone} />}
 
@@ -753,8 +773,8 @@ function StationPlayer({
                     key={b.id}
                     className={`${styles.bubble} ${i > 0 ? styles.bubbleOld : ""}`}
                     style={{
-                      ["--bx" as string]: `${Math.min(100, Math.max(0, (bubbles[0].x / 400) * 100))}%`,
-                      top: `${Math.max(16, (bubbles[0].y / 250) * 100)}%`,
+                      ["--bx" as string]: sceneLeft(Math.min(400, Math.max(0, bubbles[0].x))),
+                      top: `max(16%, ${sceneTop(bubbles[0].y)})`,
                       transform: `translate(-50%, calc(-100% - ${i * 40}px))`,
                       opacity: i === 0 ? 1 : 0.8 - i * 0.25,
                     }}
@@ -772,6 +792,32 @@ function StationPlayer({
                   <div key={toast.id} role="status" className={`${styles.toast} ${toast.good ? styles.toastGood : ""}`}>
                     <PixelIcon name={toast.good ? "grano" : "pista"} size={18} />
                     <span>{toast.text}</span>
+                  </div>
+                )}
+
+                {phase === "juego" && !windowOpen && (
+                  <div className={styles.zoomBar} role="group" aria-label="Lupa">
+                    {zoom > 1 && (
+                      <button
+                        type="button"
+                        className={styles.iconButton}
+                        onClick={() => viewRef.current?.zoomTo(zoom > 2 ? 2 : 1)}
+                        aria-label="Alejar la escena"
+                        title="Alejar"
+                      >
+                        <PixelIcon name="alejar" size={20} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.iconButton}
+                      onClick={() => viewRef.current?.zoomTo(zoom < 2 ? 2 : MAX_ZOOM)}
+                      disabled={zoom >= MAX_ZOOM}
+                      aria-label="Acercar la escena"
+                      title="Acercar (también con dos dedos)"
+                    >
+                      <PixelIcon name="lupa" size={20} />
+                    </button>
                   </div>
                 )}
 
@@ -817,6 +863,14 @@ function StationPlayer({
                       </button>
                     </div>
                     <div className={styles.winBody}>
+                      {scene && (
+                        <ZoneLoupe
+                          scene={scene}
+                          zoneId={ask.zone}
+                          view={viewRef}
+                          label={`De cerca: ${map.zoneLabels[ask.zone] ?? "lo que tocaste"}`}
+                        />
+                      )}
                       <p style={{ fontWeight: 700 }}>{askRisk.prompt}</p>
                       {askRisk.options.map((o, i) => (
                         <button
@@ -893,6 +947,14 @@ function StationPlayer({
                       </button>
                     </div>
                     <div className={styles.winBody}>
+                      {scene && outcomeZone && (
+                        <ZoneLoupe
+                          scene={scene}
+                          zoneId={outcomeZone}
+                          view={viewRef}
+                          label={`De cerca: ${map.zoneLabels[outcomeZone] ?? outcome.title}`}
+                        />
+                      )}
                       <span className={styles.tag}>RIESGO {outcome.category.toUpperCase()}</span>
                       <p style={{ fontWeight: 700, fontSize: 17 }}>{outcome.title}</p>
                       {outcome.chosen !== null && !outcome.correct && (
@@ -937,6 +999,7 @@ function StationPlayer({
                               className={styles.button}
                               onClick={() => {
                                 setZoneList(null);
+                                viewRef.current?.focus(z.x, z.y);
                                 scene?.ripple(z.x, z.y);
                                 openZone(z);
                               }}
@@ -1261,13 +1324,47 @@ function StarRing({ scene, zoneId }: { scene: PlayScene; zoneId: string }) {
       className={styles.ring}
       aria-hidden
       style={{
-        left: `${(at.x / scene.width) * 100}%`,
-        top: `${(at.y / scene.height) * 100}%`,
-        width: `${(size / scene.width) * 100}%`,
+        left: sceneLeft(at.x),
+        top: sceneTop(at.y),
+        width: `calc(${size / scene.width} * var(--vz, 1) * 100%)`,
         aspectRatio: "1",
       }}
     />
   );
+}
+
+/**
+ * Viñeta de acercamiento: recorte ampliado y nítido de la zona tocada, para confirmar qué es
+ * antes de responder (en el celular, la ventana tapa la escena y los detalles miden 2 a 4 px).
+ * Copia del lienzo de la escena en cada cuadro, así se ve animado y sigue a la zona si se mueve.
+ */
+function ZoneLoupe({ scene, zoneId, view, label }: { scene: PlayScene; zoneId: string; view: React.RefObject<SceneHandle | null>; label: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const zone = scene.zones().find((z) => z.id === zoneId);
+  // Tamaño del recorte en px de la escena (2:1): las zonas chicas se ven más de cerca.
+  const cw = zone ? Math.round(Math.min(112, Math.max(56, zone.r * 4 + 24))) : 0;
+  const ch = Math.round(cw / 2);
+  useEffect(() => {
+    const out = ref.current;
+    if (!out || !cw) return;
+    const ctx = out.getContext("2d")!;
+    ctx.imageSmoothingEnabled = false;
+    let raf = 0;
+    const draw = () => {
+      const src = view.current?.canvas();
+      const z = scene.zones().find((zz) => zz.id === zoneId);
+      if (src && z) {
+        const sx = Math.round(Math.min(scene.width - cw, Math.max(0, z.x - cw / 2)));
+        const sy = Math.round(Math.min(scene.height - ch, Math.max(0, z.y - ch / 2)));
+        ctx.drawImage(src, sx, sy, cw, ch, 0, 0, cw, ch);
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, [scene, zoneId, view, cw, ch]);
+  if (!zone) return null;
+  return <canvas ref={ref} width={cw} height={ch} className={styles.loupe} role="img" aria-label={label} />;
 }
 
 /**
