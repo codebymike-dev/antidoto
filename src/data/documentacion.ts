@@ -908,6 +908,21 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "El repaso usa <details>, sin JavaScript, para cargar rápido con señal débil. Usa los textos vigentes (los que edita el superadmin). No es un certificado ni la encuesta antes/después, que siguen descartados por ahora.",
         relacionados: ["RF-912", "RF-913"],
       },
+      {
+        id: "RF-918",
+        titulo: "Lupa y viñeta de acercamiento en la escena",
+        descripcion:
+          "En el celular la escena se ve a ~0,9x y los detalles de 2 a 4 px se pierden. Mientras se busca, la escena se acerca hasta 3x pellizcando con dos dedos (o con Ctrl y la rueda o el trackpad en el computador) o con los botones de lupa de la esquina, con los píxeles nítidos; con un dedo se mueve la vista. Tocar con la lupa puesta sigue marcando riesgos, y el toque cuenta al soltar, así arrastrar o pellizcar no abre preguntas. La estrella de ayuda lleva la vista hasta el riesgo. Al tocar una zona, la ventana de la pregunta muestra arriba un recorte ampliado y animado de lo tocado para confirmar qué es antes de responder; la ventana del resultado lo repite mientras se juega.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "Gestos, vista (--vz, --vx, --vy), sceneLeft y sceneTop en src/components/experience/SceneCanvas.tsx; ZoneLoupe, botones de lupa y foco de la estrella en src/components/experience/ExperiencePlayer.tsx; iconos lupa y alejar en PixelIcon.tsx; estilos .zoomBar y .loupe en player.module.css",
+        verificacion:
+          "Revisión en Chromium con celular emulado (390 px, toque real por CDP): pellizco a 3x sin abrir preguntas, arrastre, botones, toque con zoom que abre la pregunta con viñeta, pista que centra la vista y anillo sobre la estrella. En escritorio (1366 px) el clic abre la pregunta con su viñeta.",
+        notas:
+          "No cambia el arte: sirve para todas las escenas, también las futuras. La lupa solo funciona en la búsqueda; la historia y la forma correcta se ven completas. Sin lupa, un dedo sobre la escena sigue haciendo scroll de la página. El retoque puntual de objetos difíciles (cuchillo, celular, cinturón, llanta) queda para donde la lupa no alcance, según pendientes.md.",
+        relacionados: ["RF-912", "RF-915", "RNF-18"],
+      },
     ],
   },
 ];
