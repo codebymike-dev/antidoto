@@ -54,12 +54,22 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
     return { error: `Este código venció el ${fecha}. Contacta a tu administrador.` };
   }
 
-  const id = randomBytes(16).toString("hex");
-  await run(
-    `INSERT INTO participations (id, activity_code_id, participant_name, accepted_policy_at)
-     VALUES (?, ?, ?, datetime('now'))`,
-    [id, match.activity_code_id, name]
+  // Quien vuelve con el mismo nombre y código (otro celular, cookie borrada) retoma su
+  // participación en vez de empezar de cero y quedar duplicado en las métricas.
+  const previa = await one<{ id: string }>(
+    `SELECT id FROM participations
+     WHERE activity_code_id = ? AND participant_name = ? COLLATE NOCASE
+     ORDER BY started_at DESC LIMIT 1`,
+    [match.activity_code_id, name]
   );
+  const id = previa?.id ?? randomBytes(16).toString("hex");
+  if (!previa) {
+    await run(
+      `INSERT INTO participations (id, activity_code_id, participant_name, accepted_policy_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [id, match.activity_code_id, name]
+    );
+  }
 
   const jar = await cookies();
   jar.set(PARTICIPATION_COOKIE, id, {

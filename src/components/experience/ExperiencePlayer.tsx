@@ -70,7 +70,7 @@ const REQUEST_TIMEOUT_MS = 20000;
 const BLOCK_COPY: Record<Exclude<Blocked["reason"], "other">, { title: string; body: string }> = {
   paused: { title: "Actividad en pausa", body: "Tu avance está guardado. Cuando tu administrador la reactive, podrás seguir donde ibas." },
   expired: { title: "La actividad venció", body: "Lo que ya respondiste quedó guardado, pero ya no se pueden enviar más respuestas." },
-  session: { title: "Tu sesión terminó", body: "Vuelve a entrar con tu código para seguir." },
+  session: { title: "Tu sesión terminó", body: "Vuelve a entrar con tu nombre y tu código: sigues donde ibas." },
   done: { title: "Ya terminaste esta actividad", body: "No hace falta responder nada más." },
 };
 
