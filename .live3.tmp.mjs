@@ -13,25 +13,28 @@ const pin = String(Math.floor(100000 + Math.random() * 900000));
 const matchId = Number((await db.execute({ sql: "INSERT INTO live_matches (game_id, host_user_id, company_id, pin) VALUES (?, 1, NULL, ?)", args: [gameId, pin] })).lastInsertRowid);
 const browser = await chromium.launch();
 try {
-  const player = await browser.newContext();
+  const player = await browser.newContext({ viewport: { width: 390, height: 800 } });
   await player.request.post(`${BASE}/api/live/join`, { headers: { origin: BASE }, data: { pin, nickname: "Tester", acceptedPolicy: true } });
+  const pp = await player.newPage();
+  await pp.goto(`${BASE}/jugar`);
   const host = await browser.newContext({ storageState: JSON.parse(readFileSync(".claude-tmp/lab/auth.json", "utf8")), viewport: { width: 1280, height: 800 } });
   await host.request.post(`${BASE}/api/live/host/${matchId}/command`, { headers: { origin: BASE }, data: { command: "start" } });
   const ap = await host.newPage();
-  ap.on("console", (m) => m.type() === "error" && !m.text().includes("eval") && log("console:", m.text().slice(0, 300)));
-  ap.on("pageerror", (e) => log("pageerror:", e.message.slice(0, 300)));
   await ap.goto(`${BASE}/admin/vivo/${matchId}`, { waitUntil: "networkidle" });
-  const btn = ap.getByRole("button", { name: /jugadores/ });
-  await btn.click();
-  await sleep(800);
-  log("aria-expanded:", await btn.getAttribute("aria-expanded"), "| dialogs:", await ap.getByRole("dialog").count());
-  await ap.screenshot({ path: "/tmp/live3-kick.png" });
+  await sleep(3000);
+  await ap.getByRole("button", { name: /jugadores/ }).click();
   await ap.getByRole("dialog").getByRole("button", { name: "Tester" }).click();
+  await ap.screenshot({ path: "/tmp/live3-kick.png" });
   await ap.getByRole("dialog").getByRole("button", { name: "¿Sacar a Tester?" }).click();
-  await sleep(2000);
-  log("expulsado:", (await q1("SELECT kicked_at IS NOT NULL k FROM live_players WHERE match_id = ?", [matchId])).k, "| texto:", (await ap.getByRole("dialog").innerText()).replace(/\s+/g, " "));
+  await sleep(2500);
+  log("expulsado:", (await q1("SELECT kicked_at IS NOT NULL k FROM live_players WHERE match_id = ?", [matchId])).k);
+  log("panel:", (await ap.getByRole("dialog").innerText()).replace(/\s+/g, " "));
+  log("celular:", (await pp.locator("body").innerText()).replace(/\s+/g, " ").slice(0, 100));
+  await ap.keyboard.press("Escape");
+  log("panel tras Escape:", await ap.getByRole("dialog").count());
 } finally {
   await browser.close();
   await db.execute({ sql: "DELETE FROM live_matches WHERE id = ?", args: [matchId] });
   await db.execute({ sql: "DELETE FROM live_games WHERE id = ?", args: [gameId] });
+  log("limpieza hecha");
 }
