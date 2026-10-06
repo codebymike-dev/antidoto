@@ -453,54 +453,54 @@ function CodeRow({
 
 function CodeOptions({ a }: { a: Assignment }) {
   return (
-        // La key cambia al guardar: el menú se vuelve a montar cerrado.
-        <DropdownMenu
-          key={`${a.estado}-${a.expira ?? "sin-fecha"}`}
-          label={
-            <>
-              Opciones del código <span aria-hidden style={{ fontSize: 10 }}>▾</span>
-            </>
-          }
-          summaryClassName="btn-text"
-          summaryStyle={textButton}
-          width={270}
-        >
-          {a.estado !== "vencido" && (
-            <>
-              <form action={setCodePaused}>
-                <input type="hidden" name="codeId" value={a.id} />
-                <input type="hidden" name="paused" value={a.estado === "pausado" ? "0" : "1"} />
-                <button type="submit" className="report-menu-item" style={menuButton}>
-                  {a.estado === "pausado" ? "Reanudar: que puedan volver a jugar" : "Pausar: que nadie pueda jugar por ahora"}
-                </button>
-              </form>
-              <div style={menuDivider} />
-            </>
-          )}
-          <form action={setCodeExpiry} style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 8 }}>
+    // La key cambia al guardar: el menú se vuelve a montar cerrado.
+    <DropdownMenu
+      key={`${a.estado}-${a.expira ?? "sin-fecha"}`}
+      label={
+        <>
+          Opciones del código <span aria-hidden style={{ fontSize: 10 }}>▾</span>
+        </>
+      }
+      summaryClassName="btn-text"
+      summaryStyle={textButton}
+      width={270}
+    >
+      {a.estado !== "vencido" && (
+        <>
+          <form action={setCodePaused}>
             <input type="hidden" name="codeId" value={a.id} />
-            <label style={{ fontSize: 12, fontWeight: 600, color: colors.accentDark }} htmlFor={`expira-${a.id}`}>
-              Último día para jugar
-            </label>
-            <input
-              id={`expira-${a.id}`}
-              name="expira"
-              type="date"
-              defaultValue={a.expira ?? ""}
-              style={{ height: 40, borderRadius: 10, border: `1.5px solid ${colors.border}`, padding: "0 10px", fontSize: 13.5 }}
-            />
-            <span style={{ fontSize: 11.5, color: colors.muted, lineHeight: 1.4 }}>Déjalo vacío para que no cierre nunca.</span>
-            <button type="submit" className="btn-filled" style={{ ...filledButton, height: 36, fontSize: 13 }}>
-              Guardar fecha
+            <input type="hidden" name="paused" value={a.estado === "pausado" ? "0" : "1"} />
+            <button type="submit" className="report-menu-item" style={menuButton}>
+              {a.estado === "pausado" ? "Reanudar: que puedan volver a jugar" : "Pausar: que nadie pueda jugar por ahora"}
             </button>
           </form>
           <div style={menuDivider} />
-          <form action={archiveCode} style={{ padding: "8px 10px" }}>
-            <input type="hidden" name="codeId" value={a.id} />
-            <ConfirmDeleteButton confirmLabel="Sí, quitar">Quitar este código</ConfirmDeleteButton>
-            <p style={menuHint}>Deja de funcionar y sale de los informes. Los resultados se guardan y se puede restaurar.</p>
-          </form>
-        </DropdownMenu>
+        </>
+      )}
+      <form action={setCodeExpiry} style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 8 }}>
+        <input type="hidden" name="codeId" value={a.id} />
+        <label style={{ fontSize: 12, fontWeight: 600, color: colors.accentDark }} htmlFor={`expira-${a.id}`}>
+          Último día para jugar
+        </label>
+        <input
+          id={`expira-${a.id}`}
+          name="expira"
+          type="date"
+          defaultValue={a.expira ?? ""}
+          style={{ height: 40, borderRadius: 10, border: `1.5px solid ${colors.border}`, padding: "0 10px", fontSize: 13.5 }}
+        />
+        <span style={{ fontSize: 11.5, color: colors.muted, lineHeight: 1.4 }}>Déjalo vacío para que no cierre nunca.</span>
+        <button type="submit" className="btn-filled" style={{ ...filledButton, height: 36, fontSize: 13 }}>
+          Guardar fecha
+        </button>
+      </form>
+      <div style={menuDivider} />
+      <form action={archiveCode} style={{ padding: "8px 10px" }}>
+        <input type="hidden" name="codeId" value={a.id} />
+        <ConfirmDeleteButton confirmLabel="Sí, quitar">Quitar este código</ConfirmDeleteButton>
+        <p style={menuHint}>Deja de funcionar y sale de los informes. Los resultados se guardan y se puede restaurar.</p>
+      </form>
+    </DropdownMenu>
   );
 }
 
