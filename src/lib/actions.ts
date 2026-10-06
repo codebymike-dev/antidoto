@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { one, run } from "./db";
+import { all, one, run } from "./db";
 import { destroySession, login } from "./auth";
 import { audit, requireSuper, requireUser } from "./admin-guard";
 import { findByCode } from "./queries";
@@ -18,6 +18,10 @@ import { parseCargos } from "./profile";
 // --- Participante ---------------------------------------------------------
 
 export type JoinState = { error: string } | null;
+
+function nameKey(name: string) {
+  return name.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("es");
+}
 
 export async function joinActivity(_prev: JoinState, formData: FormData): Promise<JoinState> {
   const name = String(formData.get("name") ?? "").trim().replace(/\s+/g, " ");
@@ -56,12 +60,14 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
 
   // Quien vuelve con el mismo nombre y código (otro celular, cookie borrada) retoma su
   // participación en vez de empezar de cero y quedar duplicado en las métricas.
-  const previa = await one<{ id: string }>(
-    `SELECT id FROM participations
-     WHERE activity_code_id = ? AND participant_name = ? COLLATE NOCASE
-     ORDER BY started_at DESC LIMIT 1`,
-    [match.activity_code_id, name]
+  // Se compara en JS porque NOCASE de SQLite no iguala tildes en mayúscula ("RÍOS").
+  const nombres = await all<{ id: string; participant_name: string }>(
+    `SELECT id, participant_name FROM participations
+     WHERE activity_code_id = ? ORDER BY started_at DESC`,
+    [match.activity_code_id]
   );
+  const clave = nameKey(name);
+  const previa = nombres.find((p) => nameKey(p.participant_name) === clave);
   const id = previa?.id ?? randomBytes(16).toString("hex");
   if (!previa) {
     await run(
