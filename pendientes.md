@@ -85,6 +85,15 @@ fecha y pueden haberse movido.
    - "El anfitrión se desconectó" en los celulares si el host lleva 8 s fuera. Solo el host
      entra en la presencia de Ably (RNF-13 actualizado con la cuenta de mensajes).
 
+4. **Compartir los códigos de actividad.** Cada código tiene "Compartir" en la página de la empresa
+   (`CodeShare.tsx`): enlace `/?codigo=...`, QR, "Copiar mensaje" y "Enviar por WhatsApp". La
+   portada recibe el código puesto y enfoca el nombre. Si el dispositivo ya tiene sesión con
+   otro código, el enlace muestra la entrada en vez de llevar a la misión vieja. Probado en
+   navegador.
+   - Ojo: las participaciones duplicadas de antes del punto 1 siguen en la base (en la local,
+     varias "Camila Ríos" en Prueba Movil). Producción puede tenerlas. Fusionarlas o
+     limpiarlas es aparte y toca datos reales: decidir antes de hacerlo.
+
 ### Quedó abierto del punto 3
 
 - Quien cierra el navegador sin tocar "Salir" sigue contando como activo: "respondieron todos"
@@ -100,10 +109,6 @@ fecha y pueden haberse movido.
 
 ### Siguiente, en este orden
 
-4. **Compartir los códigos de actividad.** Hoy solo se muestra el código en texto
-   (`empresas/[id]/page.tsx`). Falta enlace con el código ya puesto (la portada tendría que leer
-   un parámetro), QR y "copiar mensaje para enviar", como ya tienen los juegos en vivo
-   (`ChallengeShare.tsx`).
 5. **Carga y avisos en el portal.** No hay ningún `loading.tsx` ni `error.tsx` en `src/app/admin`
    y todo es `force-dynamic`, así que la pantalla se congela al navegar. Faltan avisos tras
    pausar o reanudar códigos, cambiar la fecha de cierre, quitar o restaurar códigos, archivar o

@@ -42,10 +42,10 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         id: "RF-001",
         titulo: "Entrada con nombre y código de actividad",
         descripcion:
-          "El participante entra a su misión desde la landing escribiendo su nombre y el código que le dio su empresa, sin crear cuenta.",
+          "El participante entra a su misión desde la landing escribiendo su nombre y apellido y el código que le dio su empresa, sin crear cuenta. Con el enlace para compartir (/?codigo=...) el código llega puesto y solo escribe su nombre.",
         prioridad: "alta",
         estado: "implementado",
-        origen: "src/components/LandingScreen.tsx, joinActivity en src/lib/actions.ts",
+        origen: "src/app/page.tsx, src/components/LandingScreen.tsx, joinActivity en src/lib/actions.ts",
         verificacion: "Revisión manual del flujo landing → /mision con un código del seed.",
         notas: "El código se compara sin distinguir mayúsculas (UPPER en findByCode).",
         relacionados: ["RF-002", "RF-004", "RNF-03"],
@@ -265,10 +265,10 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         id: "RF-302",
         titulo: "Códigos de cada empresa: estado, pausa y fecha de cierre",
         descripcion:
-          "La página de cada empresa muestra sus códigos con estado, fecha de cierre y participantes, un botón para copiarlos, y permite pausarlos, reanudarlos y cambiar la fecha de cierre.",
+          "La página de cada empresa muestra sus códigos con estado, fecha de cierre y participantes, un botón para copiarlos, y permite pausarlos, reanudarlos y cambiar la fecha de cierre. \"Compartir\" abre el enlace con el código puesto, su QR, un mensaje listo para pegar y el envío por WhatsApp (no se ofrece en códigos cerrados ni en empresas archivadas).",
         prioridad: "media",
         estado: "implementado",
-        origen: "listCompanyAssignments en src/lib/queries.ts, setCodePaused y setCodeExpiry en src/lib/actions.ts, src/components/admin/CopyCode.tsx",
+        origen: "listCompanyAssignments en src/lib/queries.ts, setCodePaused y setCodeExpiry en src/lib/actions.ts, src/components/admin/CopyCode.tsx, src/components/admin/CodeShare.tsx",
         notas:
           "El estado 'vencido' se deriva de expires_at (src/lib/expiry.ts): el día elegido sirve completo y vence al terminar ese día en hora de Colombia, no a medianoche UTC (antes vencía la tarde del día anterior).",
         relacionados: ["RNF-10"],
