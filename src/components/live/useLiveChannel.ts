@@ -19,6 +19,8 @@ interface Options {
 
 export function useLiveChannel({ matchId, role, onPublic, onHost, onResync }: Options) {
   const [connection, setConnection] = useState<Ably.ConnectionState>("initialized");
+  // Solo para el jugador: true cuando la pantalla del host lleva un rato fuera.
+  const [hostGone, setHostGone] = useState(false);
   const handlePublic = useEffectEvent(onPublic);
   const handleHost = useEffectEvent((e: HostEvent) => onHost?.(e));
   const resync = useEffectEvent(onResync);
@@ -41,7 +43,28 @@ export function useLiveChannel({ matchId, role, onPublic, onHost, onResync }: Op
       await pub.attach();
       if (closed) return;
       await pub.subscribe((msg) => handlePublic({ name: msg.name, data: msg.data } as PublicEvent));
+      if (role === "player") {
+        // Un parpadeo de red o recargar el proyector no debe asustar a nadie: se avisa
+        // solo si el host sigue fuera después de HOST_GONE_MS.
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const check = async () => {
+          const members = await pub.presence.get();
+          if (closed) return;
+          if (members.some((m) => m.clientId?.startsWith("host:"))) {
+            clearTimeout(timer);
+            timer = undefined;
+            setHostGone(false);
+          } else if (!timer) {
+            timer = setTimeout(() => !closed && setHostGone(true), HOST_GONE_MS);
+          }
+        };
+        await pub.presence.subscribe(() => void check().catch(() => {}));
+        await check();
+      }
       if (role === "host") {
+        // Si la presencia falla, el host igual debe recibir sus eventos.
+        await pub.presence.enter().catch(() => {});
+        if (closed) return;
         const host = realtime.channels.get(hostChannel(matchId));
         await host.attach();
         if (closed) return;
@@ -57,8 +80,10 @@ export function useLiveChannel({ matchId, role, onPublic, onHost, onResync }: Op
     };
   }, [matchId, role]);
 
-  return { connection };
+  return { connection, hostGone };
 }
+
+const HOST_GONE_MS = 8000;
 
 /**
  * Diferencia entre el reloj del servidor y el del dispositivo. Los eventos traen

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import QrCode from "../QrCode";
+import KickList from "./KickList";
 import { calSans, formatPin, game, liveButton, liveGhostButton } from "../game-theme";
 import type { PublicBrand } from "@/lib/brand-palette";
 import { CoBrand } from "@/components/BrandLogo";
@@ -20,7 +21,6 @@ interface Props {
 }
 
 export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocked, brand, busy, onStart, onToggleLock, onKick }: Props) {
-  const [confirming, setConfirming] = useState<string | null>(null);
   const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
 
   // El portapapeles falla fuera de HTTPS o sin permiso: en ese caso se muestra el enlace para copiarlo a mano.
@@ -102,38 +102,7 @@ export default function HostLobby({ pin, joinHost, joinUrl, nicknames, joinLocke
       {nicknames.length === 0 ? (
         <p style={{ margin: 0, color: game.muted, fontSize: "clamp(16px, 1.6vw, 22px)" }}>Esperando jugadores…</p>
       ) : (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", maxWidth: 1200 }}>
-          {nicknames.map((n) => (
-            <li key={n} className="live-pop">
-              <button
-                type="button"
-                className="btn-live"
-                title={confirming === n ? "Tocar de nuevo para sacarlo" : "Tocar para sacar de la partida"}
-                onClick={() => {
-                  if (confirming === n) {
-                    setConfirming(null);
-                    onKick(n);
-                  } else {
-                    setConfirming(n);
-                    setTimeout(() => setConfirming((c) => (c === n ? null : c)), 3000);
-                  }
-                }}
-                style={{
-                  padding: "10px 18px",
-                  borderRadius: 999,
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                  fontSize: "clamp(15px, 1.4vw, 20px)",
-                  background: confirming === n ? game.danger : game.surfaceStrong,
-                  color: game.text,
-                }}
-              >
-                {confirming === n ? `¿Sacar a ${n}?` : n}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <KickList nicknames={nicknames} onKick={onKick} />
       )}
     </div>
   );

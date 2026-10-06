@@ -12,6 +12,7 @@ import HostQuestion from "./HostQuestion";
 import HostReveal from "./HostReveal";
 import HostLeaderboard from "./HostLeaderboard";
 import HostPodium from "./HostPodium";
+import KickList from "./KickList";
 import { useHostSound, useSoundState } from "./useHostSound";
 import { liveSound } from "../sound";
 import { brandCssVars, brandPalette } from "@/lib/brand-palette";
@@ -31,6 +32,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmFinish, setConfirmFinish] = useState(false);
+  const [showPlayers, setShowPlayers] = useState(false);
 
   const resync = useCallback(async () => {
     const res = await fetch(`/api/live/host/${matchId}`, { cache: "no-store" });
@@ -200,6 +202,51 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         </div>
       )}
 
+      {showPlayers && inGame && (
+        <section
+          role="dialog"
+          aria-labelledby="host-players-title"
+          onKeyDown={(e) => e.key === "Escape" && setShowPlayers(false)}
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: 72,
+            transform: "translateX(-50%)",
+            width: "min(900px, calc(100% - 32px))",
+            maxHeight: "55vh",
+            overflowY: "auto",
+            background: "rgba(15,24,29,0.96)",
+            border: `1px solid ${game.border}`,
+            borderRadius: 18,
+            padding: "18px 20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+            zIndex: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <h2 id="host-players-title" style={{ ...calSans, margin: 0, fontSize: 20, fontWeight: 400 }}>
+              Jugadores <span style={{ color: game.muted, fontSize: 15 }}>· toca dos veces un apodo para sacarlo</span>
+            </h2>
+            <button
+              type="button"
+              autoFocus
+              className="btn-live"
+              style={{ ...liveGhostButton, height: 34, fontSize: 13 }}
+              onClick={() => setShowPlayers(false)}
+            >
+              Cerrar
+            </button>
+          </div>
+          {state.nicknames.length === 0 ? (
+            <p style={{ margin: 0, color: game.muted }}>No queda nadie en la partida.</p>
+          ) : (
+            <KickList nicknames={state.nicknames} onKick={(nickname) => post("kick", { nickname })} />
+          )}
+        </section>
+      )}
+
       <footer
         style={{
           position: "relative",
@@ -222,7 +269,17 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
               PIN <strong style={{ ...calSans, color: game.text, fontSize: 18 }}>{formatPin(state.pin)}</strong>
             </span>
           )}
-          {inGame && <span>{state.nicknames.length} jugadores</span>}
+          {inGame && (
+            <button
+              type="button"
+              className="btn-live"
+              aria-expanded={showPlayers}
+              style={{ ...liveGhostButton, height: 32, fontSize: 13, padding: "0 12px" }}
+              onClick={() => setShowPlayers((v) => !v)}
+            >
+              {state.nicknames.length} jugadores
+            </button>
+          )}
           {(connection === "disconnected" || connection === "suspended") && (
             <span role="status" style={{ color: "#E8A33D", fontWeight: 600 }}>
               Reconectando…

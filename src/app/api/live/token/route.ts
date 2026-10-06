@@ -7,7 +7,8 @@ import { fail, json, matchIdParam, playerIdFromCookie } from "@/lib/live-http";
 
 /**
  * Token de Ably de solo lectura. El host (con ?match=) escucha el canal público y el
- * suyo; un jugador, solo el público de su partida. Nadie publica desde el navegador.
+ * suyo, y entra en la presencia del público; un jugador solo escucha el público de su
+ * partida. Nadie publica desde el navegador.
  */
 export async function GET(request: Request) {
   const matchParam = new URL(request.url).searchParams.get("match");
@@ -18,7 +19,9 @@ export async function GET(request: Request) {
     const match = user && matchId ? await getMatchForHost(matchId, user) : null;
     if (!user || !match) return fail("Sin acceso a esta partida.", 403);
     const token = await createTokenRequest(`host:${user.id}`, {
-      [matchChannel(match.id)]: ["subscribe"],
+      // "presence": el host se anuncia en el canal público para que los celulares sepan
+      // si la pantalla sigue abierta. Solo él entra: los jugadores no se ven entre sí.
+      [matchChannel(match.id)]: ["subscribe", "presence"],
       [hostChannel(match.id)]: ["subscribe"],
     });
     return json(token);

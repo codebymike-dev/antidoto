@@ -81,7 +81,7 @@ function Connected({
   setError: (e: string | null) => void;
   onLeave: () => void;
 }) {
-  const { connection } = useLiveChannel({
+  const { connection, hostGone } = useLiveChannel({
     matchId: state.matchId,
     role: "player",
     onPublic: (event) => {
@@ -175,6 +175,11 @@ function Connected({
       {(connection === "disconnected" || connection === "suspended") && (
         <div role="status" style={toast("#E8A33D", game.bg)}>
           Reconectando…
+        </div>
+      )}
+      {hostGone && connection === "connected" && state.status !== "finished" && (
+        <div role="status" style={toast(game.surfaceStrong, game.text)}>
+          El anfitrión se desconectó. Quédate aquí: la partida sigue cuando vuelva.
         </div>
       )}
       {error && (
