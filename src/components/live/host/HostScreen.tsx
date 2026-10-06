@@ -202,51 +202,6 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         </div>
       )}
 
-      {showPlayers && inGame && (
-        <section
-          role="dialog"
-          aria-labelledby="host-players-title"
-          onKeyDown={(e) => e.key === "Escape" && setShowPlayers(false)}
-          style={{
-            position: "absolute",
-            left: "50%",
-            bottom: 72,
-            transform: "translateX(-50%)",
-            width: "min(900px, calc(100% - 32px))",
-            maxHeight: "55vh",
-            overflowY: "auto",
-            background: "rgba(15,24,29,0.96)",
-            border: `1px solid ${game.border}`,
-            borderRadius: 18,
-            padding: "18px 20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            zIndex: 20,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <h2 id="host-players-title" style={{ ...calSans, margin: 0, fontSize: 20, fontWeight: 400 }}>
-              Jugadores <span style={{ color: game.muted, fontSize: 15 }}>· toca dos veces un apodo para sacarlo</span>
-            </h2>
-            <button
-              type="button"
-              autoFocus
-              className="btn-live"
-              style={{ ...liveGhostButton, height: 34, fontSize: 13 }}
-              onClick={() => setShowPlayers(false)}
-            >
-              Cerrar
-            </button>
-          </div>
-          {state.nicknames.length === 0 ? (
-            <p style={{ margin: 0, color: game.muted }}>No queda nadie en la partida.</p>
-          ) : (
-            <KickList nicknames={state.nicknames} onKick={(nickname) => post("kick", { nickname })} />
-          )}
-        </section>
-      )}
-
       <footer
         style={{
           position: "relative",
@@ -261,6 +216,51 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
           fontSize: 14,
         }}
       >
+        {showPlayers && inGame && (
+          <section
+            role="dialog"
+            aria-labelledby="host-players-title"
+            onKeyDown={(e) => e.key === "Escape" && setShowPlayers(false)}
+            style={{
+              position: "absolute",
+              left: "50%",
+              // Pegado encima del footer, ocupe este una fila o dos.
+              bottom: "calc(100% + 8px)",
+              transform: "translateX(-50%)",
+              width: "min(900px, calc(100% - 32px))",
+              maxHeight: "55vh",
+              overflowY: "auto",
+              background: "rgba(15,24,29,0.96)",
+              border: `1px solid ${game.border}`,
+              borderRadius: 18,
+              padding: "18px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+              zIndex: 20,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <h2 id="host-players-title" style={{ ...calSans, margin: 0, fontSize: 20, fontWeight: 400 }}>
+                Jugadores <span style={{ color: game.muted, fontSize: 15 }}>· toca dos veces un apodo para sacarlo</span>
+              </h2>
+              <button
+                type="button"
+                autoFocus
+                className="btn-live"
+                style={{ ...liveGhostButton, height: 34, fontSize: 13 }}
+                onClick={() => setShowPlayers(false)}
+              >
+                Cerrar
+              </button>
+            </div>
+            {state.nicknames.length === 0 ? (
+              <p style={{ margin: 0, color: game.muted }}>No queda nadie en la partida.</p>
+            ) : (
+              <KickList nicknames={state.nicknames} onKick={(nickname) => post("kick", { nickname })} />
+            )}
+          </section>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 18, color: game.muted }}>
           {brand && state.status !== "lobby" && <BrandLogo brand={brand} surface="oscuro" height={26} showName={false} />}
           <span style={{ fontWeight: 600, color: game.text }}>{state.gameTitle}</span>

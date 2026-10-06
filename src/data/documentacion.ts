@@ -448,10 +448,10 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       {
         id: "RF-503",
         titulo: "Expulsar jugadores",
-        descripcion: "El host saca a un jugador desde la sala (doble toque para confirmar); el expulsado deja de contar en respuestas y ranking y no puede volver a entrar desde ese celular.",
+        descripcion: "El host saca a un jugador desde la sala o, ya empezada la partida, desde el panel que abre el contador de jugadores del footer (doble toque para confirmar); el expulsado deja de contar en respuestas y ranking y no puede volver a entrar desde ese celular.",
         prioridad: "media",
         estado: "implementado",
-        origen: "kickPlayer en src/lib/live-match.ts, POST /api/live/host/[matchId]/kick",
+        origen: "kickPlayer en src/lib/live-match.ts, POST /api/live/host/[matchId]/kick, src/components/live/host/KickList.tsx",
       },
       {
         id: "RF-504",
@@ -478,9 +478,9 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         descripcion: "La pregunta se cierra sola al vencer el tiempo o cuando responden todos los jugadores activos.",
         prioridad: "alta",
         estado: "implementado",
-        origen: "shouldEndQuestion en src/lib/live-engine.ts, POST /api/live/host/[matchId]/tick",
+        origen: "shouldEndQuestion en src/lib/live-engine.ts, POST /api/live/host/[matchId]/tick, POST /api/live/tick",
         notas:
-          "No hay proceso vivo en el servidor: el proyector avisa cuando su reloj llega a cero y el servidor decide con el suyo. Es idempotente.",
+          "No hay proceso vivo en el servidor: el proyector avisa cuando su reloj llega a cero y el servidor decide con el suyo. Es idempotente. Si el proyector se cerró, los celulares hacen lo mismo entre 1 y 3 s después (cada uno con un retraso distinto), así la pregunta no se queda abierta.",
         relacionados: ["RNF-09", "RNF-12"],
       },
       {
@@ -513,6 +513,19 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         estado: "implementado",
         origen: "MAX_PLAYERS en src/lib/live-match.ts",
         relacionados: ["RNF-13"],
+      },
+      {
+        id: "RF-510",
+        titulo: "Volver a la pantalla del host",
+        descripcion:
+          "Cerrar el proyector a media partida pide confirmación. Si igual se cierra, el historial del juego y el reporte de la partida ofrecen \"Volver a la pantalla en vivo\" mientras siga abierta (y no pasen 12 horas). Los celulares avisan \"El anfitrión se desconectó\" si el host lleva 8 s fuera.",
+        prioridad: "media",
+        estado: "implementado",
+        origen:
+          "liveMatchOpen en src/lib/live-report-format.ts, src/components/admin/live/MatchHistory.tsx, presencia en src/components/live/useLiveChannel.ts",
+        verificacion:
+          "live-report-format.test.mts cubre cuándo una partida sigue abierta. Probado en navegador el 2026-10-06: el aviso sale 8 s después de cerrar la pestaña del host y no aparece mientras está abierta.",
+        relacionados: ["RF-506", "RNF-13"],
       },
     ],
   },
@@ -565,10 +578,11 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       {
         id: "RF-605",
         titulo: "Salir de la partida",
-        descripcion: "El jugador abandona la partida y su celular queda libre para entrar a otra.",
+        descripcion: "El jugador abandona la partida (doble toque) y su celular queda libre para entrar a otra. En la sala de espera se borra de la partida y su apodo queda libre; ya empezada, sigue en ella y en los reportes.",
         prioridad: "baja",
         estado: "implementado",
-        origen: "POST /api/live/leave, src/components/live/player/PlayerApp.tsx",
+        origen: "POST /api/live/leave, leaveMatch en src/lib/live-match.ts, src/components/live/player/PlayerApp.tsx",
+        notas: "Quien cierra el navegador sin salir sigue contando como activo: \"respondieron todos\" no se cumple y la pregunta cierra por tiempo.",
       },
     ],
   },
@@ -1070,7 +1084,7 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
         estado: "implementado",
         origen: "src/lib/realtime.ts, MAX_PLAYERS en src/lib/live-match.ts",
         notas:
-          "Restricción del proyecto. Por eso no hay Redis ni WebSockets propios, no se usa la presencia de Ably (cuesta mensajes) y se topa a 100 jugadores por partida. Vercel Hobby no admite uso comercial.",
+          "Restricción del proyecto. Por eso no hay Redis ni WebSockets propios y se topa a 100 jugadores por partida. De la presencia de Ably solo participa el host (para avisar en los celulares que se desconectó): cada entrada o salida suya se reparte a lo sumo a 100 celulares, unos cientos de mensajes por partida. Los jugadores no entran en presencia, porque eso sí multiplicaría los mensajes. Vercel Hobby no admite uso comercial.",
         relacionados: ["RF-509"],
       },
     ],
