@@ -49,18 +49,27 @@ async function legalTextsConRespaldo() {
 }
 
 // Quien ya entró en este dispositivo (por el enlace o el ícono instalado) vuelve a su
-// misión en vez de registrarse otra vez y empezar de cero.
-async function tieneParticipacion() {
+// misión en vez de registrarse otra vez y empezar de cero. Si el enlace trae otro código,
+// es otra actividad: se muestra la entrada con ese código puesto.
+async function codigoGuardado() {
   try {
-    return !!(await currentParticipation());
+    return (await currentParticipation())?.codigo ?? null;
   } catch (error) {
     console.error("[landing] no se pudo leer la participación:", error);
-    return false;
+    return null;
   }
 }
 
-export default async function Home() {
-  if (await tieneParticipacion()) redirect("/mision");
+/** El código que trae el enlace para compartir (`/?codigo=...`), si tiene forma de código. */
+function codigoDelEnlace(raw: string | string[] | undefined) {
+  const value = (Array.isArray(raw) ? raw[0] : raw)?.trim().toUpperCase() ?? "";
+  return /^[A-Z0-9-]{4,32}$/.test(value) ? value : "";
+}
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ codigo?: string | string[] }> }) {
+  const codigo = codigoDelEnlace((await searchParams).codigo);
+  const guardado = await codigoGuardado();
+  if (guardado && (!codigo || codigo === guardado.toUpperCase())) redirect("/mision");
   const legal = await legalTextsConRespaldo();
   return (
     <>
@@ -68,7 +77,7 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
-      <LandingScreen policyText={legal.privacidad} termsText={legal.terminos} backdrop={<PassBackdrop />} />
+      <LandingScreen policyText={legal.privacidad} termsText={legal.terminos} initialCode={codigo} backdrop={<PassBackdrop />} />
     </>
   );
 }

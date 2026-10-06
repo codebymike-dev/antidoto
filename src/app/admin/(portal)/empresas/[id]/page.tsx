@@ -14,6 +14,7 @@ import { card, filledButton, secondaryButton } from "@/lib/styles";
 import BrandLogo from "@/components/BrandLogo";
 import ConfirmDeleteButton from "@/components/admin/ConfirmDeleteButton";
 import CopyCode from "@/components/admin/CopyCode";
+import CodeShare from "@/components/admin/CodeShare";
 import DropdownMenu from "@/components/admin/DropdownMenu";
 import ExpandableList from "@/components/admin/ExpandableList";
 import SavedToast from "@/components/admin/SavedToast";
@@ -63,7 +64,10 @@ export default async function EmpresaPage({
     : await Promise.all(activities.map((codes) => listCompanyParticipants(codes[0].mission_id, companyId)));
   const participantes = live.reduce((s, a) => s + a.participantes, 0);
   const justAssigned = asignada ? live.find((a) => a.codigo === asignada) : undefined;
-  const host = (await headers()).get("host");
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+  const origin = `${proto}://${host ?? ""}`;
   const p = brandPalette(brand);
   const logoBrand = brand ?? { name: company.name, primary: colors.accent, secondary: null, logoUrl: null, logoSurface: "claro" as const };
 
@@ -77,7 +81,7 @@ export default async function EmpresaPage({
 
       {justAssigned && (
         <SavedToast>
-          Listo: {justAssigned.title} quedó asignada a {company.name}. Comparte el código <b>{justAssigned.codigo}</b> con los participantes.
+          Listo: {justAssigned.title} quedó asignada a {company.name}. Comparte el código <b>{justAssigned.codigo}</b> con los participantes: abajo, en &quot;Compartir&quot;, tienes el enlace, el QR y un mensaje listo para enviar.
         </SavedToast>
       )}
       {guardada && <SavedToast>Listo: guardamos el logo y los colores de {company.name}.</SavedToast>}
@@ -180,7 +184,7 @@ export default async function EmpresaPage({
             <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: colors.inkSoft, lineHeight: 1.5 }}>
               {[
                 `${isSuper ? "Asígnale una actividad de la biblioteca." : "Antídoto le asigna una actividad a tu empresa."} Se crea un código.`,
-                `Comparte el código: cada persona entra a ${host ?? "la página de inicio"} y lo escribe.`,
+                `Comparte el enlace o el QR del código (botón "Compartir"), o pide que entren a ${host ?? "la página de inicio"} y lo escriban.`,
                 "Vuelve aquí para ver cómo va y descargar el informe.",
               ].map((text, i) => (
                 <li key={i} style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
@@ -246,11 +250,20 @@ export default async function EmpresaPage({
             {/* Sin overflow hidden en la tarjeta: el menú "Opciones del código" se sale de ella. */}
             <div style={{ background: "#F7FBFC", borderTop: `1px solid ${colors.accentTint}`, borderRadius: "0 0 18px 18px", padding: "14px 22px 6px" }}>
               <div style={{ fontSize: 13, color: colors.inkSoft, lineHeight: 1.5 }}>
-                <b style={{ color: colors.ink }}>Para entrar:</b> cada persona va a <b style={{ color: colors.ink }}>{host ?? "la página de inicio"}</b> y escribe{" "}
-                {codes.length === 1 ? "este código." : "uno de estos códigos."}
+                <b style={{ color: colors.ink }}>Para entrar:</b> comparte el enlace de &quot;Compartir&quot;, o cada persona va a{" "}
+                <b style={{ color: colors.ink }}>{host ?? "la página de inicio"}</b> y escribe {codes.length === 1 ? "este código." : "uno de estos códigos."}
               </div>
               {codes.map((a) => (
-                <CodeRow key={a.id} a={a} canManage={isSuper && !company.archived} showCount={codes.length > 1} companyArchived={company.archived} />
+                <CodeRow
+                  key={a.id}
+                  a={a}
+                  canManage={isSuper && !company.archived}
+                  showCount={codes.length > 1}
+                  companyArchived={company.archived}
+                  company={company.name}
+                  origin={origin}
+                  host={host ?? origin}
+                />
               ))}
             </div>
           </section>
@@ -392,10 +405,35 @@ function codeStatus(a: Assignment, companyArchived: boolean) {
   return { dot: "#1F8A4C", text: fecha ? `Abierto hasta el ${fecha}` : "Abierto, sin fecha de cierre" };
 }
 
-function CodeRow({ a, canManage, showCount, companyArchived }: { a: Assignment; canManage: boolean; showCount: boolean; companyArchived: boolean }) {
+function CodeRow({
+  a,
+  canManage,
+  showCount,
+  companyArchived,
+  company,
+  origin,
+  host,
+}: {
+  a: Assignment;
+  canManage: boolean;
+  showCount: boolean;
+  companyArchived: boolean;
+  company: string;
+  origin: string;
+  host: string;
+}) {
   const status = codeStatus(a, companyArchived);
   return (
-    <div style={{ padding: "10px 0 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+    <CodeShare
+      code={a.codigo}
+      joinUrl={`${origin}/?codigo=${encodeURIComponent(a.codigo)}`}
+      host={host}
+      activity={a.title}
+      company={company}
+      // Un código cerrado no sirve para entrar; uno pausado sí se comparte, para cuando se reanude.
+      shareable={!companyArchived && a.estado !== "vencido"}
+      actions={canManage && <CodeOptions a={a} />}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
         <CopyCode code={a.codigo} size={17} />
         <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, color: colors.inkSoft }}>
@@ -409,7 +447,12 @@ function CodeRow({ a, canManage, showCount, companyArchived }: { a: Assignment; 
           </span>
         )}
       </div>
-      {canManage && (
+    </CodeShare>
+  );
+}
+
+function CodeOptions({ a }: { a: Assignment }) {
+  return (
         // La key cambia al guardar: el menú se vuelve a montar cerrado.
         <DropdownMenu
           key={`${a.estado}-${a.expira ?? "sin-fecha"}`}
@@ -458,8 +501,6 @@ function CodeRow({ a, canManage, showCount, companyArchived }: { a: Assignment; 
             <p style={menuHint}>Deja de funcionar y sale de los informes. Los resultados se guardan y se puede restaurar.</p>
           </form>
         </DropdownMenu>
-      )}
-    </div>
   );
 }
 

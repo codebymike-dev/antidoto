@@ -14,10 +14,13 @@ import PolicyModal from "./PolicyModal";
 export default function LandingScreen({
   policyText,
   termsText,
+  initialCode = "",
   backdrop,
 }: {
   policyText: string;
   termsText: string;
+  /** Código que trae el enlace para compartir: llega puesto y solo falta el nombre. */
+  initialCode?: string;
   /** Fondo guilloche, calculado en el servidor (ver PassBackdrop). */
   backdrop?: ReactNode;
 }) {
@@ -29,7 +32,7 @@ export default function LandingScreen({
   // React 19 reinicia el <form> al terminar la acción, también cuando vuelve con error, y el
   // participante tenía que escribir todo de nuevo. Lo enviado pasa a ser el valor por
   // defecto: el reinicio devuelve los campos a lo que tecleó en vez de vaciarlos.
-  const [draft, setDraft] = useState({ name: "", code: "", accepted: false });
+  const [draft, setDraft] = useState({ name: "", code: initialCode, accepted: false });
   const stampLabel = pending ? "Validando" : state?.error ? "Revisa" : null;
 
   return (
@@ -110,6 +113,7 @@ export default function LandingScreen({
                   name="name"
                   placeholder="Ej. Camila Ríos"
                   autoComplete="name"
+                  autoFocus={!!initialCode}
                   defaultValue={draft.name}
                   style={fieldInput}
                   required
