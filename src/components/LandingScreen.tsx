@@ -42,7 +42,8 @@ export default function LandingScreen({
             Tu misión interactiva empieza aquí
           </MotionHeading>
           <p style={{ fontSize: 15, lineHeight: 1.5, color: colors.inkSoft, margin: 0, maxWidth: 400 }}>
-            Ingresa tu nombre y el código de tu actividad para unirte a la misión de tu equipo.
+            Ingresa tu nombre completo y el código de tu actividad para unirte a la misión de tu equipo.
+            Si ya habías empezado, con los mismos datos sigues donde ibas.
           </p>
         </div>
 
@@ -102,12 +103,13 @@ export default function LandingScreen({
             >
               <div data-pass-item style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label htmlFor="name" style={fieldLabel}>
-                  Tu nombre
+                  Tu nombre y apellido
                 </label>
                 <input
                   id="name"
                   name="name"
                   placeholder="Ej. Camila Ríos"
+                  autoComplete="name"
                   defaultValue={draft.name}
                   style={fieldInput}
                   required

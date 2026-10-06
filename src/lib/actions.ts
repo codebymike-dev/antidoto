@@ -20,11 +20,16 @@ import { parseCargos } from "./profile";
 export type JoinState = { error: string } | null;
 
 export async function joinActivity(_prev: JoinState, formData: FormData): Promise<JoinState> {
-  const name = String(formData.get("name") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim().replace(/\s+/g, " ");
   const code = String(formData.get("code") ?? "").trim();
   const accepted = formData.get("acceptedPolicy") === "on";
 
   if (!name) return { error: "Ingresa tu nombre." };
+  // Nombre y apellido: es lo que permite retomar la misión desde otro dispositivo sin
+  // fusionar a dos personas que comparten nombre.
+  if (name.split(" ").filter((w) => /\p{L}/u.test(w)).length < 2) {
+    return { error: "Escribe tu nombre y tu apellido." };
+  }
   if (!code) return { error: "Ingresa el código de tu actividad." };
   if (!accepted) return { error: "Debes aceptar la política de tratamiento de datos." };
 
