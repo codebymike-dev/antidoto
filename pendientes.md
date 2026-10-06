@@ -69,24 +69,37 @@ fecha y pueden haberse movido.
    registros viejos con un solo nombre no se reconocen al volver. Falta probar el reingreso
    desde otro dispositivo de punta a punta.
 2. **Salidas con confirmación.** `src/components/LeaveConfirm.tsx` (`<dialog>` nativo) en
-   `/mision` y `/mision/completada`, y doble toque en el "Salir" del lobby en vivo (sin probar en
-   navegador). La misión común ya no se da por completada con un 8.0 inventado: explica que ya
+   `/mision` y `/mision/completada`, y doble toque en el "Salir" del lobby en vivo (probado en
+   navegador con el punto 3). La misión común ya no se da por completada con un 8.0 inventado: explica que ya
    no está disponible. Se borraron `completeMission` y `GAME_MODE`.
+
+3. **Ciclo de vida de la partida en vivo.** Probado en navegador contra la base local:
+   - Los celulares avisan al servidor cuando vence el reloj (`POST /api/live/tick`, entre 1 y 3 s
+     después del proyector, cada uno con un retraso distinto): sin proyector, la pregunta pasó a
+     revelado a los 12 s.
+   - Volver a la pantalla del host: "Volver a la pantalla en vivo" en el historial del juego y en
+     el reporte mientras la partida siga abierta (`liveMatchOpen`), y aviso `beforeunload`.
+   - Salir en el lobby borra al jugador (`leaveMatch`) y libera su apodo.
+   - Expulsar durante el juego: el contador "N jugadores" del footer abre un panel con la misma
+     lista de doble toque del lobby (`KickList.tsx`).
+   - "El anfitrión se desconectó" en los celulares si el host lleva 8 s fuera. Solo el host
+     entra en la presencia de Ably (RNF-13 actualizado con la cuenta de mensajes).
+
+### Quedó abierto del punto 3
+
+- Quien cierra el navegador sin tocar "Salir" sigue contando como activo: "respondieron todos"
+  no se cumple y la pregunta cierra por tiempo. Detectarlo exigiría que los jugadores entren en
+  la presencia de Ably, y eso multiplica los mensajes.
+- Sin host, la partida avanza hasta el revelado y ahí se detiene: pasar al ranking y a la
+  siguiente pregunta sigue siendo decisión del host.
+- El primer toque en la pantalla del host activa el sonido y el footer se reacomoda (cambia
+  "Activar sonido" por los controles de volumen). Si ese primer toque cae en un botón del
+  footer, el botón se mueve entre el `mousedown` y el `mouseup` y el clic se pierde. Lo destapó
+  la prueba automática. Arreglo: reservar el ancho de los controles o no reacomodar el footer.
+- Probar todo en celulares reales, sobre todo el aviso del host con el bloqueo de pantalla.
 
 ### Siguiente, en este orden
 
-3. **Ciclo de vida de la partida en vivo.**
-   - Cerrar las preguntas en el servidor aunque no haya proyector: hoy solo las cierra el tick
-     de `HostScreen.tsx` o que respondan todos (`live-match.ts`). Si el host cierra la pestaña,
-     los celulares se quedan en "Se acabó el tiempo".
-   - Camino de vuelta para el host: botón "Volver a la pantalla en vivo" en el historial y en el
-     reporte (el único enlace a `/admin/vivo/{id}` es el redirect al crearla) y aviso
-     `beforeunload` en `HostScreen`.
-   - Jugadores fantasma: `/api/live/leave` solo borra la cookie, así que el jugador sigue activo,
-     "respondieron todos" nunca se cumple y el "N de M" no se completa. Además no puede volver con
-     el mismo apodo. Marcar la salida en la base y, si se puede, detectar presencia con Ably.
-   - Expulsar durante el juego, no solo en el lobby (la API `/kick` ya existe).
-   - Aviso "El anfitrión se desconectó" en los celulares (guía Kahoot 6.5).
 4. **Compartir los códigos de actividad.** Hoy solo se muestra el código en texto
    (`empresas/[id]/page.tsx`). Falta enlace con el código ya puesto (la portada tendría que leer
    un parámetro), QR y "copiar mensaje para enviar", como ya tienen los juegos en vivo
