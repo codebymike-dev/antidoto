@@ -561,6 +561,45 @@ button {
   }
 }
 
+/* Texto solo para lectores de pantalla. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Bloques de carga del portal (loading.tsx): un brillo que cruza de izquierda a derecha. */
+.skeleton {
+  display: block;
+  border-radius: 8px;
+  background: #e6f1f5;
+  background-image: linear-gradient(90deg, transparent 0, rgba(255, 255, 255, 0.7) 50%, transparent 100%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeletonSheen 1.3s ease-in-out infinite;
+}
+
+@keyframes skeletonSheen {
+  from {
+    background-position: -150% 0;
+  }
+  to {
+    background-position: 250% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
 /* --- Reportes PDF (admin/reporte) ---------------------------------------------
    En pantalla, una hoja sobre fondo gris; al imprimir, solo la hoja a página completa
    y con los colores de la marca (print-color-adjust). */
