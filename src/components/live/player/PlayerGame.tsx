@@ -168,9 +168,7 @@ function Connected({
           <Centered>
             <h1 className="live-pop" style={title}>¡Estás dentro!</h1>
             <p style={subtitle}>¿Ves tu apodo en la pantalla?</p>
-            <button type="button" className="btn-live" style={{ ...liveGhostButton, marginTop: 24 }} onClick={onLeave}>
-              Salir
-            </button>
+            <LeaveButton onLeave={onLeave} />
           </Centered>
         )}
 
@@ -440,3 +438,23 @@ const toast = (bg: string, fg: string): React.CSSProperties => ({
   fontSize: 14,
   textAlign: "center",
 });
+
+/** Salir de la sala con doble toque, como expulsar en el lobby: un toque suelto no saca a nadie. */
+function LeaveButton({ onLeave }: { onLeave: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <button
+      type="button"
+      className="btn-live"
+      aria-live="polite"
+      style={{ ...liveGhostButton, marginTop: 24, ...(confirming && { background: game.danger, color: "#fff" }) }}
+      onClick={() => {
+        if (confirming) return onLeave();
+        setConfirming(true);
+        setTimeout(() => setConfirming(false), 3000);
+      }}
+    >
+      {confirming ? "¿Salir? Toca otra vez" : "Salir"}
+    </button>
+  );
+}

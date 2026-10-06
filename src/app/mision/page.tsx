@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { currentParticipation } from "@/lib/participation";
-import { completeMission, leaveActivity } from "@/lib/actions";
+import { leaveActivity } from "@/lib/actions";
 import { colors, LOGO_SRC, calSans } from "@/lib/theme";
-import { card, filledButton } from "@/lib/styles";
+import { card } from "@/lib/styles";
 import { getCompanyBrand } from "@/lib/company-brand";
 import { brandCssVars, brandPalette } from "@/lib/brand-palette";
 import { CoBrand } from "@/components/BrandLogo";
-import { GAME_MODE } from "@/lib/data";
 import { loadAllOverrides, missionStations, participationAnswers, resultsFor } from "@/lib/experience-data";
 import { publicExperience } from "@/lib/experiences/texts";
 import ExperiencePlayer from "@/components/experience/ExperiencePlayer";
+import LeaveConfirm from "@/components/LeaveConfirm";
 import { participantProfile, profileConfigFor } from "@/lib/participant-profile";
 
 export const dynamic = "force-dynamic";
@@ -52,11 +52,6 @@ export default async function MisionPage() {
     );
   }
 
-  const modeLabel =
-    GAME_MODE === "sincronizado"
-      ? "Modo en vivo · todo el equipo responde a la vez"
-      : "Modo a tu ritmo · avanza cuando quieras";
-
   // Sin marca configurada, la paleta es la de Antídoto y la pantalla queda como siempre.
   const pal = brandPalette(brand);
 
@@ -75,23 +70,24 @@ export default async function MisionPage() {
     >
       <div style={{ width: "100%", maxWidth: 640, display: "flex", flexDirection: "column", gap: 26 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <form action={leaveActivity}>
-            <button
-              type="submit"
-              className="btn-text"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 14,
-                color: pal.strong,
-                fontWeight: 600,
-                padding: 0,
-              }}
-            >
-              ‹ Volver
-            </button>
-          </form>
+          <LeaveConfirm
+            action={leaveActivity}
+            className="btn-text"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 14,
+              color: pal.strong,
+              fontWeight: 600,
+              padding: 0,
+            }}
+            title="¿Salir de la actividad?"
+            body={<p style={{ margin: 0 }}>Este dispositivo olvidará tu sesión. Para volver, entra con tu mismo nombre y código.</p>}
+            confirmLabel="Salir"
+          >
+            ‹ Salir
+          </LeaveConfirm>
           {brand ? (
             <CoBrand brand={brand} surface="claro" height={44} />
           ) : (
@@ -147,24 +143,11 @@ export default async function MisionPage() {
             <p style={{ fontSize: 14.5, lineHeight: 1.6, color: colors.inkSoft, margin: 0 }}>
               {p.mission_description}
             </p>
-            <span style={{ fontSize: 12.5, color: pal.accent, fontWeight: 600 }}>{modeLabel}</span>
-            <form action={completeMission}>
-              <button
-                type="submit"
-                className="btn-filled"
-                style={{
-                  ...filledButton,
-                  alignSelf: "flex-start",
-                  height: 50,
-                  padding: "0 28px",
-                  fontSize: 15,
-                  marginTop: 8,
-                  boxShadow: pal.buttonShadow,
-                }}
-              >
-                Comenzar reto
-              </button>
-            </form>
+            {/* Las misiones comunes ya no tienen contenido jugable: antes este botón las daba por
+                completadas con un puntaje inventado. Solo un código viejo puede llegar aquí. */}
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: pal.strong, fontWeight: 600, margin: "4px 0 0" }}>
+              Esta misión ya no está disponible para jugar. Pide a tu administrador el código de la nueva actividad.
+            </p>
           </div>
         </div>
       </div>

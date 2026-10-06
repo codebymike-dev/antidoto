@@ -118,7 +118,8 @@ export default function TopBar({ brand, title, sub, grains, found, total, spotPu
                 ibas.
               </p>
               <p className={styles.muted}>
-                Si sales, este dispositivo olvida tu sesión: para jugar otra vez tendrás que entrar con el código y empezar desde cero.
+                Si sales, este dispositivo olvida tu sesión. Tu avance no se pierde: entra con tu mismo nombre y código y sigues donde
+                ibas.
               </p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="button" autoFocus className={`${styles.button} ${styles.primary}`} onClick={() => setConfirmExit(false)}>

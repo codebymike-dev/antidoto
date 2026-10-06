@@ -9,6 +9,7 @@ import { getCompanyBrand } from "@/lib/company-brand";
 import { brandCssVars, brandPalette } from "@/lib/brand-palette";
 import BrandLogo, { WithAntidoto } from "@/components/BrandLogo";
 import MissionPass from "@/components/motion/MissionPass";
+import LeaveConfirm from "@/components/LeaveConfirm";
 import { participationRecap } from "@/lib/experience-data";
 import { RecapReview, RecapSummary } from "@/components/experience/RouteRecap";
 
@@ -63,16 +64,24 @@ export default async function MisionCompletadaPage() {
           style={{ width: "100%", maxWidth: 440 }}
           stamp={{ label: "Cumplida", tone: "brand", playKey: 1, delay: 1.2, className: "stamp--done" }}
           stub={
-            <form action={leaveActivity} style={{ display: "flex", justifyContent: "flex-start" }}>
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
               {/* Botón a la izquierda: a la derecha cae el sello, que cruza la perforación. */}
-              <button
-                type="submit"
+              <LeaveConfirm
+                action={leaveActivity}
                 className="btn-primary"
                 style={{ ...primaryButton, marginTop: 0, boxShadow: pal.buttonShadow, height: 50, padding: "0 30px", fontSize: 15 }}
+                title="¿Salir de este dispositivo?"
+                body={
+                  <p style={{ margin: 0 }}>
+                    Tu resultado queda guardado. Si sales, este dispositivo olvida tu sesión: para volver a verlo, entra
+                    con tu mismo nombre y código. Si solo quieres terminar, puedes cerrar esta pestaña.
+                  </p>
+                }
+                confirmLabel="Salir"
               >
-                Volver al inicio
-              </button>
-            </form>
+                Salir
+              </LeaveConfirm>
+            </div>
           }
         >
           <div data-pass-item style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center", padding: "8px 0 4px" }}>

@@ -4,4 +4,3 @@ export const ESTADO_STYLES: Record<string, { label: string; bg: string; color: s
   vencido: { label: "Vencido", bg: "#FCE4E1", color: "#C0392B" },
 };
 
-export const GAME_MODE: "autoritmo" | "sincronizado" = "autoritmo";

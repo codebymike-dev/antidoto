@@ -102,19 +102,19 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
           "El participante marca la misión como completada y llega a una pantalla de cierre con su resultado.",
         prioridad: "alta",
         estado: "parcial",
-        origen: "completeMission en src/lib/actions.ts, src/app/mision/completada/page.tsx",
+        origen: "src/lib/experience-actions.ts, src/app/mision/completada/page.tsx",
         notas:
-          "En una misión común completar deja avance 100 y un puntaje fijo de 8.0: no tiene contenido propio que produzca un puntaje real. Las actividades de la biblioteca (RF-903) sí calculan el puntaje.",
+          "Solo las actividades de la biblioteca (RF-903) se completan y calculan el puntaje. Una misión común (sin escenas) ya no se puede asignar; si queda un código viejo apuntando a una, /mision lo explica en vez de marcarla como completada con un puntaje inventado.",
         relacionados: ["RF-206", "RF-904"],
       },
       {
         id: "RF-007",
         titulo: "Reanudar y salir de la actividad",
         descripcion:
-          "La participación se recuerda 30 días en una cookie para volver a la misión; el participante puede salir y empezar de nuevo con otro código.",
+          "La participación se recuerda 30 días en una cookie: la portada lleva directo a la misión. Desde otro dispositivo se retoma entrando con el mismo nombre y apellido y el mismo código. Salir pide confirmación y solo olvida la sesión en ese dispositivo.",
         prioridad: "media",
         estado: "implementado",
-        origen: "PARTICIPATION_COOKIE en src/lib/participation.ts, leaveActivity",
+        origen: "PARTICIPATION_COOKIE en src/lib/participation.ts, joinActivity y leaveActivity en src/lib/actions.ts, src/components/LeaveConfirm.tsx",
         relacionados: ["RNF-04"],
       },
     ],

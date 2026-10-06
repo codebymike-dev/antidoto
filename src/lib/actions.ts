@@ -89,22 +89,6 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
   redirect("/mision");
 }
 
-export async function completeMission() {
-  const jar = await cookies();
-  const id = jar.get(PARTICIPATION_COOKIE)?.value;
-  if (!id) redirect("/");
-
-  await run(
-    `UPDATE participations
-     SET completed_at = datetime('now'), avance = 100, puntaje = COALESCE(puntaje, 8.0)
-     WHERE id = ? AND completed_at IS NULL`,
-    [id]
-  );
-
-  revalidatePath("/mision");
-  redirect("/mision/completada");
-}
-
 export async function leaveActivity() {
   const jar = await cookies();
   jar.delete(PARTICIPATION_COOKIE);
