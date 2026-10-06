@@ -54,6 +54,91 @@ Casos vistos:
 **Recomendación:** empezar por la 1 y la 2, que no tocan el diseño, y aplicar la 3 solo
 donde la lupa no alcance.
 
+## Usabilidad
+
+Auditoría del 2026-10-06 sobre el flujo del participante, el portal admin y el módulo en vivo
+(este último comparado con `docs/investigacion-ux-kahoot.md`). Las rutas con línea son de esa
+fecha y pueden haberse movido.
+
+### Hecho el 2026-10-06
+
+1. **Retomar el avance.** La portada redirige a `/mision` si hay una participación válida. Se pide
+   nombre y apellido, y quien vuelve con el mismo nombre y código retoma su participación (la
+   comparación ignora mayúsculas, tildes en mayúscula y espacios de más). Riesgos aceptados:
+   quien sepa el nombre completo de un compañero y el código entra a su participación, y los
+   registros viejos con un solo nombre no se reconocen al volver. Falta probar el reingreso
+   desde otro dispositivo de punta a punta.
+2. **Salidas con confirmación.** `src/components/LeaveConfirm.tsx` (`<dialog>` nativo) en
+   `/mision` y `/mision/completada`, y doble toque en el "Salir" del lobby en vivo (sin probar en
+   navegador). La misión común ya no se da por completada con un 8.0 inventado: explica que ya
+   no está disponible. Se borraron `completeMission` y `GAME_MODE`.
+
+### Siguiente, en este orden
+
+3. **Ciclo de vida de la partida en vivo.**
+   - Cerrar las preguntas en el servidor aunque no haya proyector: hoy solo las cierra el tick
+     de `HostScreen.tsx` o que respondan todos (`live-match.ts`). Si el host cierra la pestaña,
+     los celulares se quedan en "Se acabó el tiempo".
+   - Camino de vuelta para el host: botón "Volver a la pantalla en vivo" en el historial y en el
+     reporte (el único enlace a `/admin/vivo/{id}` es el redirect al crearla) y aviso
+     `beforeunload` en `HostScreen`.
+   - Jugadores fantasma: `/api/live/leave` solo borra la cookie, así que el jugador sigue activo,
+     "respondieron todos" nunca se cumple y el "N de M" no se completa. Además no puede volver con
+     el mismo apodo. Marcar la salida en la base y, si se puede, detectar presencia con Ably.
+   - Expulsar durante el juego, no solo en el lobby (la API `/kick` ya existe).
+   - Aviso "El anfitrión se desconectó" en los celulares (guía Kahoot 6.5).
+4. **Compartir los códigos de actividad.** Hoy solo se muestra el código en texto
+   (`empresas/[id]/page.tsx`). Falta enlace con el código ya puesto (la portada tendría que leer
+   un parámetro), QR y "copiar mensaje para enviar", como ya tienen los juegos en vivo
+   (`ChallengeShare.tsx`).
+5. **Carga y avisos en el portal.** No hay ningún `loading.tsx` ni `error.tsx` en `src/app/admin`
+   y todo es `force-dynamic`, así que la pantalla se congela al navegar. Faltan avisos tras
+   pausar o reanudar códigos, cambiar la fecha de cierre, quitar o restaurar códigos, archivar o
+   restaurar empresas y juegos, y guardar los textos legales.
+
+### Portal admin
+
+- "Archivar juego" no pide confirmación (`juegos/page.tsx`); el resto de archivados sí.
+- `ConfirmDeleteButton` vuelve solo al estado normal a los 3 s, sin "Cancelar" ni `aria-live`.
+- El menú lateral mide 250 px fijos, sin hamburguesa ni breakpoint: en el celular no se usa bien.
+- Login sin "¿Olvidaste tu contraseña?" ni aviso de a quién pedirla. La contraseña generada no
+  obliga a cambiarse en el primer ingreso.
+- Onboarding del admin de empresa: el paso 1 dice "Antídoto le asigna" sin contacto ni botón
+  para pedirlo. No hay "primeros pasos" (cambiar la contraseña, subir el logo).
+- Sin búsqueda en empresas; participantes sin búsqueda ni paginación; la auditoría se corta en
+  50 entradas sin "ver más".
+- Sin breadcrumbs en los niveles profundos (empresa > actividad > reporte). Al menú le falta
+  `aria-current="page"`, y al portal un `<main>` y el enlace "saltar al contenido".
+- El "PDF" del reporte es `window.print()`: depende de elegir "Guardar como PDF".
+
+### Participante
+
+- La carga de la escena no muestra texto ni spinner ni `aria-busy`, y `/mision` no tiene
+  `loading.tsx` ni `error.tsx` propios.
+- Las animaciones del canvas (intro, `playIntro`, `playGoodPractice`) ignoran
+  `prefers-reduced-motion`; el CSS sí lo respeta.
+- Las ventanas del jugador de escenas usan `role="dialog"` pero no atrapan el foco ni tienen
+  `aria-modal`, y la de la pregunta no oscurece el fondo. Se podría reusar el enfoque de
+  `LeaveConfirm`.
+- El cursor `zoom-in` sobre la escena engaña: hacer clic marca un riesgo (`SceneCanvas.tsx`).
+- El checkbox de la política es nativo y diminuto en la landing, y un código mal escrito solo da
+  "Código no encontrado".
+- `ChallengeGame.tsx` (`/jugar`) no muestra "Reconectando…".
+- `src/app/error.tsx` enlaza a `/`; si el error viene de `/mision` y hay cookie, la portada
+  redirige otra vez a `/mision`.
+
+### Módulo en vivo (pulido)
+
+- El celular muestra la medalla antes de que el proyector termine el suspenso del podio.
+- El error del jugador no se borra al pasar de pantalla (`setError(null)` solo corre al
+  responder).
+- Sin Wake Lock: el celular puede bloquear la pantalla en el lobby o en el ranking.
+- El aviso de conexión no cubre el estado `failed` ni "Hay demoras…".
+- Apodos sin generador ni filtro de groserías; un duplicado se rechaza sin sugerir otro.
+- Accesibilidad: el resultado personal no tiene `aria-live`, el celular no dice cuál era la
+  correcta y falta el modo alto contraste.
+- De la guía también quedan: modo sin tiempo y rotación de música del lobby.
+
 ## Seguridad: vulnerabilidad crítica en Next
 
 Detectado el 2026-10-06 con `npm audit`. Sin resolver: falta que Mike autorice la actualización,
