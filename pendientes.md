@@ -53,3 +53,59 @@ Casos vistos:
 
 **Recomendación:** empezar por la 1 y la 2, que no tocan el diseño, y aplicar la 3 solo
 donde la lupa no alcance.
+
+## Seguridad: vulnerabilidad crítica en Next
+
+Detectado el 2026-10-06 con `npm audit`. Sin resolver: falta que Mike autorice la actualización,
+porque afecta a toda la app.
+
+- **Qué:** ejecución remota de código en `next/og` ImageResponse
+  ([GHSA-vcvr-r3jv-pc5j](https://github.com/advisories/GHSA-vcvr-r3jv-pc5j)). Afecta de 16.2.0
+  a 16.3.5; el proyecto usa 16.3.5.
+- **Dónde lo usa el proyecto:** `src/app/opengraph-image.tsx`, `src/app/icon.tsx`,
+  `src/app/apple-icon.tsx` y las rutas `src/app/pwa-icon-*`.
+- **Arreglo:** actualizar `next` y `eslint-config-next` a 16.3.8 (16.3.6 es el mínimo), correr
+  tests, lint y build, y revisar las imágenes OG y los íconos.
+- El mismo audit marca altas en dependencias de desarrollo (`braces`, `micromatch`,
+  `fast-glob` vía `eslint-config-next`) y en `sharp`, `http-cache-semantics` y
+  `source-map-js`. Revisarlas con la actualización de Next.
+
+## Bricks Serious Play (juego de ladrillos 3D)
+
+Investigación en `docs/investigacion-construccion-3d.md`, plan en `docs/plan-construccion-3d.md`.
+Fase 1 (banco de pruebas de render en `/admin/escena/ladrillos`) hecha en local el 2026-10-06.
+
+### Para cerrar la fase 1
+
+1. **Medir en celulares reales.** Solo se verificó en Chromium sin tarjeta gráfica, donde los FPS
+   no valen. En cada teléfono: abrir la página, tocar "Orbitar (medir FPS)" unos 10 s y luego
+   "Copiar reporte", con 1.500 ladrillos en nivel medio.
+   - Equipos: un Android de gama media (Redmi Note o Galaxy A5x), un iPhone 11 o 12 y, si se
+     consigue, un Galaxy A0x como piso.
+   - Criterio de paso: 50 FPS o más orbitando, 40 draw calls o menos, primera imagen en menos
+     de 3 s en 4G.
+   - Falta decidir cómo abrirla desde el celular: red local con `next dev`
+     (`http://<IP-del-PC>:3000/admin/escena/ladrillos`, cifras algo peores que en producción)
+     o un preview en Vercel (cifras reales, pero es un despliegue: necesita autorización).
+2. **Bajar el nivel alto.** Con 1.500 ladrillos ya da 969.000 triángulos y el presupuesto es de
+   1 millón con 3.000. La palanca son los studs lejanos (menos segmentos o normal map de studs
+   según la distancia). Medio con 3.000 también da 795.000.
+3. **Actualizar `/admin/docs`** (RF/RNF/kanban) al cerrar la fase.
+
+### Decisiones abiertas
+
+- **Bisagras por pasos.** Propuesta: subensamblajes con su propia grilla unidos por una bisagra
+  que gira por pasos fijos (15° o 22,5°), nunca libre. Falta que Mike diga si entra como fase
+  propia del plan. Si entra, el modelo de datos de la fase 2 debe prepararse desde el inicio.
+- **Nombre.** BRICKS SERIOUS PLAY elegido; "Serious Play" es parte de la marca registrada
+  LEGO SERIOUS PLAY. Revisión con abogado antes del lanzamiento público (fase 8).
+- **Retos de fábrica** del catálogo inicial y si alguno es para un cliente concreto.
+- **Votación:** si el anfitrión puede saltarla en eventos cortos.
+
+### Notas para retomar
+
+- Sin React Three Fiber: el lint del React Compiler prohíbe mutar objetos de three desde hooks.
+  El motor es three puro en `src/components/bricks/lab/engine.ts`.
+- Capturas: `.claude-tmp/lab/shot.mjs` (guarda la sesión en `auth.json`). El login del admin
+  permite 5 intentos por usuario cada 15 min y cada intento bloqueado reinicia la ventana.
+- Build local sin tocar la base de producción: `set -a; . ./.env.local; set +a; npx next build`.
