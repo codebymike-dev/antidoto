@@ -52,8 +52,17 @@ export function proposePlacement(world: BrickWorld, hit: Hit, partId: number, ro
     if (yy < 0) break;
     const pl: Placement = { part: partId, rot, x, y: yy, z };
     if (!world.collides(pl, ignore)) {
-      const supported = world.isSupported(pl, ignore);
-      return { ...pl, ok: supported, problem: supported ? undefined : "sin apoyo" };
+      if (world.isSupported(pl, ignore)) return { ...pl, ok: true };
+      // Sin apoyo al costado de algo: la pieza "cae" hasta el primer lugar donde encaje, como
+      // si se soltara. La altura se infiere, nunca se le pide al usuario (investigación, 3.1).
+      if (!down) {
+        for (let fall = yy - 1; fall >= 0; fall--) {
+          const below: Placement = { ...pl, y: fall };
+          if (world.collides(below, ignore)) break;
+          if (world.isSupported(below, ignore)) return { ...below, ok: true };
+        }
+      }
+      return { ...pl, ok: false, problem: "sin apoyo" };
     }
   }
   return { part: partId, rot, x, y: Math.max(0, y), z, ok: false, problem: "ocupado" };

@@ -5,6 +5,7 @@ import { History, apply, invert, type Op } from "./ops.ts";
 import { PARTS, part, partByKey } from "./parts.ts";
 import { proposePlacement } from "./place.ts";
 import { castRay } from "./ray.ts";
+import { partTransform, rotatePoint } from "./rotation.ts";
 import { PLATE_H } from "./units.ts";
 import { BrickWorld, footprint, localCell, type Brick, type Rot } from "./world.ts";
 
@@ -33,6 +34,21 @@ test("cada rotación recorre todas las celdas de la pieza una sola vez", () => {
       const seen = new Set<number>();
       for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) seen.add(localCell(p, rot, i, k));
       assert.equal(seen.size, p.w * p.d, `${p.key} rot ${rot}`);
+    }
+});
+
+test("el giro del dibujo coincide con el del motor", () => {
+  for (const p of PARTS)
+    for (const rot of [0, 1, 2, 3] as Rot[]) {
+      const t = partTransform(p, rot);
+      const { w, d } = footprint(p, rot);
+      for (let i = 0; i < w; i++)
+        for (let k = 0; k < d; k++) {
+          // El centro de la celda local que el motor asigna a (i, k) debe dibujarse en (i, k).
+          const cell = localCell(p, rot, i, k);
+          const [x, z] = rotatePoint(t, (cell % p.w) + 0.5, Math.floor(cell / p.w) + 0.5);
+          assert.deepEqual([x, z], [i + 0.5, k + 0.5], `${p.key} rot ${rot} celda ${i},${k}`);
+        }
     }
 });
 
@@ -130,6 +146,17 @@ test("la propuesta apila, pega de lado y sube si choca", () => {
   w.add(brick("ladrillo-1x1", 1, 3, 0));
   const lifted = proposePlacement(w, castRay(w, [0.5, 10, 0.5], [0, -1, 0])!, P("ladrillo-2x2"), 0, [0, 0]);
   assert.deepEqual([lifted.x, lifted.y, lifted.z, lifted.ok], [0, 6, 0, true]);
+});
+
+test("de lado y sin apoyo, la pieza cae hasta donde encaja", () => {
+  const w = new BrickWorld(16);
+  w.add(brick("ladrillo-1x1", 4, 0, 4));
+  w.add(brick("ladrillo-1x1", 4, 3, 4));
+  // Tocando el costado del ladrillo de arriba, al lado no hay nada: cae hasta la base.
+  const hit = castRay(w, [8.5, 4.5 * PLATE_H, 4.5], [-1, 0, 0])!;
+  assert.equal(hit.brickId !== undefined, true);
+  const p = proposePlacement(w, hit, P("placa-1x1"), 0, [0, 0]);
+  assert.deepEqual([p.x, p.y, p.z, p.ok], [5, 0, 4, true]);
 });
 
 test("la propuesta avisa por qué no cabe", () => {

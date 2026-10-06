@@ -113,14 +113,22 @@ fecha y pueden haberse movido.
   la prueba automática. Arreglo: reservar el ancho de los controles o no reacomodar el footer.
 - Probar todo en celulares reales, sobre todo el aviso del host con el bloqueo de pantalla.
 
+### Hecho después de los cinco puntos (2026-10-06)
+
+- **Portal en el celular.** Por debajo de 860 px el menú es un cajón con botón "Menú" (foco
+  adentro al abrir, Escape lo cierra, tocar un enlace lo cierra). Sin desborde horizontal a
+  390 px. El contenido del portal ahora va en `<main>`.
+- **Ventanas del jugador de escenas.** `ModalWindow.tsx`: `aria-modal`, Tab atrapado y foco
+  devuelto al cerrar (o a "Zonas"). El cursor de la escena es la mano, no la lupa. La ventana
+  de la pregunta sigue sin oscurecer el fondo a propósito: se responde mirando la escena.
+
 ### Siguiente
 
-Los cinco puntos acordados están hechos. Lo que queda está abajo, por área.
+Lo que queda está abajo, por área.
 
 ### Portal admin
 
 - `ConfirmDeleteButton` vuelve solo al estado normal a los 3 s, sin "Cancelar" ni `aria-live`.
-- El menú lateral mide 250 px fijos, sin hamburguesa ni breakpoint: en el celular no se usa bien.
 - Login sin "¿Olvidaste tu contraseña?" ni aviso de a quién pedirla. La contraseña generada no
   obliga a cambiarse en el primer ingreso.
 - Onboarding del admin de empresa: el paso 1 dice "Antídoto le asigna" sin contacto ni botón
@@ -137,10 +145,6 @@ Los cinco puntos acordados están hechos. Lo que queda está abajo, por área.
   `loading.tsx` ni `error.tsx` propios.
 - Las animaciones del canvas (intro, `playIntro`, `playGoodPractice`) ignoran
   `prefers-reduced-motion`; el CSS sí lo respeta.
-- Las ventanas del jugador de escenas usan `role="dialog"` pero no atrapan el foco ni tienen
-  `aria-modal`, y la de la pregunta no oscurece el fondo. Se podría reusar el enfoque de
-  `LeaveConfirm`.
-- El cursor `zoom-in` sobre la escena engaña: hacer clic marca un riesgo (`SceneCanvas.tsx`).
 - El checkbox de la política es nativo y diminuto en la landing, y un código mal escrito solo da
   "Código no encontrado".
 - `ChallengeGame.tsx` (`/jugar`) no muestra "Reconectando…".
@@ -179,7 +183,10 @@ porque afecta a toda la app.
 
 Investigación en `docs/investigacion-construccion-3d.md`, plan en `docs/plan-construccion-3d.md`.
 Fase 1 (banco de pruebas de render en `/admin/escena/ladrillos`) hecha en local el 2026-10-06.
-Fase 2 (motor de construcción en `src/lib/bricks/`) hecha el mismo día. Sigue la fase 3.
+Fase 2 (motor de construcción en `src/lib/bricks/`) hecha el mismo día. Fase 3 (constructor
+jugable en `/admin/escena/construir`) hecha en local el mismo día; falta probarla con gente.
+Fase 4 (inclinadas, redondas, ventanas, puerta y vidrio) hecha el mismo día. Sigue la fase 5,
+que trae tablas nuevas: avisar antes de migrar producción.
 
 ### Para cerrar la fase 1
 
@@ -198,6 +205,16 @@ Fase 2 (motor de construcción en `src/lib/bricks/`) hecha el mismo día. Sigue 
    ciudad de prueba (82x82 studs); el diorama real es de 16x16 a 32x32. Medirlo de nuevo en la
    fase 3 y, si hace falta, simplificar los studs según la distancia.
 3. **Actualizar `/admin/docs`** (RF/RNF/kanban) al cerrar la fase.
+
+### Para cerrar la fase 3
+
+1. **Probar los gestos táctiles en celulares reales.** En Chromium emulado solo se probaron
+   toques, no arrastres con el dedo: arrastrar desde la bandeja, arrastrar el fantasma,
+   mantener para levantar una pieza, pellizcar. También el clic y la vibración en Android, y el
+   sonido en iOS con el interruptor de silencio.
+2. **Prueba con 5 personas sin explicación** (plan, fase 3): anotar dónde se traban.
+3. **Lupa para piezas diminutas:** decidir si hace falta después de esas pruebas.
+4. **Actualizar `/admin/docs`** al cerrar las fases 1 a 3.
 
 ### Decisiones abiertas
 

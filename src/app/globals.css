@@ -662,3 +662,140 @@ button {
 .assign-option:hover { transform: translateY(-2px); }
 .assign-option:has(input:checked) { box-shadow: 0 0 0 2.5px #1C99CA, 0 10px 26px rgba(12,92,125,0.14); }
 .assign-option:has(input:focus-visible) { outline: 2px solid #0C5C7D; outline-offset: 3px; }
+
+/* --- Marco del portal admin (AdminShell) ------------------------------------------
+   En escritorio, menú lateral fijo de 250 px. Por debajo de 860 px el menú pasa a ser un
+   cajón que se abre con el botón "Menú" de la barra superior. */
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-nav {
+  width: 250px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  gap: 26px;
+}
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  padding: 36px 40px;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.admin-menu-button,
+.admin-topbar-logo,
+.admin-nav-backdrop {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .admin-shell {
+    display: block;
+  }
+
+  .admin-nav {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(280px, 85vw);
+    overflow-y: auto;
+    transform: translateX(-100%);
+    /* Oculto también para el teclado y los lectores de pantalla mientras está cerrado. */
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+  }
+
+  .admin-nav.is-open {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.25s ease;
+    box-shadow: 0 0 40px rgba(15, 24, 29, 0.35);
+  }
+
+  .admin-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: rgba(15, 24, 29, 0.45);
+  }
+
+  .admin-main {
+    padding: 14px 16px 32px;
+  }
+
+  .admin-topbar {
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .admin-menu-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid #cfeffb;
+    background: #fff;
+    color: #0f181d;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .admin-topbar-logo {
+    display: block;
+    height: 34px;
+    margin-right: auto;
+  }
+}
+
+/* Tres rayas dibujadas con CSS: el ícono de menú. */
+.admin-menu-icon,
+.admin-menu-icon::before,
+.admin-menu-icon::after {
+  display: block;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.admin-menu-icon {
+  position: relative;
+}
+
+.admin-menu-icon::before,
+.admin-menu-icon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+
+.admin-menu-icon::before {
+  top: -5px;
+}
+
+.admin-menu-icon::after {
+  top: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-nav,
+  .admin-nav.is-open {
+    transition: none;
+  }
+}

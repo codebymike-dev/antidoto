@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions";
@@ -35,6 +35,23 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, ownCompa
     pathname.startsWith("/admin/empresas") || pathname.startsWith("/admin/asignar") || (isEmpresa && pathname.startsWith("/admin/actividades"));
   const navHomeOn = !navGamesOn && !navDocsOn && !navSettingsOn && !navLibraryOn && !navCompaniesOn && !navAccountOn;
   const roleInitial = roleSubtitle === "Acceso total" ? "S" : roleSubtitle.charAt(0).toUpperCase();
+  // En pantallas angostas el menú es un cajón (ver .admin-nav en globals.css).
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    // Al abrir, el foco entra al cajón; Escape lo cierra y devuelve el foco al botón.
+    navRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setMenuOpen(false);
+      menuButton.current?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   function navStyle(active: boolean) {
     return {
@@ -51,17 +68,16 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, ownCompa
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F7FAFB" }}>
+    <div className="admin-shell" style={{ background: "#F7FAFB" }}>
+      {menuOpen && <div className="admin-nav-backdrop" aria-hidden onClick={() => setMenuOpen(false)} />}
       <nav
-        style={{
-          width: 250,
-          flexShrink: 0,
-          background: colors.ink,
-          display: "flex",
-          flexDirection: "column",
-          padding: "24px 16px",
-          gap: 26,
-        }}
+        id="admin-nav"
+        ref={navRef}
+        aria-label="Menú del portal"
+        className={menuOpen ? "admin-nav is-open" : "admin-nav"}
+        style={{ background: colors.ink }}
+        // Tocar un enlace del cajón lo cierra: la página nueva queda a la vista.
+        onClick={(e) => (e.target as HTMLElement).closest("a") && setMenuOpen(false)}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -210,12 +226,26 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, ownCompa
         </div>
       </nav>
 
-      <div style={{ flex: 1, padding: "36px 40px", minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginBottom: 24 }}>
+      <main className="admin-main">
+        <div className="admin-topbar">
+          {/* Solo en pantallas angostas: abre el menú y muestra la marca, que ya no está a la izquierda. */}
+          <button
+            ref={menuButton}
+            type="button"
+            className="admin-menu-button"
+            aria-expanded={menuOpen}
+            aria-controls="admin-nav"
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            <span aria-hidden className="admin-menu-icon" />
+            Menú
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO_SRC} alt="Antídoto" className="admin-topbar-logo" />
           <NotificationsBell notifications={notifications} />
         </div>
         {children}
-      </div>
+      </main>
       {/* useSearchParams pide un Suspense alrededor. */}
       <Suspense fallback={null}>
         <Toaster />

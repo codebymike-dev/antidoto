@@ -1155,11 +1155,14 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
       {
         id: "RNF-20",
         titulo: "Foco visible y navegación por teclado",
-        descripcion: "Enlaces y botones muestran foco visible al navegar con teclado.",
+        descripcion:
+          "Enlaces y botones muestran foco visible al navegar con teclado. Las ventanas modales del jugador de escenas (pregunta, resultado, zonas, salir, ficha, cierre) llevan aria-modal, no dejan escapar el Tab y al cerrarse devuelven el foco a quien las abrió (o a \"Zonas\" si ese botón ya no existe). Salir de la misión usa <dialog> nativo.",
         prioridad: "media",
         estado: "parcial",
-        origen: "src/app/globals.css",
-        notas: "Falta una revisión completa con lector de pantalla, sobre todo en el editor de juegos.",
+        origen: "src/app/globals.css, src/components/experience/ModalWindow.tsx, src/components/LeaveConfirm.tsx",
+        verificacion: "Probado con teclado en Playwright el 2026-10-06: Tab y Shift+Tab no salen de ninguna ventana y Escape devuelve el foco.",
+        notas:
+          "El tutorial y la bienvenida de Ramiro no son modales a propósito: piden tocar la escena mientras se ven. Falta una revisión completa con lector de pantalla, sobre todo en el editor de juegos.",
       },
       {
         id: "RNF-21",
@@ -1207,10 +1210,10 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
         id: "RNF-22",
         titulo: "Responsive: celular, portátil y proyector",
         descripcion:
-          "La landing, la misión y el jugador en vivo se usan desde el celular; el portal desde portátil; el host se ve bien en un proyector.",
+          "La landing, la misión y el jugador en vivo se usan desde el celular; el portal desde portátil y también desde el celular; el host se ve bien en un proyector.",
         prioridad: "alta",
         estado: "parcial",
-        notas: "Landing, misión, escenas y jugador en vivo son responsive (desde el 2026-10-01 el celular acostado usa el diseño de celular). Falta probarlos en celulares y en un proyector reales.",
+        notas: "Landing, misión, escenas y jugador en vivo son responsive (desde el 2026-10-01 el celular acostado usa el diseño de celular). Desde el 2026-10-06, por debajo de 860 px el menú del portal es un cajón con botón \"Menú\" (.admin-nav en globals.css); probado a 390 px sin desborde horizontal en inicio, empresa, juegos, ajustes y biblioteca. La tabla de participantes de una empresa se desliza de lado dentro de su tarjeta. Falta probarlos en celulares y en un proyector reales.",
       },
       {
         id: "RNF-23",

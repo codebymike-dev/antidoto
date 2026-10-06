@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import styles from "./player.module.css";
 import PixelIcon from "./PixelIcon";
+import ModalWindow from "./ModalWindow";
 import { sceneSound } from "./sound";
 import { LOGO_SRC } from "@/lib/theme";
 import { CoBrand } from "@/components/BrandLogo";
@@ -103,7 +104,7 @@ export default function TopBar({ brand, title, sub, grains, found, total, spotPu
       {confirmExit && exitAction && (
         <>
           <div className={styles.dimFixed} onClick={() => setConfirmExit(false)} />
-          <section className={`${styles.window} ${styles.dialogFixed}`} role="dialog" aria-labelledby="xp-exit-title">
+          <ModalWindow className={`${styles.window} ${styles.dialogFixed}`} role="dialog" aria-labelledby="xp-exit-title">
             <div className={`${styles.winHead} ${styles.winHeadWarn}`}>
               <span className={styles.winTitle} id="xp-exit-title">
                 ¿Salir de la ruta?
@@ -132,7 +133,7 @@ export default function TopBar({ brand, title, sub, grains, found, total, spotPu
                 </form>
               </div>
             </div>
-          </section>
+          </ModalWindow>
         </>
       )}
     </header>

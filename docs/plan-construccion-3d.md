@@ -122,6 +122,35 @@ El corazón del producto. Se prueba con 5 personas sin explicación antes de seg
 - Accesibilidad: teclado, `aria-live`, reduced motion, válido e inválido por forma (§3.8).
 - Botón de silencio y modo foto básico.
 
+**Estado (2026-10-06)**: hecho en local en `/admin/escena/construir` (vista previa para
+admins, nada se guarda). Verificado en Chromium sin tarjeta gráfica, en celular emulado
+(390x844) y escritorio (1280x800). Falta la prueba con 5 personas y en celulares reales.
+
+- `src/components/bricks/stage.ts`: escenario común (render, luz, cámara, postproceso, dibujo
+  por demanda, foto). El banco de pruebas también lo usa ahora.
+- `builder/engine.ts`: controlador fuera de React, leído con `useSyncExternalStore`. Se crea
+  antes del lienzo y se monta y desmonta (modo estricto, cambio de nivel).
+- `builder/view.ts`: cuerpos en BatchedMesh incremental, studs recalculados por cambio,
+  fantasma (color real y contorno sólido si cabe; gris, discontinuo y motivo si no), sombra bajo
+  el fantasma, contorno doble de selección, caída con rebote de 140 ms (sin ella con reduced
+  motion), piezas sueltas aclaradas.
+- Gestos: dedo sobre el fantasma mueve la pieza; en el vacío gira la cámara; toque lejos del
+  fantasma lo mueve ahí; toque sobre el fantasma o "Colocar" coloca; mantener 450 ms levanta
+  una pieza; arrastrar desde la bandeja con el fantasma 56 px sobre el dedo. Ratón: el fantasma
+  sigue al cursor y el clic coloca. Teclado completo (R, flechas, Enter, Ctrl+Z, Supr, Ctrl+D,
+  Esc, F, ?).
+- `sound.ts`: clic de plástico sintetizado (ruido con pasabanda más golpe grave, ±7 % de tono,
+  más agudo arriba), sonidos de coger, girar, no cabe, quitar y deshacer; vibración de 10 ms en
+  Android; silencio recordado.
+- Interfaz: bandeja con miniaturas 3D en el color activo (ladrillos, placas, tejas), 12 colores
+  esenciales y panel por familias, barra de acciones que cambia con la selección (girar,
+  pintar, mover, duplicar, eliminar), aviso con "Deshacer", guía de 3 pasos, pista a los 20 s de
+  inactividad, ayuda de controles, foto PNG, `aria-live` en cada acción.
+- Peso: unos 318 KB gzip con el motor 3D.
+
+No se hizo todavía: la lupa para piezas diminutas (decidir tras probar en celular real) y la
+prueba con 5 personas.
+
 ### Fase 4: catálogo completo de piezas
 
 - Básicas: ladrillos 1x1 a 2x8, placas 1x1 a 8x8, tejas lisas.
@@ -132,6 +161,23 @@ El corazón del producto. Se prueba con 5 personas sin explicación antes de seg
   mapa de entorno en lugar de refracción real.
 - Miniaturas 3D en la bandeja generadas con el mismo motor.
 - Se vuelve a medir el banco de pruebas con el catálogo completo.
+
+**Estado (2026-10-06)**: hecho en local y verificado en Chromium (escritorio y celular emulado).
+
+- `src/components/bricks/part-geometry.ts`: inclinadas como perfil extruido con canto biselado
+  (fila alta plana con studs, rampa hasta un labio de una placa), redondas y cilindro torneados
+  con bordes redondeados, ventanas y puerta como marco con vidrio aparte (la puerta con hoja,
+  travesaño y manija). Todo indexado, como exige el BatchedMesh.
+- `src/lib/bricks/rotation.ts`: el giro del dibujo, con un test que lo compara contra
+  `localCell` en las 38 piezas y las 4 rotaciones.
+- El vidrio va siempre en Cristal Celeste en la capa translúcida, sea cual sea el color del
+  marco. En celular es opacidad más reflejo; en ultra, refracción real.
+- La bandeja suma Inclinadas, Redondas y Ventanas, con miniaturas de la geometría real.
+- Mejora del motor encontrada al probar: al tocar el costado de una pieza donde no hay apoyo,
+  la pieza nueva cae hasta el primer lugar donde encaja, en vez de quedar "sin apoyo".
+
+Queda para después: el rayo choca con la caja completa de cada celda, así que tocar el aire
+sobre la rampa de una inclinada cuenta como tocar la inclinada.
 
 ### Fase 5: biblioteca y modo individual
 

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./player.module.css";
 import PixelIcon from "./PixelIcon";
+import ModalWindow from "./ModalWindow";
 import SceneThumb from "./SceneThumb";
 import TopBar from "./TopBar";
 import { sceneSound } from "./sound";
@@ -553,7 +554,7 @@ function ProfileWindow({
   const municipios = DEPARTAMENTOS.find((d) => d.code === dept)?.municipios ?? [];
 
   return (
-    <section className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-profile-title">
+    <ModalWindow className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-profile-title">
       <div className={styles.winHead}>
         <PixelIcon name="ramiro" size={16} />
         <span className={styles.winTitle} id="xp-profile-title">
@@ -629,6 +630,6 @@ function ProfileWindow({
           {pending ? "Guardando…" : "Guardar y seguir"}
         </button>
       </form>
-    </section>
+    </ModalWindow>
   );
 }

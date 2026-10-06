@@ -94,7 +94,8 @@ export default function SceneCanvas({ sceneKey, onScene, onSay, onTap, maxHeight
     canvas.style.imageRendering = (box.clientWidth / W) * v.z < 1.5 ? "auto" : "pixelated";
     // Con la lupa puesta un dedo mueve la vista; sin ella, deja hacer scroll a la página.
     canvas.style.touchAction = v.z > 1 ? "none" : "pan-y";
-    canvas.style.cursor = v.z > 1 ? "grab" : "zoom-in";
+    // Tocar marca un riesgo, no acerca: la mano de enlace, no la lupa.
+    canvas.style.cursor = v.z > 1 ? "grab" : "pointer";
     if (changed) zoomRef.current?.(v.z);
   }
 
@@ -293,7 +294,7 @@ export default function SceneCanvas({ sceneKey, onScene, onSay, onTap, maxHeight
               height: "calc(var(--vz, 1) * 100%)",
               left: "calc(var(--vx, 0) * var(--vz, 1) * -100%)",
               top: "calc(var(--vy, 0) * var(--vz, 1) * -100%)",
-              cursor: "zoom-in",
+              cursor: "pointer",
               touchAction: "pan-y",
               userSelect: "none",
               WebkitUserSelect: "none",

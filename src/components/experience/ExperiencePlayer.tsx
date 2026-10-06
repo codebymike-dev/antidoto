@@ -17,6 +17,7 @@ import { answerExperienceRisk, checkActivity, revealExperienceRisks, type Answer
 import { withTimeout } from "@/lib/with-timeout";
 import { touchTolerance } from "./touch";
 import FinishRouteButton from "./FinishRouteButton";
+import ModalWindow from "./ModalWindow";
 import { ConnectionBanner, networkMessage, useOnline } from "./connection";
 import { brandPalette, INK, mix, type PublicBrand } from "@/lib/brand-palette";
 import type { ProfileConfig } from "@/lib/profile";
@@ -848,7 +849,7 @@ function StationPlayer({
                 )}
 
                 {askRisk && ask && (
-                  <section
+                  <ModalWindow
                     className={`${styles.window} ${styles.questionWin}`}
                     style={ask.side === "right" ? { right: 12 } : { left: 12 }}
                     role="dialog"
@@ -896,13 +897,13 @@ function StationPlayer({
                         </p>
                       )}
                     </div>
-                  </section>
+                  </ModalWindow>
                 )}
 
                 {blocked && blocked.reason !== "other" && (
                   <>
                     <div className={styles.dim} />
-                    <section className={`${styles.window} ${styles.dialogCenter}`} role="alertdialog" aria-labelledby="xp-blocked-title" aria-describedby="xp-blocked-body">
+                    <ModalWindow className={`${styles.window} ${styles.dialogCenter}`} role="alertdialog" aria-labelledby="xp-blocked-title" aria-describedby="xp-blocked-body">
                       <div className={`${styles.winHead} ${styles.winHeadWarn}`}>
                         <span className={styles.winTitle} id="xp-blocked-title">
                           {BLOCK_COPY[blocked.reason].title}
@@ -927,12 +928,12 @@ function StationPlayer({
                           </form>
                         ) : null}
                       </div>
-                    </section>
+                    </ModalWindow>
                   </>
                 )}
 
                 {outcome && (
-                  <section
+                  <ModalWindow
                     className={`${styles.window} ${styles.questionWin}`}
                     style={{ right: 12 }}
                     role="dialog"
@@ -973,13 +974,13 @@ function StationPlayer({
                         {found >= total && phase === "juego" ? "Terminar la búsqueda" : "Seguir buscando"}
                       </button>
                     </div>
-                  </section>
+                  </ModalWindow>
                 )}
 
                 {zoneList && (
                   <>
                     <div className={styles.dim} onClick={() => setZoneList(null)} />
-                    <section className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-zones-title">
+                    <ModalWindow className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-zones-title">
                       <div className={styles.winHead}>
                         <span className={styles.winTitle} id="xp-zones-title">
                           Zonas del momento {moment}
@@ -1009,14 +1010,14 @@ function StationPlayer({
                           ))}
                         </div>
                       </div>
-                    </section>
+                    </ModalWindow>
                   </>
                 )}
 
                 {confirmReveal && (
                   <>
                     <div className={styles.dim} onClick={() => setConfirmReveal(false)} />
-                    <section
+                    <ModalWindow
                       className={`${styles.window} ${styles.dialogCenter}`}
                       role="dialog"
                       aria-labelledby="xp-reveal-title"
@@ -1053,14 +1054,14 @@ function StationPlayer({
                           </button>
                         </div>
                       </div>
-                    </section>
+                    </ModalWindow>
                   </>
                 )}
 
                 {phase === "completo" && !outcome && (
                   <>
                     <div className={styles.dim} />
-                    <section className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-done-title">
+                    <ModalWindow className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-done-title">
                       <div className={`${styles.winHead} ${styles.winHeadGood}`}>
                         <span className={styles.winTitle} id="xp-done-title">
                           {spotted === total ? `¡Encontraste los ${total} riesgos!` : "Estos eran los riesgos"}
@@ -1077,14 +1078,14 @@ function StationPlayer({
                           Ver cómo se hace bien
                         </button>
                       </div>
-                    </section>
+                    </ModalWindow>
                   </>
                 )}
 
                 {phase === "resumen" && (
                   <>
                     <div className={styles.dim} />
-                    <section className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-end-title">
+                    <ModalWindow className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-end-title">
                       <div className={`${styles.winHead} ${styles.winHeadGood}`}>
                         <span className={styles.winTitle} id="xp-end-title">
                           ¡Estación completada!
@@ -1136,7 +1137,7 @@ function StationPlayer({
                           Ver otra vez la forma correcta
                         </button>
                       </div>
-                    </section>
+                    </ModalWindow>
                   </>
                 )}
               </div>
@@ -1203,6 +1204,8 @@ function StationPlayer({
                   className={`${styles.iconButton} ${coachSpot === "help" ? styles.spot : ""}`}
                   onClick={openZones}
                   disabled={phase !== "juego" || windowOpen}
+                  // Adónde vuelve el foco al cerrar una ventana cuyo botón ya no existe (ModalWindow).
+                  data-modal-fallback
                 >
                   <PixelIcon name="zonas" size={16} /> Zonas
                 </button>
