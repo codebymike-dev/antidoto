@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions";
@@ -8,7 +9,6 @@ import { BuildingIcon, DocIcon, GearIcon, HomeIcon, KeyIcon, LibraryIcon, Logout
 import NavPill from "@/components/motion/NavPill";
 import NotificationsBell from "./NotificationsBell";
 import Toaster from "./Toaster";
-import { Suspense } from "react";
 
 interface Props {
   roleTitle: string;

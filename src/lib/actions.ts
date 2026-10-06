@@ -286,7 +286,7 @@ export async function archiveCompany(formData: FormData) {
   await run("DELETE FROM sessions WHERE admin_user_id IN (SELECT id FROM admin_users WHERE company_id = ?)", [id]);
   await audit(`Empresa "${company.name}" archivada.`, user, id);
   revalidateCompany(id);
-  redirect("/admin/empresas");
+  redirect("/admin/empresas?aviso=empresa-archivada");
 }
 
 export async function restoreCompany(formData: FormData) {
@@ -298,7 +298,7 @@ export async function restoreCompany(formData: FormData) {
   await run("DELETE FROM company_archive WHERE company_id = ?", [id]);
   await audit(`Empresa "${company.name}" restaurada.`, user, id);
   revalidateCompany(id);
-  redirect(`/admin/empresas/${id}`);
+  redirect(`/admin/empresas/${id}?aviso=empresa-restaurada`);
 }
 
 export async function updateLegalText(formData: FormData) {

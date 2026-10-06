@@ -2,6 +2,8 @@ import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { listGames } from "@/lib/live-games";
 import { archiveGame, createGame, deleteGame, duplicateGame, launchMatch, restoreGame } from "@/lib/live-games-actions";
+import ActionForm from "@/components/admin/ActionForm";
+import ConfirmDeleteButton from "@/components/admin/ConfirmDeleteButton";
 import { canEditGame } from "@/lib/scope";
 import { colors, calSans } from "@/lib/theme";
 import { card, filledButton, tabButton, tabButtonActive } from "@/lib/styles";
@@ -211,16 +213,28 @@ export default async function JuegosPage({
                     </form>
                   )}
                   {editable && (
-                    <form action={archived ? restoreGame : archiveGame}>
+                    <ActionForm
+                      action={archived ? restoreGame : archiveGame}
+                      notice={
+                        archived
+                          ? `Listo: "${g.title}" está activo otra vez.`
+                          : `Listo: "${g.title}" quedó archivado. Lo encuentras en Archivados.`
+                      }
+                    >
                       <input type="hidden" name="id" value={g.id} />
-                      <button
-                        type="submit"
-                        className="btn-text"
-                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: colors.muted }}
-                      >
-                        {archived ? "Restaurar" : "Archivar"}
-                      </button>
-                    </form>
+                      {archived ? (
+                        <button
+                          type="submit"
+                          className="btn-text"
+                          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: colors.muted }}
+                        >
+                          Restaurar
+                        </button>
+                      ) : (
+                        // Segundo toque para confirmar, como archivar una empresa o quitar un código.
+                        <ConfirmDeleteButton confirmLabel="¿Archivar?">Archivar</ConfirmDeleteButton>
+                      )}
+                    </ActionForm>
                   )}
                   {editable && archived && <DeleteGameButton id={g.id} action={deleteGame} matches={g.matches} />}
                   <form action={duplicateGame}>

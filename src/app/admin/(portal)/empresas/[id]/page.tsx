@@ -15,6 +15,7 @@ import BrandLogo from "@/components/BrandLogo";
 import ConfirmDeleteButton from "@/components/admin/ConfirmDeleteButton";
 import CopyCode from "@/components/admin/CopyCode";
 import CodeShare from "@/components/admin/CodeShare";
+import ActionForm, { PendingButton } from "@/components/admin/ActionForm";
 import DropdownMenu from "@/components/admin/DropdownMenu";
 import ExpandableList from "@/components/admin/ExpandableList";
 import SavedToast from "@/components/admin/SavedToast";
@@ -297,12 +298,12 @@ export default async function EmpresaPage({
                 {a.participantes === 1 ? "participante" : "participantes"}
               </div>
               {isSuper && !company.archived && (
-                <form action={restoreCode}>
+                <ActionForm action={restoreCode} notice={`Listo: el código ${a.codigo} vuelve a funcionar y cuenta otra vez en los informes.`}>
                   <input type="hidden" name="codeId" value={a.id} />
-                  <button type="submit" className="btn-secondary" style={{ ...secondaryButton, height: 34 }}>
+                  <PendingButton className="btn-secondary" style={{ ...secondaryButton, height: 34 }} pendingLabel="Restaurando…">
                     Restaurar
-                  </button>
-                </form>
+                  </PendingButton>
+                </ActionForm>
               )}
             </div>
           ))}
@@ -467,17 +468,28 @@ function CodeOptions({ a }: { a: Assignment }) {
     >
       {a.estado !== "vencido" && (
         <>
-          <form action={setCodePaused}>
+          <ActionForm
+            action={setCodePaused}
+            notice={
+              a.estado === "pausado"
+                ? `Listo: el código ${a.codigo} está abierto otra vez.`
+                : `Listo: el código ${a.codigo} quedó pausado. Nadie puede jugar hasta que lo reanudes.`
+            }
+          >
             <input type="hidden" name="codeId" value={a.id} />
             <input type="hidden" name="paused" value={a.estado === "pausado" ? "0" : "1"} />
             <button type="submit" className="report-menu-item" style={menuButton}>
               {a.estado === "pausado" ? "Reanudar: que puedan volver a jugar" : "Pausar: que nadie pueda jugar por ahora"}
             </button>
-          </form>
+          </ActionForm>
           <div style={menuDivider} />
         </>
       )}
-      <form action={setCodeExpiry} style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 8 }}>
+      <ActionForm
+        action={setCodeExpiry}
+        notice={`Listo: guardamos el último día para jugar con el código ${a.codigo}.`}
+        style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 8 }}
+      >
         <input type="hidden" name="codeId" value={a.id} />
         <label style={{ fontSize: 12, fontWeight: 600, color: colors.accentDark }} htmlFor={`expira-${a.id}`}>
           Último día para jugar
@@ -490,16 +502,20 @@ function CodeOptions({ a }: { a: Assignment }) {
           style={{ height: 40, borderRadius: 10, border: `1.5px solid ${colors.border}`, padding: "0 10px", fontSize: 13.5 }}
         />
         <span style={{ fontSize: 11.5, color: colors.muted, lineHeight: 1.4 }}>Déjalo vacío para que no cierre nunca.</span>
-        <button type="submit" className="btn-filled" style={{ ...filledButton, height: 36, fontSize: 13 }}>
+        <PendingButton className="btn-filled" style={{ ...filledButton, height: 36, fontSize: 13 }}>
           Guardar fecha
-        </button>
-      </form>
+        </PendingButton>
+      </ActionForm>
       <div style={menuDivider} />
-      <form action={archiveCode} style={{ padding: "8px 10px" }}>
+      <ActionForm
+        action={archiveCode}
+        notice={`Listo: quitamos el código ${a.codigo}. Sus resultados se guardan en "Actividades quitadas", abajo.`}
+        style={{ padding: "8px 10px" }}
+      >
         <input type="hidden" name="codeId" value={a.id} />
         <ConfirmDeleteButton confirmLabel="Sí, quitar">Quitar este código</ConfirmDeleteButton>
         <p style={menuHint}>Deja de funcionar y sale de los informes. Los resultados se guardan y se puede restaurar.</p>
-      </form>
+      </ActionForm>
     </DropdownMenu>
   );
 }

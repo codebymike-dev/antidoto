@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ActionForm, { PendingButton } from "@/components/admin/ActionForm";
 import { portalLoginUrl, requireSuper } from "@/lib/admin-guard";
 import { getLegalTexts, listAuditLog, listPortalUsers } from "@/lib/queries";
 import { updateLegalText } from "@/lib/actions";
@@ -68,9 +69,10 @@ async function LegalTab() {
           { key: "terminos", title: "Términos y condiciones", body: legal.terminos, minHeight: 140 },
         ] as const
       ).map((t) => (
-        <form
+        <ActionForm
           key={t.key}
           action={updateLegalText}
+          notice={`Listo: guardamos ${t.key === "privacidad" ? "la política de datos" : "los términos y condiciones"}. Los participantes ya ven el texto nuevo.`}
           style={{ background: "#fff", borderRadius: 18, padding: 22, display: "flex", flexDirection: "column", gap: 10, boxShadow: colors.cardShadowSmall }}
         >
           <h3 style={{ ...calSans, fontSize: 16, margin: 0, color: colors.ink }}>{t.title}</h3>
@@ -89,10 +91,10 @@ async function LegalTab() {
               resize: "vertical",
             }}
           />
-          <button type="submit" className="btn-filled" style={{ ...filledButton, height: 42, alignSelf: "flex-start", padding: "0 18px", fontSize: 13.5 }}>
+          <PendingButton className="btn-filled" style={{ ...filledButton, height: 42, alignSelf: "flex-start", padding: "0 18px", fontSize: 13.5 }}>
             Guardar
-          </button>
-        </form>
+          </PendingButton>
+        </ActionForm>
       ))}
       <span style={{ fontSize: 12, color: colors.muted }}>
         Este texto se muestra a los participantes desde el enlace de política en la pantalla de ingreso.
