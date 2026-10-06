@@ -7,6 +7,8 @@ import { colors, LOGO_SRC } from "@/lib/theme";
 import { BuildingIcon, DocIcon, GearIcon, HomeIcon, KeyIcon, LibraryIcon, LogoutIcon, PlayIcon } from "@/components/icons";
 import NavPill from "@/components/motion/NavPill";
 import NotificationsBell from "./NotificationsBell";
+import Toaster from "./Toaster";
+import { Suspense } from "react";
 
 interface Props {
   roleTitle: string;
@@ -214,6 +216,10 @@ export default function AdminShell({ roleTitle, roleSubtitle, showDocs, ownCompa
         </div>
         {children}
       </div>
+      {/* useSearchParams pide un Suspense alrededor. */}
+      <Suspense fallback={null}>
+        <Toaster />
+      </Suspense>
     </div>
   );
 }
