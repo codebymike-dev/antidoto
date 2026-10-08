@@ -17,18 +17,18 @@ const JSON_LD = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://antidotocolombia.vercel.app/#organization",
+      "@id": "https://actividades.antidotocolombia.com/#organization",
       name: "Antídoto",
       url: "https://antidotocolombia.com",
       logo: "https://antidotocolombia.com/antidoto.svg",
     },
     {
       "@type": "WebSite",
-      "@id": "https://antidotocolombia.vercel.app/#website",
+      "@id": "https://actividades.antidotocolombia.com/#website",
       name: "Antídoto · Misiones interactivas",
-      url: "https://antidotocolombia.vercel.app",
+      url: "https://actividades.antidotocolombia.com",
       description: "Únete a la misión interactiva de tu equipo con el código de tu actividad.",
-      publisher: { "@id": "https://antidotocolombia.vercel.app/#organization" },
+      publisher: { "@id": "https://actividades.antidotocolombia.com/#organization" },
       inLanguage: "es-CO",
     },
   ],

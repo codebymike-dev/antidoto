@@ -19,7 +19,7 @@ const plexMono = IBM_Plex_Mono({
   weight: ["600"],
 });
 
-const SITE_URL = "https://antidotocolombia.vercel.app";
+const SITE_URL = "https://actividades.antidotocolombia.com";
 const SITE_TITLE = "Antídoto · Misiones interactivas";
 const SITE_DESCRIPTION =
   "Únete a la misión interactiva de tu equipo con el código de tu actividad.";
