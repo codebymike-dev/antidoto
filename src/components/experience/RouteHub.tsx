@@ -352,7 +352,7 @@ function RouteMap({
                   )}
                 </span>
                 <span className={styles.nodeLabel}>
-                  <span className={styles.nodeNum}>{s.station}</span>
+                  {stations.length > 1 && <span className={styles.nodeNum}>{s.station}</span>}
                   {s.title.split(":")[0]}
                 </span>
               </button>

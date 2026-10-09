@@ -254,7 +254,6 @@ function QuestionView({
 }) {
   const q = state.question!;
   const [word, setWord] = useState("");
-  const [showOptionText, setShowOptionText] = useState(false);
   const serverNow = useServerNow(offset, 250);
   const timeUp = serverNow !== null && remainingMs(q, offset, serverNow - offset) === 0;
   const introLeft = serverNow === null ? null : q.startedAt - serverNow;
@@ -285,16 +284,19 @@ function QuestionView({
   if (state.myAnswer) {
     const i = state.myAnswer.optionIndex;
     return (
-      <Centered>
-        {i !== null && (
-          <span className="live-pop" style={{ background: ANSWER_STYLES[i].bg, borderRadius: 20, padding: 20, display: "flex" }}>
-            <AnswerShape index={i} size={64} />
-          </span>
-        )}
-        {state.myAnswer.text && <span style={{ ...calSans, fontSize: 32 }}>“{state.myAnswer.text}”</span>}
-        <h1 style={title}>{sending ? "Enviando…" : "Respuesta enviada"}</h1>
-        <p style={subtitle}>{sending ? "Un momento" : "Esperando a los demás…"}</p>
-      </Centered>
+      <>
+        <QuestionHeader q={q} offset={offset} />
+        <Centered>
+          {i !== null && (
+            <span className="live-pop" style={{ background: ANSWER_STYLES[i].bg, borderRadius: 20, padding: 20, display: "flex" }}>
+              <AnswerShape index={i} size={64} />
+            </span>
+          )}
+          {state.myAnswer.text && <span style={{ ...calSans, fontSize: 32 }}>“{state.myAnswer.text}”</span>}
+          <h1 style={title}>{sending ? "Enviando…" : "Respuesta enviada"}</h1>
+          <p style={subtitle}>{sending ? "Un momento" : "Esperando a los demás…"}</p>
+        </Centered>
+      </>
     );
   }
 
@@ -308,18 +310,7 @@ function QuestionView({
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <CountdownRing question={q} offsetMs={offset} size={64} />
-        <button
-          type="button"
-          onClick={() => setShowOptionText((v) => !v)}
-          aria-pressed={showOptionText}
-          style={{ background: "none", border: "none", color: game.muted, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}
-        >
-          {showOptionText ? "Ocultar las respuestas" : "Ver las respuestas aquí"}
-        </button>
-      </div>
-      <p style={{ margin: 0, fontWeight: 600, fontSize: 18, lineHeight: 1.35 }}>{q.prompt}</p>
+      <QuestionHeader q={q} offset={offset} />
 
       {q.type === "nube" ? (
         <form
@@ -345,15 +336,7 @@ function QuestionView({
           </button>
         </form>
       ) : (
-        <div
-          style={{
-            flex: 1,
-            display: "grid",
-            gridTemplateColumns: q.options.length > 2 ? "1fr 1fr" : "1fr",
-            gridAutoRows: "1fr",
-            gap: 12,
-          }}
-        >
+        <div style={{ flex: 1, display: "grid", gridAutoRows: "1fr", gap: 12 }}>
           {q.options.map((text, i) => (
             <button
               key={i}
@@ -368,24 +351,35 @@ function QuestionView({
                 background: ANSWER_STYLES[i].bg,
                 color: ANSWER_STYLES[i].fg,
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
+                gap: 14,
                 cursor: "pointer",
                 boxShadow: "0 6px 0 rgba(0,0,0,0.3)",
                 touchAction: "manipulation",
-                padding: 12,
-                minHeight: 110,
+                padding: "12px 18px",
+                minHeight: 72,
+                textAlign: "left",
               }}
             >
-              <AnswerShape index={i} size={56} />
-              {showOptionText && <span style={{ fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{text}</span>}
+              <AnswerShape index={i} size={32} />
+              <span style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.25 }}>{text}</span>
             </button>
           ))}
         </div>
       )}
     </>
+  );
+}
+
+/** La pregunta queda arriba, a la vista, mientras se elige y mientras se espera. */
+function QuestionHeader({ q, offset }: { q: NonNullable<PlayerSnapshot["question"]>; offset: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <CountdownRing question={q} offsetMs={offset} size={60} />
+      <p style={{ ...calSans, margin: 0, flex: 1, background: "#fff", color: game.bg, borderRadius: 16, padding: "12px 16px", fontSize: 21, fontWeight: 400, lineHeight: 1.25 }}>
+        {q.prompt}
+      </p>
+    </div>
   );
 }
 
