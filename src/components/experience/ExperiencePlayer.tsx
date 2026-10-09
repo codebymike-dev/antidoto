@@ -100,7 +100,7 @@ function markTutorialSeen() {
 type View = { kind: "mapa"; celebrate: number | null } | { kind: "estacion"; index: number; wasDone: boolean; tutorial: boolean };
 
 /**
- * La serie se juega desde el mapa de la ruta: la primera vez Ramiro da la bienvenida (y
+ * La serie se juega desde el mapa de la ruta: la primera vez la guía de la serie da la bienvenida (y
  * se llena la ficha, si el código la pide); desde ahí se entra a cada estación, que se
  * abre al terminar la anterior. Las respuestas de todas las estaciones viven aquí.
  */
@@ -178,7 +178,7 @@ interface StationProps extends Props {
   experience: PublicExperience;
   results: Results;
   setResults: React.Dispatch<React.SetStateAction<Results>>;
-  /** Primera vez en la ruta: Ramiro enseña los controles antes de buscar. */
+  /** Primera vez en la ruta: el personaje de la estación enseña los controles antes de buscar. */
   tutorial: boolean;
   /** Vuelve al mapa de la ruta. */
   onBack: () => void;
@@ -353,7 +353,7 @@ function StationPlayer({
     "Ahora tú: toca donde brilla la estrella.",
   ];
   const coachSpot = coach === null ? null : (["stage", "moments", "help", "quest", "stage"] as const)[coach];
-  // Mientras Ramiro explica no se puede tocar la escena; en el último paso, sí.
+  // Mientras el personaje explica no se puede tocar la escena; en el último paso, sí.
 
   function coachNext() {
     if (coach === null) return;
@@ -756,6 +756,7 @@ function StationPlayer({
             <SceneCanvas
               ref={viewRef}
               sceneKey={experience.scene}
+              series={experience.series}
               onScene={begin}
               onSay={onSay}
               onTap={onTap}

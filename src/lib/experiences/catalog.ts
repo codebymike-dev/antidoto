@@ -744,12 +744,26 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
   ],
 };
 
+// Misión Juan Valdez: la misma tienda de la Ruta del café, sola, como actividad aparte.
+// Tiene su propia clave, así sus textos editados y sus resultados no se mezclan con la ruta.
+// Atiende Conchita, el personaje de Juan Valdez, con el uniforme de la marca.
+export const MISION_JV_TIENDA: ExperienceDef = {
+  ...(JSON.parse(JSON.stringify(RUTA_CAFE_TIENDA).replaceAll("Sara", "Conchita")) as ExperienceDef),
+  key: "mision-jv-tienda",
+  scene: "tienda-jv",
+  series: "Misión Juan Valdez",
+  station: 1,
+  description:
+    "Conchita, barista de Juan Valdez, abre la tienda, prepara las bebidas y atiende la hora pico. Encuentra los riesgos de la barra.",
+};
+
 export const EXPERIENCES: ExperienceDef[] = [
   RUTA_CAFE_FINCA,
   RUTA_CAFE_TRANSPORTE,
   RUTA_CAFE_TRILLADORA,
   RUTA_CAFE_TOSTION,
   RUTA_CAFE_TIENDA,
+  MISION_JV_TIENDA,
 ];
 
 export function getExperience(key: string): ExperienceDef | null {
@@ -786,6 +800,8 @@ export interface ExperienceActivity {
 const SERIES_DESCRIPTION: Record<string, string> = {
   "Ruta del café":
     "De la finca a la taza, una estación por cada eslabón de la cadena del café. Se juega completa con un solo código: al terminar una estación se abre la siguiente.",
+  "Misión Juan Valdez":
+    "Una sola parada: la tienda, donde el café llega a la taza. Conchita, barista de Juan Valdez, abre, prepara las bebidas y atiende la hora pico; hay que encontrar los riesgos de la barra.",
 };
 
 export function experienceActivities(): ExperienceActivity[] {

@@ -16,6 +16,8 @@ export interface Zone {
 
 export interface SceneEvents {
   say?: (text: string) => void;
+  /** La serie que se juega (la tienda cierra la Ruta del café, pero también va sola). */
+  series?: string;
 }
 
 export interface PlayScene {
@@ -56,7 +58,7 @@ export interface SceneMap {
   /** Descripción de la escena para lectores de pantalla. */
   place: string;
   /** Cabecita del que habla en las burbujas de chat (un icono de PixelIcon). */
-  speaker: "ramiro" | "fabio" | "luz" | "sara";
+  speaker: "ramiro" | "fabio" | "luz" | "sara" | "conchita";
 }
 
 /** Riesgos que se pueden encontrar en un momento. */

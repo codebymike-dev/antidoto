@@ -10,7 +10,7 @@ import { FincaScene } from "../src/components/experience/scenes/finca.ts";
 import { TransporteScene } from "../src/components/experience/scenes/transporte.ts";
 import { TrilladoraScene } from "../src/components/experience/scenes/trilladora.ts";
 import { TostionScene } from "../src/components/experience/scenes/tostion.ts";
-import { TiendaScene } from "../src/components/experience/scenes/tienda.ts";
+import { CONCHITA, TiendaScene } from "../src/components/experience/scenes/tienda.ts";
 import type { Moment, PlayScene, SceneEvents } from "../src/components/experience/scenes/types.ts";
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
@@ -26,6 +26,8 @@ const create = (events?: SceneEvents): PlayScene =>
         ? new TostionScene(events)
         : which === "tienda"
           ? new TiendaScene(events)
+          : which === "tienda-jv"
+            ? new TiendaScene(events, CONCHITA)
           : new FincaScene(events);
 // Cuánto dura cada tramo entre momentos y las pausas para las capturas de la historia.
 const long = which !== "finca";

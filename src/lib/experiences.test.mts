@@ -1,16 +1,16 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { EXPERIENCES, RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA, RUTA_CAFE_TOSTION, RUTA_CAFE_TIENDA, seriesEntry, seriesFrom } from "./experiences/catalog.ts";
+import { EXPERIENCES, RUTA_CAFE_FINCA, RUTA_CAFE_TRANSPORTE, RUTA_CAFE_TRILLADORA, RUTA_CAFE_TOSTION, RUTA_CAFE_TIENDA, MISION_JV_TIENDA, seriesEntry, seriesFrom } from "./experiences/catalog.ts";
 import { LIMITS, parseStoredTexts, publicExperience, riskResult, score, validateRiskTexts } from "./experiences/texts.ts";
 import { buildRecap, MAX_TAKEAWAYS } from "./experiences/recap.ts";
 import { FINCA_MAP } from "../components/experience/scenes/finca-map.ts";
 import { TRANSPORTE_MAP } from "../components/experience/scenes/transporte-map.ts";
 import { TRILLADORA_MAP } from "../components/experience/scenes/trilladora-map.ts";
 import { TOSTION_MAP } from "../components/experience/scenes/tostion-map.ts";
-import { TIENDA_MAP } from "../components/experience/scenes/tienda-map.ts";
+import { TIENDA_JV_MAP, TIENDA_MAP } from "../components/experience/scenes/tienda-map.ts";
 import type { SceneMap } from "../components/experience/scenes/types.ts";
 
-const MAPS: Record<string, SceneMap> = { finca: FINCA_MAP, transporte: TRANSPORTE_MAP, trilladora: TRILLADORA_MAP, tostion: TOSTION_MAP, tienda: TIENDA_MAP };
+const MAPS: Record<string, SceneMap> = { finca: FINCA_MAP, transporte: TRANSPORTE_MAP, trilladora: TRILLADORA_MAP, tostion: TOSTION_MAP, tienda: TIENDA_MAP, "tienda-jv": TIENDA_JV_MAP };
 
 describe("catálogo", () => {
   test("cada riesgo trae una pista corta que no repite la respuesta", () => {
@@ -77,6 +77,15 @@ describe("serie", () => {
     assert.equal(seriesEntry(RUTA_CAFE_TOSTION).key, RUTA_CAFE_FINCA.key);
     assert.equal(seriesEntry(RUTA_CAFE_TIENDA).key, RUTA_CAFE_FINCA.key);
     assert.equal(seriesEntry(RUTA_CAFE_FINCA).key, RUTA_CAFE_FINCA.key);
+  });
+
+  test("la Misión Juan Valdez es solo la tienda, aparte de la ruta", () => {
+    assert.deepEqual(seriesFrom(MISION_JV_TIENDA).map((d) => d.key), [MISION_JV_TIENDA.key]);
+    assert.equal(seriesEntry(MISION_JV_TIENDA).key, MISION_JV_TIENDA.key);
+    assert.equal(MISION_JV_TIENDA.scene, "tienda-jv");
+    assert.ok(!JSON.stringify(MISION_JV_TIENDA).includes("Sara"));
+    assert.ok(!JSON.stringify(MISION_JV_TIENDA).includes("Ramiro"));
+    assert.notEqual(MISION_JV_TIENDA.key, RUTA_CAFE_TIENDA.key);
   });
 
   test("el puntaje de la serie cuenta los riesgos de todas las estaciones", () => {

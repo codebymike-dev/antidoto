@@ -29,9 +29,30 @@ const SARA: Look = {
   mustache: false,
 };
 
-const COWORKER: Look = {
+/**
+ * Conchita, la barista de la Misión Juan Valdez: el uniforme de la marca. Camisa blanca
+ * con un toque azul, gorra roja con la firma bordada en blanco y delantal rojo de peto
+ * con botones dorados.
+ */
+export const CONCHITA: Look = {
   ...SARA,
-  shirt: hex("#2f5d50"),
+  shirt: hex("#eef4f8"),
+  shirtDark: hex("#bfd0dc"),
+  shirtLine: hex("#bfd0dc"),
+  plainShirt: true,
+  skin: hex("#c98d5f"),
+  skinDark: hex("#a8714a"),
+  hair: hex("#2b1d16"),
+  headwear: "gorra",
+  hat: hex("#d8402f"),
+  hatDark: hex("#9c2019"),
+  band: hex("#d8402f"),
+  capMark: hex("#ffffff"),
+  apron: { cloth: hex("#d8402f"), dark: hex("#a82c22"), button: hex("#e2b34a") },
+};
+
+/** El compañero de la caja lleva el mismo uniforme que la barista; esto es lo suyo. */
+const COWORKER_FACE: Partial<Look> = {
   skin: hex("#d1a47c"),
   skinDark: hex("#b08560"),
   hair: hex("#6b3f22"),
@@ -96,7 +117,9 @@ export class TiendaScene implements PlayScene {
   private sara: Actor = { x: 0, y: 0, facing: -1, pose: MOP, expr: "normal", walking: false, walkPhase: 0, carrying: false };
   private coworker: Actor = { x: 0, y: 0, facing: 1, pose: AT_REGISTER, expr: "feliz", walking: false, walkPhase: 0, carrying: false };
   private customers: Actor[] = QUEUE.map(() => ({ x: 0, y: 0, facing: 1, pose: STAND, expr: "normal", walking: false, walkPhase: 0, carrying: false }));
-  private look: Look = { ...SARA };
+  private look: Look;
+  /** Quién atiende la barra: Sara en la Ruta del café, Conchita en la Misión Juan Valdez. */
+  private barista: Look;
 
   private good = false;
   private mopping = false;
@@ -120,8 +143,10 @@ export class TiendaScene implements PlayScene {
 
   private events: SceneEvents;
 
-  constructor(events: SceneEvents = {}) {
+  constructor(events: SceneEvents = {}, barista: Look = SARA) {
     this.events = events;
+    this.barista = barista;
+    this.look = { ...barista };
     art.drawRoom(this.room);
     this.applyMoment(1);
   }
@@ -136,7 +161,7 @@ export class TiendaScene implements PlayScene {
 
   private prepare(good: boolean) {
     this.good = good;
-    this.look = { ...SARA, shoes: good ? "botas" : "chanclas" };
+    this.look = { ...this.barista, shoes: good ? "botas" : "chanclas" };
     this.mopping = false;
     this.steam = false;
     this.queue = false;
@@ -351,7 +376,7 @@ export class TiendaScene implements PlayScene {
           this.place(s, { i: CHAIR.i + 0.6, j: CHAIR.j + 0.8 });
         }),
         poseTo(s, WAVE, 0.4, "feliz"),
-        this.say("¡Y el café llega a la taza! Fin de la Ruta del café."),
+        this.say(`¡Y el café llega a la taza! Fin de la ${this.events.series ?? "Ruta del café"}.`),
         wait(1.6),
         act(onDone),
       );
@@ -417,7 +442,7 @@ export class TiendaScene implements PlayScene {
       if (this.good) art.drawLadder(out, CHAIR.i, CHAIR.j);
       else art.drawChair(out, CHAIR.i, CHAIR.j);
     }
-    if (this.good && this.queue) drawAvatarLayers(out, AT_REGISTER, COWORKER, this.coworker, {});
+    if (this.good && this.queue) drawAvatarLayers(out, AT_REGISTER, { ...this.barista, ...COWORKER_FACE }, this.coworker, {});
     if (behind) this.drawSara(out);
     art.drawBar(out, { t: this.time, steam: this.steam });
 

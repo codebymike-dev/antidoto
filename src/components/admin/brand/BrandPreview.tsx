@@ -108,8 +108,8 @@ function LiveMock({ brand, p }: { brand: BrandLike; p: BrandPalette }) {
         <CoBrand brand={brand} surface="oscuro" height={26} />
       </div>
       <div style={{ position: "relative", background: "#fff", color: INK, borderRadius: 16, padding: "14px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, marginTop: 6 }}>
-        <span style={{ fontSize: 11, fontWeight: 600 }}>
-          Únete en <strong style={{ color: p.accent }}>antidoto.co/jugar</strong>
+        <span style={{ fontSize: 11, fontWeight: 600, textAlign: "center" }}>
+          Únete en <strong style={{ color: p.accent }}>actividades.antidotocolombia.com/jugar</strong>
         </span>
         <span style={{ fontSize: 10, color: colors.muted, fontWeight: 600 }}>PIN del juego</span>
         <span style={{ ...calSans, fontSize: 38, letterSpacing: 2, lineHeight: 1.05 }}>482 915</span>

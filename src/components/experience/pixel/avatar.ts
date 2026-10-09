@@ -54,6 +54,12 @@ export interface Look {
   earmuffs?: boolean;
   /** Tapabocas o respirador para polvo. */
   mask?: boolean;
+  /** Camisa lisa, sin el cuadriculado de siempre (uniforme). */
+  plainShirt?: boolean;
+  /** Delantal de peto con botones en las tiras: cubre el pecho y baja hasta la rodilla. */
+  apron?: { cloth: Color; dark: Color; button: Color };
+  /** El bordado del frente de la gorra (la firma de la marca, sugerida en dos trazos). */
+  capMark?: Color;
 }
 
 export interface Point {
@@ -229,6 +235,7 @@ export function drawAvatar(
   drawTorso(buf, rig, look);
   layers.afterTorso?.();
   drawLeg(buf, rig.hip, rig.kneeN, rig.footN, fl, look, false);
+  if (look.apron) drawApronSkirt(buf, rig, look.apron);
   layers.held?.();
   buf.capsule(rig.neck.x, rig.neck.y, rig.head.x, rig.head.y, 2 * S, 2 * S, look.skinDark, OUTLINE);
   drawHead(buf, rig.head, fu, pose.headTilt, look, expression);
@@ -269,6 +276,15 @@ function drawArm(buf: PixelBuffer, shoulder: Point, elbow: Point, hand: Point, l
   buf.capsule(hand.x, hand.y, hand.x, hand.y, 2 * S, 2 * S, far ? look.skinDark : look.skin, OUTLINE);
 }
 
+/** La falda del delantal: de la cintura a la rodilla, por delante de los dos muslos. */
+function drawApronSkirt(buf: PixelBuffer, rig: Rig, apron: NonNullable<Look["apron"]>) {
+  const knee = { x: (rig.kneeN.x + rig.kneeF.x) / 2, y: (rig.kneeN.y + rig.kneeF.y) / 2 };
+  const hem = add(rig.hip, { x: knee.x - rig.hip.x, y: knee.y - rig.hip.y }, 0.92);
+  const f = rig.facingLegs;
+  const shader = (x: number): Color => ((x - rig.hip.x) * f < -2.2 * S ? apron.dark : apron.cloth);
+  buf.capsule(rig.hip.x + f * 0.6, rig.hip.y, hem.x + f * 1.2, hem.y, 4 * S, 4.4 * S, shader, OUTLINE);
+}
+
 function drawTorso(buf: PixelBuffer, rig: Rig, look: Look) {
   const { hip, neck } = rig;
   const fu = rig.facingUpper;
@@ -285,7 +301,18 @@ function drawTorso(buf: PixelBuffer, rig: Rig, look: Look) {
     const ry = y - hip.y;
     const u = (rx * ux + ry * uy) / S;
     const v = (rx * bx + ry * by) / S;
+    const apron = look.apron;
+    if (apron) {
+      if (u < 1.2) return apron.dark; // la cinta del delantal
+      // El peto por delante, con un botón donde se abrocha la tira.
+      if (v < 1 && u < 11.5) {
+        if (u >= 9.6 && u < 10.8 && v >= -1.6 && v < -0.4) return apron.button;
+        return v < -3.8 ? apron.dark : apron.cloth;
+      }
+      if (v >= -0.6 && v < 1 && u >= 11.5) return apron.cloth; // la tira, hasta el hombro
+    }
     if (u < 1.2) return hex("#5b3a22"); // cinturón
+    if (look.plainShirt) return v > 3.2 ? look.shirtDark : look.shirt;
     const stripeU = Math.floor(u + 0.5) % 5 === 0;
     const stripeV = Math.floor(v + 20.5) % 5 === 0;
     if (stripeU && stripeV) return look.shirtLine;
@@ -330,8 +357,16 @@ function drawHead(buf: PixelBuffer, c: Point, f: number, tilt: number, look: Loo
       if (ly >= -3.4 && ly < -1.8 && lx >= 2 && lx <= 10.5 - (ly + 3.4) * 0.6) return look.hatDark;
       if (ly < -2 && lx * lx + (ly + 1.4) ** 2 <= 7.6 * 7.6) {
         if (ly < -8.4 && Math.abs(lx) < 1) return look.band;
+        // El bordado: dos trazos ondulados en el frente de la copa.
+        if (look.capMark && lx > 0.4 && lx < 5.6 && ly >= -6.4 && ly < -4) {
+          const row = Math.floor(ly + 6.4);
+          const col = Math.floor(lx - 0.4);
+          if ((row === 0 && col % 2 === 0) || (row === 1 && col % 2 === 1) || (row === 2 && col === 0)) return look.capMark;
+        }
         return lx < -2.5 ? look.hatDark : look.hat;
       }
+      // Cola de caballo que sale bajo la gorra y cae sobre la nuca.
+      if (look.hairStyle === "recogido" && (lx + 8.4 - ly * 0.2) ** 2 / 2.4 + (ly - 4.6) ** 2 / 26 <= 1) return look.hair;
     }
     if (look.earmuffs) {
       // Copa sobre la oreja y la diadema que sube hasta la gorra.

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./player.module.css";
-import PixelIcon from "./PixelIcon";
+import PixelIcon, { type PixelIconName } from "./PixelIcon";
 import ModalWindow from "./ModalWindow";
 import SceneThumb from "./SceneThumb";
 import TopBar from "./TopBar";
@@ -29,7 +29,7 @@ interface Props {
   paused?: boolean;
   exitAction?: () => Promise<void>;
   exitHref?: string;
-  /** La bienvenida de Ramiro está abierta sobre el mapa. */
+  /** La bienvenida de la guía está abierta sobre el mapa. */
   welcomeOpen: boolean;
   /** Lo que pide el código en la ficha; null si no pide nada. */
   profileConfig: ProfileConfig | null;
@@ -45,7 +45,7 @@ interface Props {
 
 /**
  * El mapa de la ruta: la casa del participante entre estaciones. Muestra qué terminó,
- * qué sigue y qué está cerrado; la primera vez, Ramiro da la bienvenida encima.
+ * qué sigue y qué está cerrado; la primera vez, la guía de la serie da la bienvenida encima.
  */
 export default function RouteHub(props: Props) {
   const { stations, results, participant, company, brand, mode, paused, welcomeOpen, celebrate } = props;
@@ -369,6 +369,25 @@ interface Page {
   spot?: "ruta" | "granos";
 }
 
+/** Quién recibe al participante en el mapa, según la serie. */
+interface Guide {
+  name: string;
+  /** El icono pequeño (encabezados) y la cara grande del diálogo. */
+  icon: PixelIconName;
+  face: PixelIconName;
+  intro: string;
+}
+
+const GUIDES: Record<string, Guide> = {
+  "Misión Juan Valdez": { name: "Conchita", icon: "conchita", face: "conchitaRetrato", intro: "Soy Conchita, barista de Juan Valdez." },
+};
+
+const ROUTE_GUIDE: Guide = { name: "Ramiro", icon: "ramiro", face: "ramiro", intro: "Soy Ramiro, recolector de café." };
+
+function guideFor(series: string): Guide {
+  return GUIDES[series] ?? ROUTE_GUIDE;
+}
+
 function Welcome({
   stations,
   participant,
@@ -392,15 +411,21 @@ function Welcome({
   const first = participant.trim().split(/\s+/)[0];
   const minutes = totalMinutes(stations);
   const asks = !!config && (!!config.cargos || config.askPlace);
+  // "la finca", "la tienda": el lugar de cada estación, sin el subtítulo.
+  const place = (s: PublicExperience) => s.title.split(":")[0].toLowerCase();
+  const single = stations.length === 1;
+  const guide = guideFor(stations[0].series);
   const pages: Page[] = [
     {
-      text: `¡Hola, ${first}! Soy Ramiro, recolector de café. Qué bueno tenerte en la ${stations[0].series}${company ? ` de ${company}` : ""}.`,
+      text: `¡Hola, ${first}! ${guide.intro} Qué bueno tenerte en la ${stations[0].series}${company ? ` de ${company}` : ""}.`,
     },
     {
-      text: "En esta ruta la gente trabaja como siempre lo ha hecho, pero comete errores que le pueden costar la salud. Tu misión es encontrarlos antes de que alguien se lastime.",
+      text: `En esta ${single ? "tienda" : "ruta"} la gente trabaja como siempre lo ha hecho, pero comete errores que le pueden costar la salud. Tu misión es encontrarlos antes de que alguien se lastime.`,
     },
     {
-      text: `Son ${stations.length} estaciones, de ${stations[0].title.split(":")[0].toLowerCase()} a ${stations[stations.length - 1].title.split(":")[0].toLowerCase()}${minutes ? `, unos ${minutes} en total` : ""}. Cada una se abre cuando terminas la anterior.`,
+      text: single
+        ? `Esta vez la parada es una sola: ${place(stations[0])}${minutes ? `, unos ${minutes}` : ""}.`
+        : `Son ${stations.length} estaciones, de ${place(stations[0])} a ${place(stations[stations.length - 1])}${minutes ? `, unos ${minutes} en total` : ""}. Cada una se abre cuando terminas la anterior.`,
       spot: "ruta",
     },
     {
@@ -412,7 +437,7 @@ function Welcome({
     },
     asks
       ? { text: `Antes de arrancar, cuéntame un poco de ti. Así ${company ?? "tu empresa"} sabe dónde reforzar el cuidado de su gente.` }
-      : { text: "¡Listo! Empecemos por la finca. Yo te espero allá." },
+      : { text: `¡Listo! Empecemos por ${place(stations[0])}. Yo te espero allá.` },
   ];
 
   const [page, setPage] = useState(0);
@@ -485,18 +510,18 @@ function Welcome({
     return (
       <>
         <div className={styles.dim} />
-        <ProfileWindow config={config} company={company} pending={pending} error={error} onSave={finish} />
+        <ProfileWindow guide={guide} config={config} company={company} pending={pending} error={error} onSave={finish} />
       </>
     );
   }
 
   return (
-    <section className={`${styles.window} ${styles.talk}`} role="dialog" aria-label="Bienvenida de Ramiro" aria-live="polite">
+    <section className={`${styles.window} ${styles.talk}`} role="dialog" aria-label={`Bienvenida de ${guide.name}`} aria-live="polite">
       <div className={styles.talkFace} aria-hidden>
-        <PixelIcon name="ramiro" size={52} />
+        <PixelIcon name={guide.face} size={guide.face === guide.icon ? 52 : 60} />
       </div>
       <div className={styles.talkBody}>
-        <div className={styles.talkName}>Ramiro</div>
+        <div className={styles.talkName}>{guide.name}</div>
         <p className={styles.talkText}>
           <span>{text.slice(0, chars)}</span>
           {/* El resto ocupa su lugar invisible: la caja no salta de tamaño mientras escribe. */}
@@ -536,12 +561,14 @@ function Welcome({
 }
 
 function ProfileWindow({
+  guide,
   config,
   company,
   pending,
   error,
   onSave,
 }: {
+  guide: Guide;
   config: ProfileConfig;
   company: string | null;
   pending: boolean;
@@ -556,7 +583,7 @@ function ProfileWindow({
   return (
     <ModalWindow className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-profile-title">
       <div className={styles.winHead}>
-        <PixelIcon name="ramiro" size={16} />
+        <PixelIcon name={guide.icon} size={16} />
         <span className={styles.winTitle} id="xp-profile-title">
           Tu ficha
         </span>

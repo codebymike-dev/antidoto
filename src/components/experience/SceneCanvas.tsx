@@ -40,6 +40,8 @@ export interface SceneHandle {
 interface Props {
   /** Qué escena dibujar; se crea una sola vez por montaje. */
   sceneKey: SceneKey;
+  /** La serie que se juega, para los textos de la escena que la nombran. */
+  series?: string;
   onScene: (scene: PlayScene) => void;
   onSay: (text: string) => void;
   /** `scale`: píxeles de pantalla por píxel de la escena (en un celular ronda 0,9; con la lupa, más). */
@@ -56,7 +58,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export default function SceneCanvas({ sceneKey, onScene, onSay, onTap, maxHeight, label, zoomable, onZoom, ref, children }: Props) {
+export default function SceneCanvas({ sceneKey, series, onScene, onSay, onTap, maxHeight, label, zoomable, onZoom, ref, children }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -133,7 +135,7 @@ export default function SceneCanvas({ sceneKey, onScene, onSay, onTap, maxHeight
 
   useEffect(() => {
     const canvas = canvasRef.current!;
-    const scene = createScene(sceneKey, { say: (t) => sayRef.current(t) });
+    const scene = createScene(sceneKey, { say: (t) => sayRef.current(t), series });
     sceneRef.current = scene;
     onScene(scene);
     (window as unknown as { __scene?: PlayScene }).__scene = scene; // TEMP-MOVIL

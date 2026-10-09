@@ -60,3 +60,9 @@ export const TIENDA_MAP: SceneMap = {
   place: "Sara trabaja en la barra de una tienda de café, con la máquina de espresso, el lavaplatos y los clientes.",
   speaker: "sara",
 };
+
+/** La misma tienda en la Misión Juan Valdez: atiende Conchita en vez de Sara. */
+export const TIENDA_JV_MAP: SceneMap = {
+  ...(JSON.parse(JSON.stringify(TIENDA_MAP).replaceAll("Sara", "Conchita")) as SceneMap),
+  speaker: "conchita",
+};

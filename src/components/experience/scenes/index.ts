@@ -8,8 +8,8 @@ import { TrilladoraScene } from "./trilladora";
 import { TRILLADORA_MAP } from "./trilladora-map";
 import { TostionScene } from "./tostion";
 import { TOSTION_MAP } from "./tostion-map";
-import { TiendaScene } from "./tienda";
-import { TIENDA_MAP } from "./tienda-map";
+import { CONCHITA, TiendaScene } from "./tienda";
+import { TIENDA_JV_MAP, TIENDA_MAP } from "./tienda-map";
 import { TRANSPORTE_MAP } from "./transporte-map";
 import type { PlayScene, SceneEvents, SceneMap } from "./types";
 
@@ -20,6 +20,7 @@ export function createScene(key: SceneKey, events: SceneEvents = {}): PlayScene 
   if (key === "trilladora") return new TrilladoraScene(events);
   if (key === "tostion") return new TostionScene(events);
   if (key === "tienda") return new TiendaScene(events);
+  if (key === "tienda-jv") return new TiendaScene(events, CONCHITA);
   return new FincaScene(events);
 }
 
@@ -29,4 +30,5 @@ export const SCENE_MAPS: Record<SceneKey, SceneMap> = {
   trilladora: TRILLADORA_MAP,
   tostion: TOSTION_MAP,
   tienda: TIENDA_MAP,
+  "tienda-jv": TIENDA_JV_MAP,
 };
