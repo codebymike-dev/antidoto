@@ -55,6 +55,8 @@ export default function RouteHub(props: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const s = stations[selected];
   const allDone = prog.current === -1;
+  // Una sola estación: no se habla de "ruta" ni de "estaciones" (quien juega no sabe que hay rutas más largas).
+  const single = stations.length === 1;
 
   function select(k: number) {
     setSelected(k);
@@ -77,7 +79,7 @@ export default function RouteHub(props: Props) {
       <TopBar
         brand={brand}
         title={s.series}
-        sub={`Mapa de la ruta · ${mode === "preview" ? "Vista previa" : participant}`}
+        sub={`${single ? "Mapa" : "Mapa de la ruta"} · ${mode === "preview" ? "Vista previa" : participant}`}
         grains={prog.grains}
         found={prog.found}
         total={prog.total}
@@ -107,7 +109,7 @@ export default function RouteHub(props: Props) {
                       ¡Se abrió la estación {celebrated.station}: <b>{celebrated.title}</b>!
                     </>
                   ) : (
-                    "¡Terminaste toda la ruta!"
+                    single ? "¡Terminaste la misión!" : "¡Terminaste toda la ruta!"
                   )}
                 </span>
               </div>
@@ -132,7 +134,7 @@ export default function RouteHub(props: Props) {
             <div className={`${styles.winHead} ${prog.done[selected] ? styles.winHeadGood : ""}`}>
               <PixelIcon name={prog.done[selected] ? "check" : prog.open[selected] ? "pin" : "candado"} size={14} />
               <span className={styles.winTitle}>
-                Estación {s.station} de {stations.length}
+                {single ? "Tu misión" : `Estación ${s.station} de ${stations.length}`}
               </span>
             </div>
             <div className={styles.winBody}>
@@ -160,7 +162,7 @@ export default function RouteHub(props: Props) {
             <div className={styles.winHead}>
               <PixelIcon name="insignia" size={16} />
               <span className={styles.winTitle} id="xp-route-title">
-                Tu ruta · {prog.done.filter(Boolean).length}/{stations.length}
+                {single ? "Tu avance" : `Tu ruta · ${prog.done.filter(Boolean).length}/${stations.length}`}
               </span>
             </div>
             <div className={styles.winBody}>
@@ -180,7 +182,7 @@ export default function RouteHub(props: Props) {
               </ul>
               {allDone &&
                 (mode === "play" ? (
-                  <FinishRouteButton />
+                  <FinishRouteButton single={single} />
                 ) : (
                   <button type="button" className={`${styles.button} ${styles.go}`} onClick={props.onRestart}>
                     Volver a empezar
@@ -199,7 +201,7 @@ export default function RouteHub(props: Props) {
             <div className={styles.winBody}>
               <ol className={styles.steps}>
                 <li>
-                  <PixelIcon name="repetir" size={16} /> Mira la historia de cada estación.
+                  <PixelIcon name="repetir" size={16} /> {single ? "Mira la historia." : "Mira la historia de cada estación."}
                 </li>
                 <li>
                   <PixelIcon name="riesgo" size={16} /> Toca donde veas un error.
@@ -313,7 +315,7 @@ function RouteMap({
         <path d={d} className={styles.mapRoadDirt} vectorEffect="non-scaling-stroke" />
         <path d={d} className={styles.mapRoadDash} vectorEffect="non-scaling-stroke" />
       </svg>
-      <ol className={styles.mapNodes} aria-label="Estaciones de la ruta">
+      <ol className={styles.mapNodes} aria-label={stations.length === 1 ? "Mapa" : "Estaciones de la ruta"}>
         {stations.map((s, k) => {
           const state = done[k] ? "hecha" : open[k] ? "abierta" : "cerrada";
           return (
@@ -328,7 +330,7 @@ function RouteMap({
                 onClick={() => onSelect(k)}
                 disabled={disabled}
                 aria-pressed={selected === k}
-                aria-label={`Estación ${s.station}: ${s.title}, ${state}`}
+                aria-label={stations.length === 1 ? `${s.title}, ${state}` : `Estación ${s.station}: ${s.title}, ${state}`}
               >
                 {current === k && (
                   <span className={styles.nodeHere} aria-hidden>
@@ -420,16 +422,19 @@ function Welcome({
       text: `¡Hola, ${first}! ${guide.intro} Qué bueno tenerte en la ${stations[0].series}${company ? ` de ${company}` : ""}.`,
     },
     {
-      text: `En esta ${single ? "tienda" : "ruta"} la gente trabaja como siempre lo ha hecho, pero comete errores que le pueden costar la salud. Tu misión es encontrarlos antes de que alguien se lastime.`,
+      text: `En ${single ? place(stations[0]) : "esta ruta"} la gente trabaja como siempre lo ha hecho, pero comete errores que le pueden costar la salud. Tu misión es encontrarlos antes de que alguien se lastime.`,
     },
     {
+      // Con una sola estación no se nombran "estaciones": quien juega no sabe que hay rutas más largas.
       text: single
-        ? `Esta vez la parada es una sola: ${place(stations[0])}${minutes ? `, unos ${minutes}` : ""}.`
+        ? `Todo pasa aquí, en ${place(stations[0])}${minutes ? `, y te toma unos ${minutes}` : ""}.`
         : `Son ${stations.length} estaciones, de ${place(stations[0])} a ${place(stations[stations.length - 1])}${minutes ? `, unos ${minutes} en total` : ""}. Cada una se abre cuando terminas la anterior.`,
       spot: "ruta",
     },
     {
-      text: `En cada estación miras la historia, tocas los errores y eliges qué está mal. Si aciertas a la primera ganas ${GRAINS_CORRECT} granos de café; si lo encuentras pero fallas, ${GRAINS_FOUND}. Y cada estación te da una insignia.`,
+      text: single
+        ? `Miras la historia, tocas los errores y eliges qué está mal. Si aciertas a la primera ganas ${GRAINS_CORRECT} granos de café; si lo encuentras pero fallas, ${GRAINS_FOUND}. Y al terminar te llevas una insignia.`
+        : `En cada estación miras la historia, tocas los errores y eliges qué está mal. Si aciertas a la primera ganas ${GRAINS_CORRECT} granos de café; si lo encuentras pero fallas, ${GRAINS_FOUND}. Y cada estación te da una insignia.`,
       spot: "granos",
     },
     {

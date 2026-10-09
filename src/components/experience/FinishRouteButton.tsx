@@ -8,10 +8,10 @@ import { withTimeout } from "@/lib/with-timeout";
 import { networkMessage } from "./connection";
 
 /**
- * "Terminar la ruta". Si no hay señal avisa y deja reintentar, en vez de dejar al
+ * "Terminar la ruta" (o "Terminar la misión" si es de una sola estación). Si no hay señal avisa y deja reintentar, en vez de dejar al
  * participante frente a un error de la aplicación justo en el último paso.
  */
-export default function FinishRouteButton({ autoFocus = false }: { autoFocus?: boolean }) {
+export default function FinishRouteButton({ autoFocus = false, single = false }: { autoFocus?: boolean; single?: boolean }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export default function FinishRouteButton({ autoFocus = false }: { autoFocus?: b
   return (
     <>
       <button type="button" autoFocus={autoFocus} className={`${styles.button} ${styles.go}`} style={{ width: "100%" }} onClick={finish} disabled={pending}>
-        {pending ? "Guardando..." : "Terminar la ruta"}
+        {pending ? "Guardando..." : single ? "Terminar la misión" : "Terminar la ruta"}
       </button>
       {error && (
         <p role="alert" className={styles.netError}>

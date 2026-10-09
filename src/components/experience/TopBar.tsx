@@ -21,12 +21,14 @@ interface Props {
   spotPurse?: boolean;
   /** Volver al mapa de la ruta; sin él no se muestra el botón. */
   onMap?: () => void;
+  /** Actividad de una sola estación: el mapa no se llama "ruta". */
+  single?: boolean;
   exitAction?: () => Promise<void>;
   exitHref?: string;
 }
 
 /** Barra de la sala, como en Habbo: marca, dónde estás, monedero, sonido y salida. */
-export default function TopBar({ brand, title, sub, grains, found, total, spotPurse, onMap, exitAction, exitHref }: Props) {
+export default function TopBar({ brand, title, sub, grains, found, total, spotPurse, onMap, single, exitAction, exitHref }: Props) {
   const muted = useSyncExternalStore(
     sceneSound().subscribe,
     () => sceneSound().muted,
@@ -84,8 +86,8 @@ export default function TopBar({ brand, title, sub, grains, found, total, spotPu
         </span>
       </div>
       {onMap && (
-        <button type="button" className={styles.iconButton} onClick={onMap} aria-label="Ver el mapa de la ruta">
-          <PixelIcon name="mapa" size={16} /> <span className={styles.exitLabel}>Ruta</span>
+        <button type="button" className={styles.iconButton} onClick={onMap} aria-label={single ? "Ver el mapa" : "Ver el mapa de la ruta"}>
+          <PixelIcon name="mapa" size={16} /> <span className={styles.exitLabel}>{single ? "Mapa" : "Ruta"}</span>
         </button>
       )}
       <button type="button" className={styles.iconButton} onClick={toggleSound} aria-label={muted ? "Activar sonido" : "Silenciar"}>

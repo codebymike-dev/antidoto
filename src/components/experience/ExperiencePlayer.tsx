@@ -251,6 +251,8 @@ function StationPlayer({
   const { grains } = routeProgress(stations, results);
   const allDone = found >= total;
   const next = stations[stations.indexOf(experience) + 1] ?? null;
+  // Una sola estación: no se habla de "ruta" ni de "estaciones" (quien juega no sabe que hay rutas más largas).
+  const single = stations.length === 1;
   // Cuántos riesgos se pueden encontrar en cada momento (un riesgo puede verse en varios).
   const momentStats = map.moments.map((m) => {
     const ids = [...risksInMoment(map, m.id)];
@@ -740,12 +742,13 @@ function StationPlayer({
     <>
       <TopBar
         brand={brand}
-        title={`${experience.series} · Estación ${experience.station}: ${experience.title}`}
+        title={single ? `${experience.series} · ${experience.title}` : `${experience.series} · Estación ${experience.station}: ${experience.title}`}
         sub={`${experience.tag.charAt(0) + experience.tag.slice(1).toLowerCase()} · ${mode === "preview" ? "Vista previa" : participant}`}
         grains={grains}
         found={found}
         total={total}
         onMap={onBack}
+        single={single}
         exitAction={exitAction}
         exitHref={exitHref}
       />
@@ -1089,7 +1092,7 @@ function StationPlayer({
                     <ModalWindow className={`${styles.window} ${styles.dialogCenter}`} role="dialog" aria-labelledby="xp-end-title">
                       <div className={`${styles.winHead} ${styles.winHeadGood}`}>
                         <span className={styles.winTitle} id="xp-end-title">
-                          ¡Estación completada!
+                          {single ? "¡Misión completada!" : "¡Estación completada!"}
                         </span>
                       </div>
                       <div className={styles.winBody}>
@@ -1119,14 +1122,14 @@ function StationPlayer({
                               Desbloqueaste la estación {next.station}: <b>{next.title}</b>.
                             </>
                           ) : (
-                            `¡Completaste la ${experience.series}, de principio a fin!`
+                            single ? `¡Completaste la ${experience.series}!` : `¡Completaste la ${experience.series}, de principio a fin!`
                           )}
                         </p>
                         {!next && mode === "play" ? (
-                          <FinishRouteButton autoFocus />
+                          <FinishRouteButton autoFocus single={single} />
                         ) : (
                           <button type="button" autoFocus className={`${styles.button} ${styles.go}`} style={{ width: "100%" }} onClick={onBack}>
-                            {next ? `Volver a la ruta y seguir a la estación ${next.station}` : "Volver a la ruta"}
+                            {next ? `Volver a la ruta y seguir a la estación ${next.station}` : single ? "Volver al mapa" : "Volver a la ruta"}
                           </button>
                         )}
                         {!next && mode === "preview" && (

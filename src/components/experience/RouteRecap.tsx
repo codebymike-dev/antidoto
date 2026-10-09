@@ -105,7 +105,7 @@ export function RecapReview({ recap, pal }: { recap: Recap; pal: BrandPalette })
           style={{ borderRadius: 12, background: pal.tint, padding: "10px 14px" }}
         >
           <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 14.5, color: pal.strong, minHeight: 28 }}>
-            Estación {s.station}: {s.title}
+            {recap.stations.length === 1 ? s.title : `Estación ${s.station}: ${s.title}`}
             <span style={{ fontWeight: 500, color: colors.inkSoft }}>
               {" "}
               · {s.correct} de {s.risks.length} a la primera
