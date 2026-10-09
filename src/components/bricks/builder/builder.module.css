@@ -60,8 +60,18 @@
   margin-right: 2px;
 }
 
+/* Con presupuesto, el contador es parte del reto: se ve siempre, también en el celular. */
+.countBudget {
+  color: #e8f4f8;
+}
+
+.countFull {
+  color: #fac80a;
+  font-weight: 600;
+}
+
 @media (max-width: 420px) {
-  .count {
+  .count:not(.countBudget) {
     display: none;
   }
 
@@ -146,6 +156,11 @@
 
 .coach svg {
   vertical-align: -3px;
+}
+
+/* Con reto, el reloj y "Entregar" ocupan la esquina de arriba: la guía baja un poco. */
+.coachLow {
+  top: 60px;
 }
 
 .coachStep {
@@ -602,6 +617,12 @@
 .help dd {
   margin: 0;
   color: rgb(232 244 248 / 0.75);
+}
+
+.helpPrompt {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .helpHand {

@@ -326,3 +326,41 @@ CREATE TABLE IF NOT EXISTS participant_profiles (
   municipio        TEXT CHECK (municipio IS NULL OR municipio GLOB '[0-9][0-9][0-9][0-9][0-9]'),
   created_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- --- Construcción con ladrillos 3D (Bricks Serious Play) --------------------------------
+-- El reto (tipo, reloj, presupuesto, modelo a replicar) vive en el código, en
+-- src/lib/bricks/challenges.ts. Igual que las escenas, cada reto es una misión: reutiliza los
+-- códigos de actividad, las participaciones, la ficha y los reportes.
+
+CREATE TABLE IF NOT EXISTS mission_builds (
+  mission_id TEXT PRIMARY KEY REFERENCES missions(id) ON DELETE CASCADE,
+  build_key  TEXT NOT NULL
+);
+
+-- Textos editados desde la biblioteca (solo superadmin). Sin fila = los del código.
+CREATE TABLE IF NOT EXISTS build_texts (
+  build_key  TEXT PRIMARY KEY,
+  title      TEXT NOT NULL,
+  prompt     TEXT NOT NULL,
+  reflection TEXT NOT NULL DEFAULT '',
+  updated_by INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Una obra por participación. Mientras se construye se guarda como borrador cada pocos
+-- segundos; al entregar se suma la foto y submitted_at. La foto vive en la base, como el logo
+-- de cada empresa: la toma el navegador ya reducida (máx. 600 KB).
+CREATE TABLE IF NOT EXISTS brick_works (
+  participation_id TEXT PRIMARY KEY REFERENCES participations(id) ON DELETE CASCADE,
+  -- Formato binario de src/lib/bricks/codec.ts (9 bytes por pieza, versión en el primer byte).
+  data             BLOB,
+  brick_count      INTEGER NOT NULL DEFAULT 0,
+  title            TEXT CHECK (title IS NULL OR length(title) <= 50),
+  phrase           TEXT CHECK (phrase IS NULL OR length(phrase) <= 160),
+  image            BLOB,
+  image_mime       TEXT CHECK (image_mime IS NULL OR image_mime IN ('image/jpeg', 'image/webp')),
+  -- El reloj de los retos con tiempo corre desde aquí (epoch en ms del servidor).
+  started_ms       INTEGER NOT NULL,
+  updated_at       TEXT NOT NULL DEFAULT (datetime('now')),
+  submitted_at     TEXT
+);

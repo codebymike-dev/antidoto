@@ -6,6 +6,7 @@ import { card } from "@/lib/styles";
 export const ACTIVITY_TYPES = {
   escenas: { label: "Escena interactiva", dot: colors.accentLight },
   juegos: { label: "Juego en vivo", dot: "#FF5A4E" },
+  construccion: { label: "Construcción 3D", dot: "#FAC80A" },
 } as const;
 export type ActivityType = keyof typeof ACTIVITY_TYPES;
 

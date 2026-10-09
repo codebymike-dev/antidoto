@@ -10,6 +10,8 @@ import { audit, requireSuper, requireUser } from "./admin-guard";
 import { findByCode } from "./queries";
 import { ensureExperienceMission } from "./experience-data";
 import { getExperience, seriesEntry } from "./experiences/catalog";
+import { buildTexts, getBuild } from "./bricks/challenges";
+import { ensureBuildMission, loadBuildOverride } from "./build-data";
 import { PARTICIPATION_COOKIE } from "./participation";
 import { clientIp, isLimited, rateLimit, recordHit } from "./rate-limit";
 import { formatExpiryDate, isDateOnly } from "./expiry";
@@ -169,8 +171,10 @@ export async function assignActivity(_prev: AssignState, formData: FormData): Pr
   const user = await requireSuper();
   const companyId = formId(formData, "companyId");
   if (!companyId) return { error: "Elige la empresa." };
-  const def = getExperience(String(formData.get("experience") ?? ""));
-  if (!def) return { error: "Elige la actividad." };
+  const key = String(formData.get("experience") ?? "");
+  const def = getExperience(key);
+  const build = def ? null : getBuild(key);
+  if (!def && !build) return { error: "Elige la actividad." };
   const expira = String(formData.get("expira") ?? "").trim();
   // Solo lo que envía <input type="date">: un texto libre nunca vencería.
   if (expira && !isDateOnly(expira)) return { error: "La fecha de cierre no es válida." };
@@ -191,10 +195,14 @@ export async function assignActivity(_prev: AssignState, formData: FormData): Pr
   if (Number(company.archived) === 1) return { error: "Esa empresa está archivada. Restáurala antes de asignarle actividades." };
 
   // Una serie (la Ruta del café) se asigna siempre desde su primera estación.
-  const entry = seriesEntry(def);
-  const missionId = await ensureExperienceMission(entry);
+  let missionId: string;
+  if (def) {
+    missionId = await ensureExperienceMission(seriesEntry(def));
+  } else {
+    missionId = await ensureBuildMission(build!, buildTexts(build!, await loadBuildOverride(build!.key)).title);
+  }
   const missionTitle = (await one<{ title: string }>("SELECT title FROM missions WHERE id = ?", [missionId]))!.title;
-  const code = await uniqueCode(entry.series, company.name);
+  const code = await uniqueCode(def ? seriesEntry(def).series : missionTitle, company.name);
   if (!code) return { error: "No pudimos generar el código. Inténtalo de nuevo." };
 
   await run(

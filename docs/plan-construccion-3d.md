@@ -190,6 +190,25 @@ sobre la rampa de una inclinada cuenta como tocar la inclinada.
 - **Tablas nuevas**: obras y textos editables de los retos. Requiere migrar producción antes de
   desplegar.
 
+**Estado (2026-10-09)**: hecho en local y verificado en Chromium (celular emulado y escritorio),
+con el flujo completo contra la base local: asignar, entrar con el código, ficha, construir,
+recargar, entregar, cierre y galería en los resultados.
+
+- Retos de fábrica en `src/lib/bricks/challenges.ts` (un `BuildDef` por reto): Construcción libre,
+  La Torre (15 piezas, 90 s), Un lugar seguro (tema, 6 min, título y frase), Replica la casa (modelo
+  de 9 piezas) y Un buen día en el equipo (metáfora, 30 piezas, título y frase). Cada reto es una
+  misión `bld-<clave>`, igual que las escenas son `exp-<clave>`.
+- Tablas `mission_builds`, `build_texts` y `brick_works`. El reloj lo lleva el servidor
+  (`started_ms`) y la obra se guarda sola 2,5 s después de cada cambio.
+- Constructor: `ChallengeLayer.tsx` suma consigna con ficha, reloj, presupuesto, modelo, guardado y
+  entrega; el motor suma `setLimit`, `exportBuild`, `deliveryPhoto` y `modelPhoto`.
+- Coincidencia de Replicar (`matchScore`): celdas y colores sobre la unión, probando los cuatro
+  giros y sin importar dónde se construyó. Es el único reto con puntaje.
+- La foto se sirve en `/obra/[id]` solo a su autor o a un admin con alcance sobre la empresa.
+
+Quedó fuera: la columna "Promedio" de los listados muestra 0 en los retos sin puntaje (igual que
+en cualquier código sin puntajes); pide mostrarla vacía en vez de 0.
+
 ### Fase 6: modo equipos en vivo
 
 - Sesión en vivo desde el admin: PIN, pantalla del anfitrión en el computador, celulares.
@@ -212,9 +231,16 @@ sobre la rampa de una inclinada cuenta como tocar la inclinada.
 - Niveles de calidad automáticos, modo foto Ultra, recorrido de la guía de §5 completo.
 - Revisión legal de nombre y arte antes del lanzamiento público.
 
+## Decisiones tomadas después del plan
+
+- **Bisagras por pasos** (2026-10-09): quedan para después, fuera de las fases actuales. Existen
+  en el juego real (bisagras de clic), pero rompen la regla de que todo cae en la cuadrícula y no
+  frenan nada de lo demás.
+
 ## Decisiones que quedan abiertas
 
 1. **Nombre comercial** (bloquea solo la fase 8, no el desarrollo).
-2. **Retos de fábrica**: qué retos y temas trae el catálogo inicial, y si alguno es para un
-   cliente concreto como la Ruta del café.
+2. **Retos de fábrica**: la fase 5 dejó una propuesta de cinco (uno por tipo, ver arriba). Falta
+   el visto bueno del usuario y decidir si alguno es para un cliente concreto como la Ruta del
+   café.
 3. **Votación**: si el anfitrión puede saltarla en eventos cortos.

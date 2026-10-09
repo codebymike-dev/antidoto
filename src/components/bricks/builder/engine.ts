@@ -6,6 +6,7 @@
 // React solo lee `getSnapshot()` (useSyncExternalStore) y llama métodos: nada de three en hooks.
 
 import * as THREE from "three";
+import { encodeBuild } from "@/lib/bricks/codec";
 import { History, type Op } from "@/lib/bricks/ops";
 import { BRICK_COLORS } from "@/lib/bricks/palette";
 import { part } from "@/lib/bricks/parts";
@@ -45,6 +46,10 @@ export interface BuilderSnapshot {
   /** Miniaturas de la bandeja en el color activo (data URL por pieza). */
   thumbs: Map<number, string>;
   color: number;
+  /** Máximo de piezas del reto; null = sin límite. */
+  limit: number | null;
+  /** Sube con cada cambio de la obra: el guardado automático lo vigila. */
+  version: number;
 }
 
 /** El fantasma va por encima de la yema para que el dedo no lo tape (investigación, 3.2). */
@@ -101,6 +106,8 @@ export class BuilderEngine {
   private counters = { placed: 0, orbits: 0, undos: 0 };
   private announce = "";
   private framed = false;
+  private limit: number | null = null;
+  private version = 0;
   private cleanup: (() => void)[] = [];
 
   /** Existe antes del lienzo: React lo crea una vez y lo lee con useSyncExternalStore. */
@@ -211,6 +218,8 @@ export class BuilderEngine {
       notice: this.notice,
       thumbs: this.thumbsCache.get(this.thumbColor) ?? new Map(),
       color: this.thumbColor,
+      limit: this.limit,
+      version: this.version,
     };
   }
 
@@ -295,11 +304,26 @@ export class BuilderEngine {
     }
   }
 
+  /** Presupuesto de piezas del reto (investigación, 6.2); null = sin límite. */
+  setLimit(limit: number | null) {
+    this.limit = limit;
+    this.emit();
+  }
+
+  private atLimit(): boolean {
+    return this.limit !== null && this.world.bricks.size >= this.limit;
+  }
+
   /** Coloca la pieza en mano donde está el fantasma. */
   place(): boolean {
     const pr = this.proposal;
     const h = this.hand;
     if (!pr || !h) return false;
+    if (!this.movingId && this.atLimit()) {
+      brickSound().play("invalid");
+      this.say(`Ya usaste tus ${this.limit} piezas. Mueve o quita alguna para cambiar tu obra.`, { visible: true });
+      return false;
+    }
     if (!pr.ok) {
       brickSound().play("invalid");
       this.say(pr.problem === "ocupado" ? "Ahí ya hay una pieza" : "Ahí no encaja: necesita apoyarse en algo");
@@ -389,10 +413,17 @@ export class BuilderEngine {
   }
 
   redo() {
-    if (this.history.redo()) {
-      brickSound().play("place");
-      this.afterChange("Rehecho");
+    const before = this.world.bricks.size;
+    if (!this.history.redo()) return;
+    // Rehacer no puede saltarse el presupuesto: si suma piezas por encima del límite, se revierte.
+    if (this.limit !== null && this.world.bricks.size > Math.max(before, this.limit)) {
+      this.history.undo();
+      brickSound().play("invalid");
+      this.say(`Ya usaste tus ${this.limit} piezas`, { visible: true });
+      return;
     }
+    brickSound().play("place");
+    this.afterChange("Rehecho");
   }
 
   frameAll() {
@@ -422,11 +453,73 @@ export class BuilderEngine {
     return this.stage.capture([this.ghost.group, this.outline.group]);
   }
 
+  /** La obra en el formato binario que se guarda (src/lib/bricks/codec.ts). */
+  exportBuild(): Uint8Array {
+    return encodeBuild(this.world.base, this.world.bricks.values());
+  }
+
+  /**
+   * Foto para entregar: la obra encuadrada entera y reducida a JPEG, que pesa poco para la base.
+   * La cámara vuelve a donde estaba.
+   */
+  async deliveryPhoto(maxSide = 1200): Promise<{ blob: Blob; url: string } | null> {
+    if (!this.mounted) return null;
+    const cam = this.stage.camera.position.clone();
+    const target = this.stage.controls.target.clone();
+    this.frameAll();
+    const png = this.stage.capture([this.ghost.group, this.outline.group]);
+    this.stage.camera.position.copy(cam);
+    this.stage.controls.target.copy(target);
+    this.stage.controls.update();
+    this.stage.request();
+    const img = new Image();
+    img.src = png;
+    await img.decode();
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/jpeg", 0.86));
+    return blob ? { blob, url: canvas.toDataURL("image/jpeg", 0.86) } : null;
+  }
+
+  /**
+   * Foto del modelo a replicar, dibujada con el mismo escenario (sin abrir otro contexto WebGL):
+   * se monta un mundo aparte en lugar de la obra, se encuadra, se captura y se desmonta.
+   */
+  modelPhoto(bricks: Brick[], base: number): string | null {
+    if (!this.mounted) return null;
+    const world = new BrickWorld(base);
+    for (const b of bricks) world.add(b);
+    const view = new WorldView(this.stage, world);
+    view.sync(new Set());
+    this.stage.scene.add(view.group);
+    const cam = this.stage.camera.position.clone();
+    const target = this.stage.controls.target.clone();
+    let maxY = 0;
+    for (const b of bricks) maxY = Math.max(maxY, (b.y + part(b.part).h) * PLATE_H);
+    const center = new THREE.Vector3(base / 2, maxY / 3, base / 2);
+    this.stage.camera.position.copy(center).add(new THREE.Vector3(0.6, 0.62, 0.72));
+    this.stage.frame(center, base + 1);
+    // Las sombras guardadas son de la obra: se recalculan para el modelo y otra vez al volver.
+    this.stage.invalidateShadows();
+    const url = this.stage.capture([this.view.group, this.ghost.group, this.outline.group]);
+    this.stage.scene.remove(view.group);
+    view.dispose();
+    this.stage.camera.position.copy(cam);
+    this.stage.controls.target.copy(target);
+    this.stage.controls.update();
+    this.stage.invalidateShadows();
+    return url;
+  }
+
   private run(op: Op, message: string, undo = false) {
     if (this.history.do(op)) this.afterChange(message, undo);
   }
 
   private afterChange(message: string, undo = false, visible = false) {
+    this.version++;
     const before = this.floating.size;
     this.floating = this.world.floating();
     if (this.mounted) this.view.sync(this.floating);

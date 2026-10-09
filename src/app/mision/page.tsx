@@ -12,6 +12,9 @@ import { publicExperience } from "@/lib/experiences/texts";
 import ExperiencePlayer from "@/components/experience/ExperiencePlayer";
 import LeaveConfirm from "@/components/LeaveConfirm";
 import { participantProfile, profileConfigFor } from "@/lib/participant-profile";
+import { loadBuildOverride, loadDraft, missionBuild } from "@/lib/build-data";
+import { buildTexts, publicBuild } from "@/lib/bricks/challenges";
+import BuilderShell from "@/components/bricks/builder/BuilderShell";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +51,37 @@ export default async function MisionPage() {
         company={p.empresa}
         // Quien ya tenía avance antes de que existiera la bienvenida no la ve de nuevo.
         onboarding={{ done: !!profile || answers.length > 0, config: profileConfig }}
+      />
+    );
+  }
+
+  // Los retos de construcción abren el constructor 3D, con la obra guardada si ya había empezado.
+  const build = await missionBuild(p.mission_id);
+  if (build) {
+    const [override, draft, profile, profileConfig] = await Promise.all([
+      loadBuildOverride(build.key),
+      loadDraft(p.id, build.base),
+      participantProfile(p.id),
+      profileConfigFor(p.id),
+    ]);
+    const texts = buildTexts(build, override);
+    return (
+      <BuilderShell
+        title={texts.title}
+        exitAction={leaveActivity}
+        challenge={publicBuild(build, texts)}
+        initial={draft.bricks}
+        session={{
+          mode: "play",
+          participant: p.participant_name,
+          company: p.empresa,
+          welcome: brand?.welcome ?? null,
+          paused: p.estado !== "activo",
+          started: draft.started,
+          elapsedMs: draft.elapsedMs,
+          profile: profileConfig,
+          onboarded: !!profile,
+        }}
       />
     );
   }

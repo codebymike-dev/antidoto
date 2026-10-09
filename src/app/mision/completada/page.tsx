@@ -12,6 +12,9 @@ import MissionPass from "@/components/motion/MissionPass";
 import LeaveConfirm from "@/components/LeaveConfirm";
 import { participationRecap } from "@/lib/experience-data";
 import { RecapReview, RecapSummary } from "@/components/experience/RouteRecap";
+import { loadBuildOverride, loadWork, missionBuild } from "@/lib/build-data";
+import { buildTexts, matchScore, modelBricks } from "@/lib/bricks/challenges";
+import WorkRecap from "@/components/bricks/recap/WorkRecap";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +31,10 @@ export default async function MisionCompletadaPage() {
   // Las rutas de escenas cierran con el resultado personal y el repaso; las demás misiones no.
   const loaded = await participationRecap(p.id, p.mission_id).catch(() => null);
   const recap = loaded && loaded.stations.some((st) => st.risks.length > 0) ? loaded : null;
+  // Los retos de construcción cierran con la obra entregada.
+  const build = recap ? null : await missionBuild(p.mission_id);
+  const [work, buildOverride] = build ? await Promise.all([loadWork(p.id), loadBuildOverride(build.key)]) : [null, null];
+  const wide = !!recap || !!work;
 
   return (
     <div
@@ -51,7 +58,7 @@ export default async function MisionCompletadaPage() {
           zIndex: 1,
           margin: "auto 0",
           width: "100%",
-          maxWidth: recap ? 560 : 440,
+          maxWidth: wide ? 560 : 440,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -103,6 +110,14 @@ export default async function MisionCompletadaPage() {
             </p>
           </div>
           {recap && <RecapSummary recap={recap} pal={pal} />}
+          {build && work && (
+            <WorkRecap
+              work={work}
+              pal={pal}
+              match={build.kind === "replicar" ? matchScore(modelBricks(build), work.bricks) : null}
+              reflection={buildTexts(build, buildOverride).reflection}
+            />
+          )}
         </MissionPass>
         {recap && <RecapReview recap={recap} pal={pal} />}
       </div>

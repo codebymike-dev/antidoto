@@ -939,6 +939,85 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       },
     ],
   },
+  {
+    id: "construccion",
+    nombre: "Construcción con ladrillos 3D (Bricks Serious Play)",
+    items: [
+      {
+        id: "RF-950",
+        titulo: "Retos de construcción en la biblioteca",
+        descripcion:
+          "La biblioteca tiene un tercer tipo de actividad, Construcción 3D, con su pestaña y una tarjeta por reto. Cinco retos de fábrica: construcción libre, La Torre (15 piezas en 90 segundos), Un lugar seguro (tema con 6 minutos), Replica la casa (copiar un modelo) y Un buen día en el equipo (metáfora con 30 piezas, título y frase). Cada reto tiene su página con cómo funciona, botón para probarlo y para asignarlo.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "BUILDS en src/lib/bricks/challenges.ts; listBuildLibrary en src/lib/build-data.ts; /admin/biblioteca (?tipo=construccion) y /admin/biblioteca/construccion/[key]; BuildThumb en src/components/bricks/BuildThumb.tsx",
+        verificacion: "challenges.test.mts (claves únicas, modelo construible, textos de fábrica válidos) y revisión en Chromium de la biblioteca y la página del reto.",
+        notas: "Igual que las escenas, el reto (reloj, presupuesto, modelo) vive en código y cada uno es una misión con id fijo (bld-<clave>) que reutiliza códigos, participaciones, ficha y reportes.",
+        relacionados: ["RF-901", "RF-951", "RF-952"],
+      },
+      {
+        id: "RF-951",
+        titulo: "Asignar un reto a una empresa y jugarlo con el código",
+        descripcion:
+          "El superadmin asigna un reto como cualquier actividad: se crea un código y el participante entra con su nombre y ese código. En /mision se abre el constructor con la consigna, la ficha (cargo y lugar si el código los pide) y el botón Empezar.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "assignActivity en src/lib/actions.ts, ensureBuildMission y mission_builds; rama de retos en src/app/mision/page.tsx; Intro en src/components/bricks/builder/ChallengeLayer.tsx",
+        verificacion: "Revisión en Chromium (celular emulado): asignar Metáfora, entrar con el código, llenar la ficha y empezar.",
+        relacionados: ["RF-301", "RF-913", "RF-950"],
+      },
+      {
+        id: "RF-952",
+        titulo: "Reloj, presupuesto de piezas y modelo a replicar",
+        descripcion:
+          "Los retos con tiempo muestran un reloj que avisa en los últimos 30 segundos y al acabarse pide entregar. Los retos con presupuesto muestran piezas usadas sobre el máximo y no dejan poner una más (tampoco rehaciendo). En Replicar, el modelo se ve en una foto 3D dibujada con el mismo escenario, y al entregar se calcula qué tanto se parece la copia.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "setLimit, modelPhoto en src/components/bricks/builder/engine.ts; reloj y avisos en ChallengeLayer.tsx; matchScore en src/lib/bricks/challenges.ts",
+        verificacion: "challenges.test.mts (coincidencia igual al mover o girar la copia, menor con un color cambiado o una pieza de menos) y revisión en Chromium.",
+        notas:
+          "El reloj lo lleva el servidor (brick_works.started_ms): recargar no lo reinicia. La coincidencia compara celdas y colores, sin importar dónde ni hacia dónde se construyó; solo Replicar guarda puntaje. Los retos creativos no tienen puntaje, a propósito (investigación, 6.3).",
+        relacionados: ["RF-950", "RF-953"],
+      },
+      {
+        id: "RF-953",
+        titulo: "Guardado automático y entrega de la obra con foto",
+        descripcion:
+          "La obra se guarda sola unos segundos después de cada cambio y se retoma al volver a entrar, sin repetir la consigna. Al entregar se toma una foto de la obra encuadrada; si el reto lo pide, el participante le pone título y frase. Después de entregar ya no se puede cambiar.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "saveDraft, startBuild y submitWork en src/lib/build-actions.ts; tabla brick_works; exportBuild y deliveryPhoto en engine.ts",
+        verificacion: "Revisión en Chromium: dos piezas, recarga con la obra intacta, entrega con título y frase y paso al cierre.",
+        notas: "La obra viaja en el formato binario de codec.ts (9 bytes por pieza) y se valida en el servidor contra el reto (base, presupuesto, piezas conocidas). La foto es JPEG de máximo 1200 px y 600 KB, revisada por sus primeros bytes.",
+        relacionados: ["RF-952", "RF-954", "RNF-08"],
+      },
+      {
+        id: "RF-954",
+        titulo: "Cierre con la obra y galería de obras en los resultados",
+        descripcion:
+          "El cierre del participante muestra la foto de su obra, su título y frase, las piezas usadas, la coincidencia si replicaba y la pregunta para pensar, con la foto para descargar. En los resultados de la actividad, el admin ve las obras entregadas con su autor y empresa.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "WorkRecap en src/components/bricks/recap/WorkRecap.tsx; listWorks en build-data.ts y galería en src/components/admin/ActivityResults.tsx; ruta /obra/[id]",
+        verificacion: "Revisión en Chromium del cierre en celular y de la galería en el portal.",
+        notas: "La foto no es pública: /obra/[id] la entrega a su autor (cookie) o a un admin con alcance sobre la empresa. La votación, el mural y la galería de cierre en sala son la fase 7.",
+        relacionados: ["RF-953", "RF-955"],
+      },
+      {
+        id: "RF-955",
+        titulo: "Editar los textos de cada reto",
+        descripcion:
+          "El superadmin edita el título, la consigna y la pregunta de cierre de cada reto desde su página, y puede volver a los textos de fábrica. El reloj, el presupuesto y el modelo no se editan.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "saveBuildTexts y resetBuildTexts en src/lib/build-actions.ts; tabla build_texts; BuildTextsEditor en src/components/admin/BuildTextsEditor.tsx",
+        verificacion: "validateBuildTexts en challenges.test.mts y revisión manual.",
+        notas: "Cambiar el título también renombra la misión, para que listados y reportes digan lo mismo que ve el participante.",
+        relacionados: ["RF-905", "RF-950"],
+      },
+    ],
+  },
 ];
 
 // --- Requerimientos no funcionales (categorías ISO/IEC 25010) ------------------

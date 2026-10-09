@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { BuilderProps } from "./Builder";
 
 // three va en un chunk aparte que solo baja el constructor; sin SSR porque necesita WebGL.
 const Builder = dynamic(() => import("./Builder"), {
@@ -12,6 +13,6 @@ const Builder = dynamic(() => import("./Builder"), {
   ),
 });
 
-export default function BuilderShell(props: { title: string; exitHref: string }) {
+export default function BuilderShell(props: BuilderProps) {
   return <Builder {...props} />;
 }

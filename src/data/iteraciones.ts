@@ -994,6 +994,37 @@ export const ITERACIONES: Iteracion[] = [
     ],
   },
   {
+    id: "it-ladrillos-biblioteca",
+    fase: "Fase 5 · Construcción con ladrillos 3D",
+    nombre: "Retos de construcción en la biblioteca y modo individual",
+    rango: "9 oct 2026",
+    ghSince: "2026-10-09",
+    ghUntil: "2026-10-10",
+    resumen:
+      "El constructor de ladrillos 3D deja de ser una prueba del portal: entra a la biblioteca como tercer tipo de actividad, con cinco retos de fábrica (libre, La Torre, un lugar seguro, replicar una casa y una metáfora), se asigna con código como las escenas y cada participante arma, guarda y entrega su obra con foto.",
+    historias: [
+      {
+        id: "AN-45",
+        titulo: "Como participante, quiero construir con ladrillos 3D el reto que me asignó mi empresa y entregar mi obra para llevarme la foto y que quede en los resultados",
+        tipo: "historia",
+        valor: "alto",
+        col: "aceptacion",
+        par: "IA",
+        fecha: "2026-10-09",
+        tags: ["ladrillos", "biblioteca", "celular"],
+        requisitos: ["RF-950", "RF-951", "RF-952", "RF-953", "RF-954", "RF-955"],
+        dod: [
+          ok("Retos de fábrica en src/lib/bricks/challenges.ts con pruebas (modelo construible, coincidencia, validación de obra, título y frase)."),
+          ok("Tablas mission_builds, build_texts y brick_works en db/schema.sql."),
+          ok("Consigna con ficha, reloj, presupuesto, modelo, guardado automático y entrega con foto, verificados en Chromium (celular y escritorio)."),
+          ok("Biblioteca, página del reto, asignar, cierre del participante y galería de obras en los resultados."),
+          pend("Migrar la base de producción antes de desplegar (tablas nuevas)."),
+          pend("Probar en celulares reales de gama media y con 5 personas."),
+        ],
+      },
+    ],
+  },
+  {
     id: "it-backlog",
     fase: "Backlog",
     nombre: "Pendientes del portal y las misiones",

@@ -45,8 +45,8 @@ function scopeArgs(user: AdminUser): { clause: string; args: number[] } {
 }
 
 /**
- * Actividades jugables (las de la biblioteca) con su uso. Las del prototipo, sin escena,
- * no aparecen; tampoco cuentan los códigos ni las empresas archivadas.
+ * Actividades jugables (las de la biblioteca: escenas y retos de construcción) con su uso.
+ * Las del prototipo no aparecen; tampoco cuentan los códigos ni las empresas archivadas.
  */
 export async function listMissions(user: AdminUser, search = ""): Promise<MissionOverview[]> {
   const { clause, args } = scopeArgs(user);
@@ -64,10 +64,11 @@ export async function listMissions(user: AdminUser, search = ""): Promise<Missio
             COUNT(p.id) AS total_participantes,
             CAST(COALESCE(AVG(p.avance), 0) AS INTEGER) AS avg_avance
      FROM missions m
-     JOIN mission_experiences me ON me.mission_id = m.id
      LEFT JOIN activity_codes ac ON ac.mission_id = m.id AND ${LIVE_CODE} ${clause}
      LEFT JOIN participations p ON p.activity_code_id = ac.id
      WHERE m.archived_at IS NULL
+       AND (EXISTS (SELECT 1 FROM mission_experiences me WHERE me.mission_id = m.id)
+         OR EXISTS (SELECT 1 FROM mission_builds mb WHERE mb.mission_id = m.id))
        AND (? = '' OR LOWER(m.title) LIKE '%' || LOWER(?) || '%')
      GROUP BY m.id
      ORDER BY m.created_at`,

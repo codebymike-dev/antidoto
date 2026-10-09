@@ -19,6 +19,7 @@ import {
 import { trendToPoints } from "@/lib/utils";
 import GroupsTable from "@/components/admin/GroupsTable";
 import { experienceRiskStats, missionStations, profileOptions } from "@/lib/experience-data";
+import { listWorks, missionBuild } from "@/lib/build-data";
 import { lugar } from "@/lib/colombia";
 import ProfileFilters from "@/components/admin/ProfileFilters";
 import type { Estado } from "@/lib/types";
@@ -50,6 +51,8 @@ export default async function ActivityResults({ missionId: id, user, company, q,
   const trend = await getTrend(id, viewer);
   const stations = await missionStations(id);
   const experience = stations?.[0] ?? null;
+  const build = stations ? null : await missionBuild(id);
+  const works = build ? await listWorks(id, viewer) : [];
   const f = { cargo: filter.cargo ?? "", dpto: filter.dpto ?? "", mpio: filter.mpio ?? "" };
   const filtered = !!(f.cargo || f.dpto || f.mpio);
   const riskReport = stations
@@ -210,9 +213,9 @@ export default async function ActivityResults({ missionId: id, user, company, q,
               </div>
             </details>
           )}
-          {user.role === "super" && experience && (
+          {user.role === "super" && (experience || build) && (
             <Link
-              href={`/admin/asignar?${new URLSearchParams({ actividad: experience.key, ...(company ? { empresa: String(company.id) } : {}) })}`}
+              href={`/admin/asignar?${new URLSearchParams({ actividad: (experience ?? build)!.key, ...(company ? { empresa: String(company.id) } : {}) })}`}
               className="btn-filled"
               style={{
                 ...filledButton,
@@ -271,6 +274,47 @@ export default async function ActivityResults({ missionId: id, user, company, q,
           </svg>
         </div>
       </div>
+
+      {build && (
+        <section style={{ ...card, padding: "20px 22px", marginBottom: 22 }} aria-labelledby="obras-reto">
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+            <h2 id="obras-reto" style={{ ...calSans, fontSize: 18, margin: 0, color: colors.ink }}>
+              Obras entregadas <span style={{ color: colors.muted, fontWeight: 400 }}>{works.length}</span>
+            </h2>
+            <Link href={`/admin/escena/construir?reto=${build.key}`} style={{ fontSize: 13, fontWeight: 700, color: colors.accent }}>
+              Probar el reto ›
+            </Link>
+          </div>
+          {works.length === 0 ? (
+            <p style={{ fontSize: 13.5, color: colors.muted, margin: 0 }}>Todavía nadie ha entregado su obra.</p>
+          ) : (
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 }}>
+              {works.map((w) => (
+                <li key={w.participationId} style={{ borderRadius: 14, overflow: "hidden", background: colors.accentTint }}>
+                  <a href={`/obra/${w.participationId}`} target="_blank" rel="noreferrer" style={{ display: "block" }} title="Abrir la foto en grande">
+                    {/* Ruta privada que revisa el alcance del admin: next/image no aporta aquí. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/obra/${w.participationId}`}
+                      alt={w.title ? `Obra "${w.title}" de ${w.participant}` : `Obra de ${w.participant}`}
+                      loading="lazy"
+                      style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "#16222A" }}
+                    />
+                  </a>
+                  <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", gap: 3 }}>
+                    {w.title && <span style={{ ...calSans, fontSize: 15, color: colors.ink }}>{w.title}</span>}
+                    {w.phrase && <span style={{ fontSize: 12.5, lineHeight: 1.45, color: colors.inkSoft }}>{w.phrase}</span>}
+                    <span style={{ fontSize: 12, color: colors.muted }}>
+                      {w.participant}
+                      {!company && ` · ${w.empresa}`} · {w.brickCount === 1 ? "1 pieza" : `${w.brickCount} piezas`}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {experience && riskReport && (
         <section

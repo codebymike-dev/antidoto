@@ -6,12 +6,15 @@ import { assignActivity, type AssignState } from "@/lib/actions";
 import { colors, calSans } from "@/lib/theme";
 import { card, fieldLabel, filledButton } from "@/lib/styles";
 import SceneThumb from "@/components/experience/SceneThumb";
+import BuildThumb from "@/components/bricks/BuildThumb";
+import type { BuildKind } from "@/lib/bricks/challenges";
 import type { ExperienceDef } from "@/lib/experiences/types";
 import { CARGO_LIMITS, DEFAULT_CARGOS } from "@/lib/profile";
 
 interface Props {
   companies: { id: number; name: string }[];
-  activities: { key: string; scene: ExperienceDef["scene"]; title: string; detail: string }[];
+  /** Escenas y retos de construcción: cada uno con su miniatura. */
+  activities: { key: string; thumb: { scene: ExperienceDef["scene"] } | { build: BuildKind }; title: string; detail: string }[];
   defaultCompany: number | null;
   defaultActivity: string | null;
   /** Cargos del último código de cada empresa, para proponerlos otra vez. */
@@ -87,7 +90,11 @@ export default function AssignForm({ companies, activities, defaultCompany, defa
                 required
                 style={{ position: "absolute", top: 12, right: 12, width: 18, height: 18, accentColor: colors.accent, zIndex: 1 }}
               />
-              <SceneThumb scene={a.scene} label={`Escena de ${a.title}`} />
+              {"scene" in a.thumb ? (
+                <SceneThumb scene={a.thumb.scene} label={`Escena de ${a.title}`} />
+              ) : (
+                <BuildThumb kind={a.thumb.build} label={`Ladrillos de ${a.title}`} />
+              )}
               <span style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
                 <span style={{ ...calSans, fontSize: 16, color: colors.ink }}>{a.title}</span>
                 <span style={{ fontSize: 12.5, color: colors.muted, lineHeight: 1.45 }}>{a.detail}</span>
