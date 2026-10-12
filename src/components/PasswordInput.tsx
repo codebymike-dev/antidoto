@@ -15,6 +15,8 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { id: string;
 export default function PasswordInput({ id, style, onKeyDown, onKeyUp, onBlur, ...rest }: Props) {
   const [shown, setShown] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
+  // El parpadeo del ojo solo después del primer toque, no al cargar la página.
+  const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const maskId = useId();
 
@@ -35,7 +37,10 @@ export default function PasswordInput({ id, style, onKeyDown, onKeyUp, onBlur, .
     const input = inputRef.current;
     const start = input?.selectionStart ?? null;
     const end = input?.selectionEnd ?? null;
-    flushSync(() => setShown((s) => !s));
+    flushSync(() => {
+      setShown((s) => !s);
+      setTouched(true);
+    });
     // Cambiar el type puede mover el cursor al inicio en algunos navegadores.
     if (input && start !== null && end !== null) input.setSelectionRange(start, end);
   }
@@ -89,6 +94,7 @@ export default function PasswordInput({ id, style, onKeyDown, onKeyUp, onBlur, .
         aria-label={label}
         title={label}
         data-shown={shown || undefined}
+        data-touched={touched || undefined}
         // Sin esto el clic le roba el foco al campo y en móvil se cierra el teclado.
         onMouseDown={(e) => e.preventDefault()}
         onClick={toggle}
