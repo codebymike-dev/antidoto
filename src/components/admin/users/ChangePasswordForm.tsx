@@ -5,6 +5,7 @@ import { changeOwnPassword, type ChangePasswordState } from "@/lib/user-actions"
 import { colors } from "@/lib/theme";
 import { card, fieldInput, fieldLabel, filledButton } from "@/lib/styles";
 import SavedToast from "@/components/admin/SavedToast";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function ChangePasswordForm({ username, minLength }: { username: string; minLength: number }) {
   const [state, action, pending] = useActionState<ChangePasswordState, FormData>(changeOwnPassword, null);
@@ -35,10 +36,9 @@ function Field({ id, label, autoComplete, minLength, hint }: { id: string; label
       <label htmlFor={id} style={fieldLabel}>
         {label}
       </label>
-      <input
+      <PasswordInput
         id={id}
         name={id}
-        type="password"
         required
         minLength={minLength}
         autoComplete={autoComplete}

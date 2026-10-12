@@ -6,6 +6,7 @@ import { loginAction, type LoginState } from "@/lib/actions";
 import { colors, calSans } from "@/lib/theme";
 import { fieldLabel, fieldInput, primaryButton } from "@/lib/styles";
 import LogoMark from "./LogoMark";
+import PasswordInput from "./PasswordInput";
 import DepartureBoard from "./motion/DepartureBoard";
 import MissionPass from "./motion/MissionPass";
 import MotionHeading from "./motion/MotionHeading";
@@ -83,10 +84,9 @@ export default function AdminLoginScreen({ backdrop }: { backdrop?: ReactNode })
                 <label htmlFor="password" style={fieldLabel}>
                   Contraseña
                 </label>
-                <input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   autoComplete="current-password"
                   placeholder="••••••••"
                   style={fieldInput}

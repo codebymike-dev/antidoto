@@ -807,11 +807,7 @@ button {
 }
 
 .pw-input {
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, padding-right 0.2s ease;
-}
-
-.pw-input:focus {
-  border-color: var(--brand-accent, #1c99ca) !important;
+  transition: padding-right 0.2s ease;
 }
 
 /* Con la contraseña a la vista se separan un poco las letras: "l", "I" y "1" se distinguen. */
@@ -851,7 +847,7 @@ button {
 
 .pw-toggle:hover {
   background: #e3f6fc;
-  color: var(--brand-accent-dark, #0c5c7d);
+  color: #0c5c7d;
 }
 
 .pw-toggle:active {
