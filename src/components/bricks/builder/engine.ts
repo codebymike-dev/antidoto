@@ -534,7 +534,8 @@ export class BuilderEngine {
     this.stage.frame(center, base + 1);
     // Las sombras guardadas son de la obra: se recalculan para el modelo y otra vez al volver.
     this.stage.invalidateShadows();
-    const url = this.stage.capture([this.view.group, this.ghost.group, this.outline.group]);
+    const hide = [this.view.group, this.ghost.group, this.outline.group, ...(this.parcelMesh ? [this.parcelMesh] : [])];
+    const url = this.stage.capture(hide);
     this.stage.scene.remove(view.group);
     view.dispose();
     this.stage.camera.position.copy(cam);

@@ -289,6 +289,11 @@ async function publishStatus(s: SessionRow) {
   });
   const players = await one<{ n: number }>("SELECT COUNT(*) AS n FROM brick_players WHERE session_id = ?", [s.id]);
   await countMessages(s.id, Number(players?.n ?? 0) + 1);
+  // Al cerrar, cada equipo recibe los créditos finales (quién puso cuántas piezas), ya sin nada en vuelo.
+  if (s.status === "finished") {
+    const teams = await all<{ id: number }>("SELECT id FROM brick_teams WHERE session_id = ?", [s.id]);
+    await Promise.all(teams.map((t) => publishMembers(s.id, Number(t.id))));
+  }
 }
 
 /** Cambió la gente de un equipo: lo ven sus miembros y el proyector. */

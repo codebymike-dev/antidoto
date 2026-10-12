@@ -187,6 +187,11 @@
     top: 58px;
     max-width: calc(100% - 20px);
   }
+
+  /* En el celular el aviso del turno o la ronda ocupa el ancho: la lista del equipo va debajo. */
+  .turn ~ .info {
+    top: 108px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

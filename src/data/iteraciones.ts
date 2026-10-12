@@ -1027,12 +1027,12 @@ export const ITERACIONES: Iteracion[] = [
   {
     id: "it-ladrillos-equipos",
     fase: "Fase 6 · Construcción con ladrillos 3D",
-    nombre: "Construcción por equipos en vivo (primera parte)",
+    nombre: "Construcción por equipos en vivo",
     rango: "9 a 12 oct 2026",
     ghSince: "2026-10-09",
     ghUntil: "2026-10-13",
     resumen:
-      "Salas en vivo con PIN, proyector y celulares para construir por equipos: La Torre en equipo (piezas compartidas y ranking de alturas) y Obra en Equipo (una franja por persona). El servidor es la autoridad de cada obra y reparte los cambios por un canal por equipo. Relevo y Teléfono Roto quedan para la segunda parte.",
+      "Salas en vivo con PIN, proyector y celulares para construir por equipos, con cuatro formas de jugar a elegir: La Torre en equipo (piezas compartidas y ranking de alturas), Obra en Equipo (una franja por persona), Relevo de Constructores (por turnos, con sorpresa a mitad del tiempo) y Teléfono Roto (en parejas, uno describe y el otro arma). El servidor es la autoridad de cada obra y reparte los cambios por un canal por equipo.",
     historias: [
       {
         id: "AN-46",
@@ -1043,14 +1043,15 @@ export const ITERACIONES: Iteracion[] = [
         par: "IA",
         fecha: "2026-10-12",
         tags: ["ladrillos", "en vivo", "proyector"],
-        requisitos: ["RF-956", "RF-957", "RF-958", "RF-959", "RF-960"],
+        requisitos: ["RF-956", "RF-957", "RF-958", "RF-959", "RF-960", "RF-961", "RF-962"],
         dod: [
           ok("Reglas puras con pruebas: reparto, parcelas, presupuesto, operaciones de la red, altura y orden de lotes."),
           ok("Tablas brick_sessions, brick_teams y brick_players en db/schema.sql."),
           ok("Verificado en Chromium con un proyector y hasta 4 celulares: lobby, sincronización, franjas, presupuesto, cierre y recorrido."),
+          ok("Relevo y Teléfono Roto como dos opciones más (turnos, sorpresa, roles por ronda, modelo secreto y comparación), verificados en Chromium."),
+          ok("El celular pregunta el estado cada 5 s mientras espera en el lobby, por si se perdió el aviso de empezar."),
           pend("Migrar la base de producción antes de desplegar (tablas nuevas)."),
           pend("Prueba con celulares reales y un proyector de verdad, midiendo los mensajes de Ably de una sesión completa."),
-          pend("Segunda parte de la fase: Relevo y Teléfono Roto."),
         ],
       },
     ],

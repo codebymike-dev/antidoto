@@ -13,6 +13,7 @@ import type { Brick } from "@/lib/bricks/world";
 import type { BuilderEngine } from "../builder/engine";
 
 const FLUSH_MS = 200;
+const LOBBY_POLL_MS = 5000;
 
 export type TeamStatus = "lobby" | "building" | "finished";
 
@@ -71,6 +72,8 @@ export class TeamSync {
   private realtime: Ably.Realtime | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
   private closed = false;
+  private status: TeamStatus;
+  private lastPoll = Date.now();
 
   constructor(engine: BuilderEngine, snap: TeamSnapshot, cb: Callbacks) {
     this.engine = engine;
@@ -79,6 +82,7 @@ export class TeamSync {
     this.teamId = snap.team.id;
     this.tag = snap.me.tag;
     this.queue = new SeqQueue(snap.team.seq);
+    this.status = snap.session.status;
   }
 
   /** El motor llama esto con cada cambio propio ya aplicado. */
@@ -97,22 +101,21 @@ export class TeamSync {
     team.on("attached", (change) => {
       if (!change.resumed) this.requestResync();
     });
-    (async () => {
-      await session.attach();
-      await team.attach();
-      if (this.closed) return;
-      await session.subscribe("status", (msg) => {
+    // Suscribirse es lo que conecta el canal: así no queda un hueco entre conectar y escuchar
+    // por donde se pierda un aviso.
+    Promise.all([
+      session.subscribe("status", (msg) => {
         const d = msg.data as { status: TeamStatus; startedMs: number | null; endsMs: number | null; serverNow: number };
-        this.cb.onClock({ status: d.status, startedMs: d.startedMs, endsMs: d.endsMs, offset: d.serverNow - Date.now() });
+        this.clock({ status: d.status, startedMs: d.startedMs, endsMs: d.endsMs, offset: d.serverNow - Date.now() });
         // Al cerrar se trae la foto final: piezas y créditos de cada uno, ya sin nada en vuelo.
         if (d.status === "finished") this.requestResync();
-      });
-      await team.subscribe("members", (msg) => this.cb.onMembers((msg.data as { members: TeamMember[] }).members));
-      await team.subscribe("ops", (msg) => {
+      }),
+      team.subscribe("members", (msg) => this.cb.onMembers((msg.data as { members: TeamMember[] }).members)),
+      team.subscribe("ops", (msg) => {
         const d = msg.data as { seq: number; ops: Op[]; by: string };
         this.receive({ seq: d.seq, mine: d.by === this.tag, ops: d.ops });
-      });
-    })().catch(() => {
+      }),
+    ]).catch(() => {
       // Solo falla por close() al desmontar; los cortes de red los reintenta Ably.
     });
   }
@@ -137,8 +140,19 @@ export class TeamSync {
     }
   }
 
+  private clock(c: TeamClock) {
+    this.status = c.status;
+    this.cb.onClock(c);
+  }
+
   private tick() {
     if (this.queue.stalled(Date.now())) this.requestResync();
+    // Red de seguridad del lobby: si el aviso de "empezar" se perdió (celular bloqueado, red lenta),
+    // se pregunta cada pocos segundos. Mientras construyen, un rechazo ya trae la foto.
+    if (this.status === "lobby" && Date.now() - this.lastPoll > LOBBY_POLL_MS) {
+      this.lastPoll = Date.now();
+      this.requestResync();
+    }
     if (this.needResync && !this.inFlight) {
       void this.resync();
       return;
@@ -199,7 +213,7 @@ export class TeamSync {
       const held = this.held.splice(0);
       for (const b of held) this.receive(b);
       this.cb.onMembers(snap.team.members);
-      this.cb.onClock({
+      this.clock({
         status: snap.session.status,
         startedMs: snap.session.startedMs,
         endsMs: snap.session.endsMs,

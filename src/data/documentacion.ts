@@ -1076,6 +1076,30 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         notas: "La cuota gratuita (6 millones al mes) es compartida con el quiz en vivo. Canales por equipo para que los mensajes no se multipliquen por toda la sala (investigación, 7.8).",
         relacionados: ["RF-959"],
       },
+      {
+        id: "RF-961",
+        titulo: "Relevo de Constructores: una obra por turnos",
+        descripcion:
+          "Cada equipo construye una sola obra por turnos de 45 segundos, en el orden en que entraron. Solo pone piezas quien tiene el turno; los demás ven la obra en vivo pero no pueden cambiarla. A mitad del tiempo aparece una consigna sorpresa en los celulares y en el proyector, y al final se ve cuántas piezas puso cada persona.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "relayTurn y twistDue en src/lib/bricks/team.ts; chequeo de turno en applyOps (brick-session.ts); setReadOnly en el motor del constructor; TeamLayer y HostScreen",
+        verificacion: "team.test.mts (rueda de turnos, sorpresa a mitad del tiempo) y prueba en Chromium con 3 celulares.",
+        notas: "El turno se calcula igual en el servidor y en el celular, con el reloj del servidor; una pieza que llega justo al cambiar de turno tiene 2 segundos de gracia. Sumar minutos no mueve la sorpresa.",
+        relacionados: ["RF-956", "RF-957"],
+      },
+      {
+        id: "RF-962",
+        titulo: "Teléfono Roto: describir un modelo secreto en parejas",
+        descripcion:
+          "Se juega en parejas y en dos rondas. En cada ronda uno ve en su celular un modelo secreto (y lo puede ver por los cuatro lados) y lo describe en voz alta; el otro lo arma en su mitad de la base sin verlo. A mitad del tiempo cambian de rol con otro modelo. Al final, el celular y el proyector muestran qué tanto se parece cada copia a su modelo, solo como curiosidad.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "phoneRound, canBuildPhone, phoneArea, phoneModel y phoneScores en team.ts; chequeo de rol en applyOps; modelPhoto con ángulo en el motor; TeamLayer y HostScreen",
+        verificacion: "team.test.mts (roles por ronda, zona estricta, seis modelos que se pueden armar, comparación por ronda) y prueba en Chromium con una pareja.",
+        notas: "Cada ronda se arma en una mitad de la base, así las dos quedan a la vista en el recorrido. Si alguien queda sin pareja, puede ver el modelo y construir a la vez.",
+        relacionados: ["RF-956", "RF-952"],
+      },
     ],
   },
 ];

@@ -219,9 +219,15 @@ en cualquier código sin puntajes); pide mostrarla vacía en vez de 0.
 - Medición real de mensajes Ably por sesión, sumada al consumo del módulo en vivo.
 - Tablas nuevas para sesiones, equipos y operaciones: migrar producción antes de desplegar.
 
-**Estado (2026-10-12)**: primera parte hecha en local y verificada en Chromium con un proyector y
-hasta 4 celulares contra la base local: La Torre en equipo y Obra en Equipo. Relevo y Teléfono
-Roto quedan para la segunda parte (cada uno es un juego distinto: turnos y parejas con roles).
+**Estado (2026-10-12)**: hecha en local y verificada en Chromium con un proyector y hasta 4
+celulares contra la base local. Los cuatro modos son opciones que el anfitrión elige al abrir la
+sala (cada uno es una tarjeta de la biblioteca); jugar solo con código, de la fase 5, sigue igual.
+
+- Relevo: turnos de 45 s por puesto (`relayTurn`), sorpresa a mitad del tiempo pactado
+  (`twistDue`); quien no tiene el turno queda en "solo mirar" (`setReadOnly` del motor).
+- Teléfono Roto: parejas, dos rondas con cambio de rol a mitad del tiempo (`phoneRound`), cada
+  ronda en su mitad de la base (`phoneArea`), seis modelos secretos (`phoneModel`) y comparación
+  por ronda (`phoneScores`). Quien describe ve el modelo por los cuatro lados.
 
 - Reglas puras en `src/lib/bricks/team.ts` (modos, reparto, parcelas, validación de lo que llega
   por la red, altura de la torre) y orden de lotes en `src/lib/bricks/sync.ts`, con pruebas.
