@@ -799,3 +799,158 @@ button {
     transition: none;
   }
 }
+
+/* --- Campo de contraseña con ojito (components/PasswordInput.tsx) ------------ */
+.pw-field {
+  position: relative;
+  width: 100%;
+}
+
+.pw-input {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, padding-right 0.2s ease;
+}
+
+.pw-input:focus {
+  border-color: var(--brand-accent, #1c99ca) !important;
+}
+
+/* Con la contraseña a la vista se separan un poco las letras: "l", "I" y "1" se distinguen. */
+.pw-input[data-shown] {
+  letter-spacing: 0.04em;
+  font-variant-ligatures: none;
+}
+
+/* Edge y Safari traen su propio ojo o llave: con el nuestro basta. */
+.pw-input::-ms-reveal,
+.pw-input::-ms-clear {
+  display: none;
+}
+
+.pw-input::-webkit-credentials-auto-fill-button {
+  margin-right: 44px;
+}
+
+.pw-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #5c7680;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease, scale 0.12s ease;
+}
+
+.pw-toggle:hover {
+  background: #e3f6fc;
+  color: var(--brand-accent-dark, #0c5c7d);
+}
+
+.pw-toggle:active {
+  scale: 0.92;
+}
+
+.pw-toggle[data-shown] {
+  color: var(--brand-accent, #1c99ca);
+}
+
+.pw-toggle:focus-visible {
+  outline-offset: 0;
+}
+
+.pw-eye {
+  overflow: visible;
+}
+
+.pw-eye-slash,
+.pw-eye-cut {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.28s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.pw-toggle[data-shown] .pw-eye-slash,
+.pw-toggle[data-shown] .pw-eye-cut {
+  stroke-dashoffset: 0;
+}
+
+.pw-eye-pupil {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: scale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pw-toggle[data-shown] .pw-eye-pupil {
+  scale: 0.55;
+}
+
+.pw-eye-lid {
+  transform-origin: 12px 12px;
+}
+
+/* Un parpadeo corto cada vez que se toca (nombres distintos para que se repita). */
+@keyframes pwBlinkA {
+  0%, 100% { transform: scaleY(1); }
+  45% { transform: scaleY(0.12); }
+}
+
+@keyframes pwBlinkB {
+  0%, 100% { transform: scaleY(1); }
+  45% { transform: scaleY(0.12); }
+}
+
+.pw-toggle[data-touched][data-shown] .pw-eye-lid {
+  animation: pwBlinkA 0.26s ease-in-out;
+}
+
+.pw-toggle[data-touched]:not([data-shown]) .pw-eye-lid {
+  animation: pwBlinkB 0.26s ease-in-out;
+}
+
+/* Aviso de Bloq Mayús, dentro del campo y a la izquierda del ojo. */
+.pw-caps {
+  position: absolute;
+  top: 50%;
+  right: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #9a5b00;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  translate: 4px -50%;
+  transition: opacity 0.15s ease, translate 0.15s ease;
+}
+
+.pw-caps[data-on] {
+  opacity: 1;
+  translate: 0 -50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-eye-slash,
+  .pw-eye-cut,
+  .pw-eye-pupil,
+  .pw-caps,
+  .pw-input {
+    transition: none;
+  }
+
+  .pw-toggle[data-touched] .pw-eye-lid {
+    animation: none !important;
+  }
+}
