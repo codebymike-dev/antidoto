@@ -64,6 +64,14 @@ export const MAX_WORK_BYTES = 64 * 1024;
 /** La foto de la obra entra por una server action, que acepta hasta 1 MB por defecto. */
 export const MAX_IMAGE_BYTES = 600 * 1024;
 
+/** JPEG o WebP de verdad, mirando los primeros bytes y no solo lo que dice el navegador. */
+export function imageMime(bytes: Uint8Array): "image/jpeg" | "image/webp" | null {
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  const ascii = (from: number, to: number) => String.fromCharCode(...bytes.subarray(from, to));
+  if (bytes.length > 12 && ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
+  return null;
+}
+
 const CASA: ModelPiece[] = [
   { part: "ladrillo-2x4", color: "Rojo Volcán", x: 3, y: 0, z: 3 },
   { part: "ladrillo-2x4", color: "Rojo Volcán", x: 3, y: 0, z: 5 },

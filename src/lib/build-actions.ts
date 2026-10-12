@@ -6,7 +6,7 @@ import { one, run } from "./db";
 import { PARTICIPATION_COOKIE } from "./participation";
 import { isExpired } from "./expiry";
 import { audit, requireSuper } from "./admin-guard";
-import { getBuild, matchScore, MAX_IMAGE_BYTES, modelBricks, validateBuildTexts, validateStory, validateWork, type BuildDef } from "./bricks/challenges";
+import { getBuild, imageMime, matchScore, MAX_IMAGE_BYTES, modelBricks, validateBuildTexts, validateStory, validateWork, type BuildDef } from "./bricks/challenges";
 import { missionBuild } from "./build-data";
 import type { Blocked, BlockReason } from "./experience-actions";
 
@@ -72,14 +72,6 @@ export async function saveDraft(formData: FormData): Promise<{ ok: true } | Bloc
   // Con piezas puestas va a mitad de camino; entregar la lleva al 100 %.
   await run("UPDATE participations SET avance = ? WHERE id = ? AND completed_at IS NULL", [work.bricks.length > 0 ? 50 : 0, ctx.participationId]);
   return { ok: true };
-}
-
-/** JPEG o WebP de verdad, mirando los primeros bytes y no solo lo que dice el navegador. */
-function imageMime(bytes: Uint8Array): "image/jpeg" | "image/webp" | null {
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
-  const ascii = (from: number, to: number) => String.fromCharCode(...bytes.subarray(from, to));
-  if (bytes.length > 12 && ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
-  return null;
 }
 
 /**

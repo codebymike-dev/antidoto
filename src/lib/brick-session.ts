@@ -51,7 +51,7 @@ export type BrickSessionStatus = "lobby" | "building" | "finished";
 /** Marca pública de un jugador en el canal: se reconoce a sí mismo sin exponer el id de la cookie. */
 export const playerTag = (playerId: string) => createHash("sha256").update(playerId).digest("hex").slice(0, 12);
 
-interface SessionRow {
+export interface SessionRow {
   id: number;
   mode: string;
   host_user_id: number | null;
@@ -80,7 +80,7 @@ function normalize(row: SessionRow): SessionRow {
   };
 }
 
-async function getSession(id: number): Promise<SessionRow | null> {
+export async function getSession(id: number): Promise<SessionRow | null> {
   const row = await one<SessionRow>(`SELECT ${SESSION_COLUMNS} FROM brick_sessions WHERE id = ?`, [id]);
   return row ? normalize(row) : null;
 }
@@ -194,7 +194,7 @@ const parseBricks = (json: string): Brick[] => {
   }
 };
 
-async function teamsOf(sessionId: number): Promise<TeamView[]> {
+export async function teamsOf(sessionId: number): Promise<TeamView[]> {
   const [teams, members] = await Promise.all([
     all<TeamRow>("SELECT id, position, bricks, seq FROM brick_teams WHERE session_id = ? ORDER BY position", [sessionId]),
     all<MemberRow>("SELECT team_id, slot, nickname, placed FROM brick_players WHERE session_id = ? ORDER BY slot", [sessionId]),
@@ -242,7 +242,7 @@ interface PlayerRow {
   nickname: string;
 }
 
-async function getPlayer(playerId: string): Promise<PlayerRow | null> {
+export async function getPlayer(playerId: string): Promise<PlayerRow | null> {
   const p = await one<PlayerRow>("SELECT id, session_id, team_id, slot, nickname FROM brick_players WHERE id = ?", [playerId]);
   return p ? { ...p, session_id: Number(p.session_id), team_id: Number(p.team_id), slot: Number(p.slot) } : null;
 }
@@ -276,7 +276,7 @@ export async function playerChannels(playerId: string): Promise<{ sessionId: num
 
 // --- Publicaciones -----------------------------------------------------------------------
 
-async function countMessages(sessionId: number, n: number) {
+export async function countMessages(sessionId: number, n: number) {
   await run("UPDATE brick_sessions SET ably_messages = ably_messages + ? WHERE id = ?", [n, sessionId]);
 }
 
