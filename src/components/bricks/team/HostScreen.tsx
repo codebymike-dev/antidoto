@@ -526,6 +526,9 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
             <button type="button" className={styles.ghostBtn} onClick={downloadMural} disabled={muralBusy || photosBusy || gallery.photos.length === 0}>
               {muralBusy ? "Armando el mural…" : "Descargar el mural"}
             </button>
+            <Link href={`/admin/reporte/equipos/${session.id}`} className={styles.back} target="_blank">
+              Reporte ›
+            </Link>
             <span className={styles.meter} title="Estimado: cada publicación por cada pantalla que la recibe">
               {snap.ablyMessages.toLocaleString("es-CO")} mensajes de tiempo real
             </span>

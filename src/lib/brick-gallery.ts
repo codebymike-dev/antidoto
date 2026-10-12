@@ -270,6 +270,7 @@ export async function teamPhoto(teamId: number, viewer: { playerId: string | nul
 // --- Reporte ---------------------------------------------------------------------------------
 
 export interface SessionReport {
+  session: { id: number; mode: string; pin: string; status: string; companyId: number | null; teamSize: number; timeLimit: number; ablyMessages: number; createdAt: string; finishedAt: string | null };
   teams: TeamView[];
   gallery: HostGallery;
   /** Votos por categoría, para el reporte: cuánta gente votó en cada una. */
@@ -286,5 +287,22 @@ export async function sessionReport(id: number, user: AdminUser): Promise<Sessio
   if (gallery.status !== null && gallery.results === null) gallery.results = withNames(tally(votes, gallery.order), teams, gallery.order);
   const votesByCategory: Record<string, number> = {};
   for (const v of votes) votesByCategory[v.category] = (votesByCategory[v.category] ?? 0) + 1;
-  return { teams, gallery, votesByCategory };
+  const dates = await one<{ created_at: string; finished_at: string | null }>("SELECT created_at, finished_at FROM brick_sessions WHERE id = ?", [s.id]);
+  return {
+    session: {
+      id: s.id,
+      mode: s.mode,
+      pin: s.pin,
+      status: s.status,
+      companyId: s.company_id,
+      teamSize: s.team_size,
+      timeLimit: s.time_limit,
+      ablyMessages: s.ably_messages,
+      createdAt: dates?.created_at ?? "",
+      finishedAt: dates?.finished_at ?? null,
+    },
+    teams,
+    gallery,
+    votesByCategory,
+  };
 }

@@ -4,6 +4,7 @@
 // se pueden mostrar (ver mural.ts) y la baja como PNG.
 
 import { useState } from "react";
+import { colors } from "@/lib/theme";
 import { downloadBlob, drawMural, type MuralItem } from "./mural";
 
 interface Props {
@@ -40,7 +41,7 @@ export default function MuralButton({ heading, subheading, items, filename, styl
       >
         {busy ? "Armando el mural…" : "Descargar el mural"}
       </button>
-      {error && <span role="alert" style={{ fontSize: 12.5, color: "#C0392B" }}>No se pudo armar.</span>}
+      {error && <span role="alert" style={{ fontSize: 12.5, color: colors.danger }}>No se pudo armar.</span>}
     </span>
   );
 }

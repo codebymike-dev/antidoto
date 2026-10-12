@@ -71,6 +71,11 @@ export default async function ModoEquipoPage({ params }: { params: Promise<{ mod
                 <Link href={`/admin/equipos/${s.id}`} style={{ fontWeight: 700, color: colors.accent }}>
                   {s.status === "finished" ? "Ver obras ›" : "Volver a la sala ›"}
                 </Link>
+                {s.status === "finished" && (
+                  <Link href={`/admin/reporte/equipos/${s.id}`} style={{ fontWeight: 700, color: colors.accent }}>
+                    Reporte ›
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

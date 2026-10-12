@@ -20,6 +20,7 @@ import { trendToPoints } from "@/lib/utils";
 import GroupsTable from "@/components/admin/GroupsTable";
 import { experienceRiskStats, missionStations, profileOptions } from "@/lib/experience-data";
 import { listWorks, missionBuild } from "@/lib/build-data";
+import MuralButton from "@/components/bricks/MuralButton";
 import { lugar } from "@/lib/colombia";
 import ProfileFilters from "@/components/admin/ProfileFilters";
 import type { Estado } from "@/lib/types";
@@ -281,10 +282,24 @@ export default async function ActivityResults({ missionId: id, user, company, q,
             <h2 id="obras-reto" style={{ ...calSans, fontSize: 18, margin: 0, color: colors.ink }}>
               Obras entregadas <span style={{ color: colors.muted, fontWeight: 400 }}>{works.length}</span>
             </h2>
-            <Link href={`/admin/escena/construir?reto=${build.key}`} style={{ fontSize: 13, fontWeight: 700, color: colors.accent }}>
-              Probar el reto ›
-            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+              <MuralButton
+                heading={mission.title}
+                subheading={`${company ? `${company.name} · ` : ""}${works.filter((w) => !w.hidden).length === 1 ? "1 obra" : `${works.filter((w) => !w.hidden).length} obras`}`}
+                items={works.filter((w) => !w.hidden).map((w) => ({ src: `/obra/${w.participationId}`, title: w.title ?? w.participant, subtitle: w.title ? w.participant : undefined }))}
+                filename={`mural-${mission.id}.png`}
+                style={{ border: 0, background: "none", padding: 0, font: "inherit", fontSize: 13, fontWeight: 700, color: colors.accent, cursor: "pointer" }}
+              />
+              <Link href={`/admin/escena/construir?reto=${build.key}`} style={{ fontSize: 13, fontWeight: 700, color: colors.accent }}>
+                Probar el reto ›
+              </Link>
+            </div>
           </div>
+          {works.some((w) => w.hidden) && (
+            <p style={{ fontSize: 13, color: colors.muted, margin: "-6px 0 14px" }}>
+              Las obras marcadas como privadas no salen en el mural: su autor prefirió no mostrarlas.
+            </p>
+          )}
           {works.length === 0 ? (
             <p style={{ fontSize: 13.5, color: colors.muted, margin: 0 }}>Todavía nadie ha entregado su obra.</p>
           ) : (
@@ -304,6 +319,7 @@ export default async function ActivityResults({ missionId: id, user, company, q,
                   <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", gap: 3 }}>
                     {w.title && <span style={{ ...calSans, fontSize: 15, color: colors.ink }}>{w.title}</span>}
                     {w.phrase && <span style={{ fontSize: 12.5, lineHeight: 1.45, color: colors.inkSoft }}>{w.phrase}</span>}
+                    {w.hidden && <span style={{ alignSelf: "flex-start", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#fff", color: colors.inkSoft }}>Privada</span>}
                     <span style={{ fontSize: 12, color: colors.muted }}>
                       {w.participant}
                       {!company && ` · ${w.empresa}`} · {w.brickCount === 1 ? "1 pieza" : `${w.brickCount} piezas`}
