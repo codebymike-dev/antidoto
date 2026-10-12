@@ -123,6 +123,35 @@ export class CityView {
     this.stage.controls.autoRotateSpeed = 1.6;
   }
 
+  /**
+   * Foto de la obra de un equipo, sola y sin el marco de color: en la galería las obras van sin
+   * nombre. Misma escena, otra cámara por un instante; después todo vuelve a donde estaba.
+   */
+  photo(teamId: number): string | null {
+    const plot = this.plots.get(teamId);
+    if (!plot || plot.world.bricks.size === 0) return null;
+    const cam = this.stage.camera.position.clone();
+    const target = this.stage.controls.target.clone();
+    let top = 1;
+    for (const b of plot.world.bricks.values()) top = Math.max(top, b.y);
+    const center = plot.origin.clone().add(new THREE.Vector3(this.base / 2, (top * PLATE_H) / 3, this.base / 2));
+    this.stage.controls.target.copy(center);
+    this.stage.camera.position.copy(center).add(new THREE.Vector3(0.6, 0.55, 0.8));
+    this.stage.frame(center, Math.max(this.base, top * PLATE_H) + 1);
+    this.stage.invalidateShadows();
+    const hide: THREE.Object3D[] = [];
+    for (const [id, p] of this.plots) {
+      hide.push(p.frame);
+      if (id !== teamId) hide.push(p.view.group);
+    }
+    const url = this.stage.capture(hide);
+    this.stage.camera.position.copy(cam);
+    this.stage.controls.target.copy(target);
+    this.stage.controls.update();
+    this.stage.invalidateShadows();
+    return url;
+  }
+
   resize(width: number, height: number) {
     this.stage.resize(width, height);
   }

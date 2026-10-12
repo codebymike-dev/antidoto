@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ team
   if (!image) return new Response("No encontrado", { status: 404 });
   const ext = image.mime === "image/webp" ? "webp" : "jpg";
   const download = new URL(request.url).searchParams.has("descargar");
-  const file = `obra-${image.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.${ext}`;
+  const file = `obra-${image.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.${ext}`;
   return new Response(new Blob([image.body as Uint8Array<ArrayBuffer>], { type: image.mime }), {
     headers: {
       "Content-Type": image.mime,

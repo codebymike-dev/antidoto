@@ -414,6 +414,138 @@
   color: rgb(232 244 248 / 0.55);
 }
 
+/* ---- Galería de cierre ---- */
+
+.gallery {
+  position: absolute;
+  inset: 84px 22px 22px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 26px;
+  border-radius: 24px;
+  background: rgb(15 24 29 / 0.96);
+}
+
+.galleryHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.galleryTitle {
+  margin: 4px 0 0;
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-size: 40px;
+  font-weight: 400;
+}
+
+.galleryHint {
+  margin: 4px 0 0;
+  font-size: 16px;
+  color: rgb(232 244 248 / 0.75);
+}
+
+.galleryCount {
+  font-size: 18px;
+  color: rgb(232 244 248 / 0.8);
+  white-space: nowrap;
+}
+
+.galleryCount b {
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-size: 44px;
+  font-weight: 400;
+  color: #fac80a;
+  margin-right: 6px;
+}
+
+.galleryGrid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.galleryGrid li {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #16222a;
+}
+
+.galleryGrid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.galleryNoPhoto {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgb(232 244 248 / 0.5);
+}
+
+.galleryNumber {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: #0f181d;
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-size: 24px;
+}
+
+.galleryFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.galleryCats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.galleryCats li {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgb(128 220 255 / 0.12);
+  color: #80dcff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.spotCategory {
+  margin: 4px 0 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #fac80a;
+}
+
+.notice {
+  margin: 0;
+  font-size: 15px;
+  color: rgb(232 244 248 / 0.75);
+}
+
 @media (max-width: 900px) {
   .lobby {
     grid-template-columns: 1fr;

@@ -11,6 +11,7 @@ import { canBuildPhone, heightLabel, phoneArea, phoneModel, phoneRound, phoneSco
 import { brickSound } from "../sound";
 import type { BuilderEngine, BuilderSnapshot } from "../builder/engine";
 import { TeamSync, type TeamClock, type TeamMember } from "./team-sync";
+import TeamClosing from "./TeamClosing";
 import styles from "../builder/challenge.module.css";
 import own from "./team.module.css";
 
@@ -41,6 +42,7 @@ export default function TeamLayer({ engine, snap, view, onStatus }: Props) {
   const [connection, setConnection] = useState<Ably.ConnectionState>("initialized");
   const [lost, setLost] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [gallerySignal, setGallerySignal] = useState(0);
 
   useEffect(() => {
     const sync = new TeamSync(engine, { session, team, me: view.me }, {
@@ -51,6 +53,7 @@ export default function TeamLayer({ engine, snap, view, onStatus }: Props) {
       onMembers: setMembers,
       onConnection: setConnection,
       onLost: setLost,
+      onGallery: () => setGallerySignal((n) => n + 1),
     });
     engine.connectTeam({ idPrefix: `t${view.me.tag.slice(0, 6)}`, onLocalOp: sync.local, parcel: view.parcel });
     sync.start();
@@ -238,49 +241,55 @@ export default function TeamLayer({ engine, snap, view, onStatus }: Props) {
       )}
 
       {clock.status === "finished" && (
-        <div className={styles.backdrop} data-builder-ui>
-          <div className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="tm-end">
-            <p className={styles.kicker}>{view.title}</p>
-            <h2 id="tm-end" className={styles.title}>
-              ¡Tiempo! Miren el proyector
-            </h2>
-            <ul className={styles.rules}>
-              <li>
-                <b>{engine.world.bricks.size}</b>
-                <span>piezas del equipo</span>
-              </li>
-              <li>
-                <b>{myPlaced}</b>
-                <span>{myPlaced === 1 ? "pieza puesta por ti" : "piezas puestas por ti"}</span>
-              </li>
-              {height !== null && (
+        <TeamClosing
+          engine={engine}
+          teamName={identity.name}
+          signal={gallerySignal}
+          title={view.title}
+          summary={
+            <>
+              <p className={styles.kicker}>{view.title}</p>
+              <h2 id="tm-end" className={styles.title}>
+                ¡Tiempo! Miren el proyector
+              </h2>
+              <ul className={styles.rules}>
                 <li>
-                  <b>{heightLabel(height)}</b>
-                  <span>de alto</span>
+                  <b>{engine.world.bricks.size}</b>
+                  <span>piezas del equipo</span>
                 </li>
+                <li>
+                  <b>{myPlaced}</b>
+                  <span>{myPlaced === 1 ? "pieza puesta por ti" : "piezas puestas por ti"}</span>
+                </li>
+                {height !== null && (
+                  <li>
+                    <b>{heightLabel(height)}</b>
+                    <span>de alto</span>
+                  </li>
+                )}
+              </ul>
+              {session.play === "telefono" && (
+                <ul className={own.credits}>
+                  {phoneScores(team.position, [...engine.world.bricks.values()]).map((score, r) => (
+                    <li key={r}>
+                      Ronda {r + 1} ({phoneModel(team.position, r as 0 | 1).name}): <b>{Math.round(score * 100)} % parecido</b>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </ul>
-            {session.play === "telefono" && (
-              <ul className={own.credits}>
-                {phoneScores(team.position, [...engine.world.bricks.values()]).map((score, r) => (
-                  <li key={r}>
-                    Ronda {r + 1} ({phoneModel(team.position, r as 0 | 1).name}): <b>{Math.round(score * 100)} % parecido</b>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {session.play === "relevo" && (
-              <ul className={own.credits} aria-label="Lo que puso cada persona">
-                {members.map((m) => (
-                  <li key={m.slot}>
-                    {m.nickname}: <b>{m.placed === 1 ? "1 pieza" : `${m.placed} piezas`}</b>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className={styles.muted}>La obra de tu equipo quedó guardada. El anfitrión la va a mostrar junto a las demás.</p>
-          </div>
-        </div>
+              {session.play === "relevo" && (
+                <ul className={own.credits} aria-label="Lo que puso cada persona">
+                  {members.map((m) => (
+                    <li key={m.slot}>
+                      {m.nickname}: <b>{m.placed === 1 ? "1 pieza" : `${m.placed} piezas`}</b>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className={styles.muted}>La obra de tu equipo quedó guardada. El anfitrión la va a mostrar junto a las demás.</p>
+            </>
+          }
+        />
       )}
     </>
   );

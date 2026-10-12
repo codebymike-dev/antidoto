@@ -44,6 +44,8 @@ interface Callbacks {
   onConnection: (state: Ably.ConnectionState) => void;
   /** La sesión ya no reconoce a este celular (salió o la sesión se borró). */
   onLost: (message: string) => void;
+  /** Cambió algo de la galería del cierre (abrió, mostró resultados o el equipo retiró su obra). */
+  onGallery: () => void;
 }
 
 const REJECTION: Record<string, string> = {
@@ -110,6 +112,8 @@ export class TeamSync {
         // Al cerrar se trae la foto final: piezas y créditos de cada uno, ya sin nada en vuelo.
         if (d.status === "finished") this.requestResync();
       }),
+      session.subscribe("gallery", () => this.cb.onGallery()),
+      team.subscribe("gallery", () => this.cb.onGallery()),
       team.subscribe("members", (msg) => this.cb.onMembers((msg.data as { members: TeamMember[] }).members)),
       team.subscribe("ops", (msg) => {
         const d = msg.data as { seq: number; ops: Op[]; by: string };

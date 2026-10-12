@@ -2,25 +2,31 @@
 
 // Pantalla del anfitrión de la construcción en equipo (fase 6): el proyector es el escenario y el
 // celular es el taller (investigación, 6.4). Lobby con PIN y QR, todas las obras creciendo en vivo
-// en una sola escena 3D, reloj grande y, al final, un recorrido de cámara por cada equipo.
+// en una sola escena 3D, reloj grande y, al final, un recorrido de cámara por cada equipo, la
+// galería con votación (opcional) y el mural para la empresa.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import * as Ably from "ably";
 import type { SessionView, TeamView } from "@/lib/brick-session";
+import type { HostGallery } from "@/lib/brick-gallery";
 import { hostChannel, sessionChannel, teamChannel } from "@/lib/bricks/channels";
 import type { Op } from "@/lib/bricks/ops";
 import type { Brick } from "@/lib/bricks/world";
 import { SeqQueue } from "@/lib/bricks/sync";
+import { MIN_GALLERY_WORKS } from "@/lib/bricks/gallery";
 import { getTeamMode, heightLabel, phoneRound, phoneScores, relayTurn, towerHeight, twistDue } from "@/lib/bricks/team";
 import QrCode from "@/components/live/QrCode";
+import { downloadBlob, drawMural, toJpeg } from "../mural";
 import { CityView } from "./city";
+import GalleryStage from "./GalleryStage";
 import styles from "./host.module.css";
 
 interface Snapshot {
   session: SessionView;
   teams: TeamView[];
   ablyMessages: number;
+  gallery: HostGallery;
 }
 
 interface Props {
@@ -118,7 +124,9 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         setOffset(d.serverNow - Date.now());
         setSnap((s) => ({ ...s, session: { ...s.session, status: d.status, startedMs: d.startedMs, endsMs: d.endsMs } }));
       });
+      await pub.subscribe("gallery", later);
       await host.subscribe("roster", later);
+      await host.subscribe("votes", later);
       // Lo que pasó mientras la pantalla se conectaba (o durante un corte) no llegó: se trae la foto.
       host.on("attached", (change) => {
         if (!change.resumed) later();
@@ -179,9 +187,74 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
     [session.id, refresh],
   );
 
+  const galleryCommand = useCallback(
+    async (action: "open" | "reveal") => {
+      setPending(action);
+      setError(null);
+      try {
+        const res = await fetch(`/api/bricks/host/${session.id}/gallery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) setError(body.error ?? "No se pudo.");
+        else {
+          if (action === "open") stopTour();
+          void refresh();
+        }
+      } catch {
+        setError("Sin conexión con el servidor.");
+      } finally {
+        setPending(null);
+      }
+    },
+    [session.id, refresh],
+  );
+
   useEffect(() => {
     cityRef.current?.setSpin(session.status !== "lobby");
   }, [session.status]);
+
+  // Al terminar, el proyector toma la foto de cada obra y la sube: es el único que las tiene todas en
+  // su escena. Sirven para votar en el celular, para el reporte y para el mural.
+  const [photosBusy, setPhotosBusy] = useState(false);
+  // Si una subida falla, la lista no cambia y no se reintenta en bucle: se reintenta al volver a la pantalla.
+  const missingKey =
+    session.status === "finished"
+      ? snap.teams
+          .filter((t) => t.bricks.length > 0 && !snap.gallery.photos.includes(t.id))
+          .map((t) => t.id)
+          .join(",")
+      : "";
+  useEffect(() => {
+    if (!missingKey) return;
+    let cancelled = false;
+    (async () => {
+      // Un momento para que entren los últimos lotes antes de la foto.
+      await new Promise((ok) => setTimeout(ok, 800));
+      if (cancelled) return;
+      setPhotosBusy(true);
+      for (const id of missingKey.split(",").map(Number)) {
+        if (cancelled) return;
+        const png = cityRef.current?.photo(id);
+        const jpeg = png ? await toJpeg(png, 1200).catch(() => null) : null;
+        if (!jpeg) continue;
+        const form = new FormData();
+        form.set("team", String(id));
+        form.set("image", jpeg, "obra.jpg");
+        await fetch(`/api/bricks/host/${session.id}/photo`, { method: "POST", body: form }).catch(() => null);
+      }
+      if (!cancelled) {
+        setPhotosBusy(false);
+        void refresh();
+      }
+    })();
+    return () => {
+      cancelled = true;
+      setPhotosBusy(false);
+    };
+  }, [missingKey, session.id, refresh]);
 
   // Reloj. Al llegar a cero la sala se cierra sola; el servidor también la cierra si esta pantalla no está.
   const finishing = useRef(false);
@@ -200,25 +273,56 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
     return () => clearInterval(id);
   }, [status, endsMs, offset, command]);
 
-  // Recorrido del cierre: un equipo cada TOUR_MS.
-  const teamCount = snap.teams.length;
+  // Recorrido del cierre: un equipo cada TOUR_MS. Se salta las obras que su equipo no quiso mostrar.
+  const shown = snap.teams.filter((t) => !snap.gallery.hidden.includes(t.id));
+  const teamCount = shown.length;
   useEffect(() => {
     if (!tour.on || teamCount === 0) return;
-    const t = snap.teams[tour.index % teamCount];
+    const t = shown[tour.index % teamCount];
     cityRef.current?.focus(t.id);
     const id = setTimeout(() => setTour((x) => ({ ...x, index: (x.index + 1) % teamCount })), TOUR_MS);
     return () => clearTimeout(id);
-  }, [tour, teamCount, snap.teams]);
+    // `shown` cambia de identidad en cada render; basta con su tamaño y el índice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tour, teamCount]);
 
-  const stopTour = () => {
+  function stopTour() {
     setTour({ on: false, index: 0 });
     cityRef.current?.showAll();
+  }
+
+  /** En los resultados la cámara va a la obra ganadora; sin ganador, vista de todas. */
+  const focusWinner = useCallback((teamId: number | null) => {
+    if (teamId === null) cityRef.current?.showAll();
+    else cityRef.current?.focus(teamId);
+  }, []);
+
+  const [muralBusy, setMuralBusy] = useState(false);
+  const downloadMural = async () => {
+    setMuralBusy(true);
+    try {
+      const badges = new Map<number, string[]>();
+      for (const r of snap.gallery.results ?? []) for (const w of r.winners) badges.set(w.teamId, [...(badges.get(w.teamId) ?? []), r.title]);
+      const items = shown
+        .filter((t) => snap.gallery.photos.includes(t.id))
+        .map((t) => ({ src: `/api/bricks/photo/${t.id}`, title: t.name, color: t.color, subtitle: t.members.map((m) => m.nickname).join(" · "), badges: badges.get(t.id) }));
+      const date = new Date().toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+      const blob = await drawMural({ heading: mode.title, subheading: `${date} · ${items.length} ${items.length === 1 ? "obra" : "obras"} en equipo`, items });
+      if (blob) downloadBlob(blob, `mural-${session.pin}.png`);
+      else setError("No se pudo armar el mural.");
+    } catch {
+      setError("No se pudo armar el mural.");
+    } finally {
+      setMuralBusy(false);
+    }
   };
 
   const ranked = [...snap.teams].sort((a, b) =>
     mode.play === "juntos" ? (live.get(b.id)?.height ?? 0) - (live.get(a.id)?.height ?? 0) : a.position - b.position,
   );
-  const touring = tour.on ? snap.teams[tour.index % Math.max(1, teamCount)] : null;
+  const touring = tour.on ? (shown[tour.index % Math.max(1, teamCount)] ?? null) : null;
+  const gallery = snap.gallery;
+  const hiddenCount = snap.teams.filter((t) => gallery.hidden.includes(t.id)).length;
 
   // Relevo y Teléfono Roto: turno, ronda y sorpresa con el mismo reloj que los celulares.
   const serverNow = now + offset;
@@ -328,7 +432,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         </section>
       )}
 
-      {session.status !== "lobby" && (
+      {session.status !== "lobby" && gallery.status !== "voting" && (
         <aside className={styles.board} aria-label="Equipos">
           {session.status === "building" && <p className={styles.boardPrompt}>{mode.prompt}</p>}
           {round !== null && (
@@ -357,7 +461,19 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         </aside>
       )}
 
-      {session.status === "finished" && (
+      {session.status === "finished" && gallery.status !== null && (
+        <GalleryStage
+          gallery={gallery}
+          teams={snap.teams}
+          pending={!!pending}
+          onReveal={() => galleryCommand("reveal")}
+          onFocus={focusWinner}
+          onMural={downloadMural}
+          muralBusy={muralBusy}
+        />
+      )}
+
+      {session.status === "finished" && gallery.status === null && (
         <div className={styles.end}>
           {touring ? (
             <div className={styles.spot} style={{ "--team": touring.color } as React.CSSProperties}>
@@ -383,6 +499,11 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
               <p className={styles.spotMembers}>Así quedaron las obras. Recórranlas equipo por equipo y que cada uno cuente la suya.</p>
             </div>
           )}
+          {hiddenCount > 0 && (
+            <p className={styles.notice}>
+              {hiddenCount === 1 ? "Un equipo prefirió no mostrar su obra: no sale en el recorrido, la galería ni el mural." : `${hiddenCount} equipos prefirieron no mostrar su obra: no salen en el recorrido, la galería ni el mural.`}
+            </p>
+          )}
           <div className={styles.endActions}>
             {tour.on ? (
               <button type="button" className={styles.ghostBtn} onClick={stopTour}>
@@ -393,6 +514,18 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
                 Recorrer las obras
               </button>
             )}
+            <button
+              type="button"
+              className={styles.ghostBtn}
+              onClick={() => galleryCommand("open")}
+              disabled={!!pending || photosBusy || gallery.order.length < MIN_GALLERY_WORKS}
+              title={gallery.order.length < MIN_GALLERY_WORKS ? "Hacen falta al menos dos obras para votar" : "Cada persona vota desde su celular, por categorías"}
+            >
+              {photosBusy ? "Tomando las fotos…" : "Abrir la votación"}
+            </button>
+            <button type="button" className={styles.ghostBtn} onClick={downloadMural} disabled={muralBusy || photosBusy || gallery.photos.length === 0}>
+              {muralBusy ? "Armando el mural…" : "Descargar el mural"}
+            </button>
             <span className={styles.meter} title="Estimado: cada publicación por cada pantalla que la recibe">
               {snap.ablyMessages.toLocaleString("es-CO")} mensajes de tiempo real
             </span>

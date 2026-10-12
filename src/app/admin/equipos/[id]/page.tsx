@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { hostSnapshot } from "@/lib/brick-session";
+import { hostGallery } from "@/lib/brick-gallery";
 import HostShell from "@/components/bricks/team/HostShell";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function EquiposPage({ params }: { params: Promise<{ id: st
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   return (
     <HostShell
-      initial={{ session: res.session, teams: res.teams, ablyMessages: res.ablyMessages }}
+      initial={{ session: res.session, teams: res.teams, ablyMessages: res.ablyMessages, gallery: await hostGallery(res.session.id, res.teams) }}
       joinHost={host}
       joinUrl={`${proto}://${host}/construir?pin=${res.session.pin}`}
     />
