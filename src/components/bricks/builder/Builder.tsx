@@ -14,6 +14,8 @@ import type { Brick } from "@/lib/bricks/world";
 import type { Tier } from "../material";
 import { brickSound } from "../sound";
 import ChallengeLayer, { type ChallengeSession } from "./ChallengeLayer";
+import TeamLayer from "../team/TeamLayer";
+import type { PlayerView } from "@/lib/brick-session";
 import { BuilderEngine } from "./engine";
 import { Icon } from "./icons";
 import LeaveConfirm from "@/components/LeaveConfirm";
@@ -59,24 +61,33 @@ export interface BuilderProps {
   exitHref?: string;
   /** Salir como participante: borra la sesión del dispositivo, previa confirmación. */
   exitAction?: () => Promise<void>;
+  /** Qué pasa al salir, en la confirmación. */
+  exitNote?: string;
   /** Reto de la biblioteca; sin reto es construcción libre de prueba. */
   challenge?: PublicBuild;
   session?: ChallengeSession;
   /** Obra guardada para retomarla. */
   initial?: Brick[];
+  /** Construcción en equipo en vivo: la obra es compartida y la manda el servidor. */
+  team?: PlayerView;
 }
 
-function initialBricks({ challenge, initial }: BuilderProps): Brick[] {
+function initialBricks({ challenge, initial, team }: BuilderProps): Brick[] {
+  if (team) return team.team.bricks;
   if (initial?.length) return initial;
   if (!challenge) return starter(FREE_BASE);
   return challenge.starter ? starter(challenge.base) : [];
 }
 
 export default function Builder(props: BuilderProps) {
-  const { title, exitHref, exitAction, challenge, session } = props;
+  const { title, exitHref, exitAction, challenge, session, team } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [engine] = useState(() => new BuilderEngine(challenge?.base ?? FREE_BASE, initialBricks(props)));
+  const [engine] = useState(() => new BuilderEngine(team?.session.base ?? challenge?.base ?? FREE_BASE, initialBricks(props)));
   const [introOpen, setIntroOpen] = useState(() => !!challenge && !session?.started);
+  const [teamStatus, setTeamStatus] = useState(() => team?.session.status ?? null);
+  // En equipo, la guía y las pistas esperan a que el anfitrión dé la señal.
+  const waiting = introOpen || (teamStatus !== null && teamStatus !== "building");
+  const limit = team ? team.session.maxPieces : (challenge?.maxPieces ?? null);
   const [tier] = useState<Tier>(chooseTier);
   const snap = useSyncExternalStore(engine.subscribe, engine.getSnapshot, engine.getSnapshot);
   const sound = brickSound();
@@ -93,7 +104,7 @@ export default function Builder(props: BuilderProps) {
     const canvas = canvasRef.current!;
     engine.mount(canvas, tier);
     engine.setTrayParts(TRAY_IDS);
-    engine.setLimit(challenge?.maxPieces ?? null);
+    engine.setLimit(limit);
     const parent = canvas.parentElement!;
     const ro = new ResizeObserver(() => engine.resize(parent.clientWidth, parent.clientHeight));
     ro.observe(parent);
@@ -102,7 +113,7 @@ export default function Builder(props: BuilderProps) {
       ro.disconnect();
       engine.unmount();
     };
-  }, [engine, tier, challenge]);
+  }, [engine, tier, limit]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -122,7 +133,7 @@ export default function Builder(props: BuilderProps) {
 
   // Primer minuto guiado (investigación, 3.7): colocar, girar la cámara, deshacer. Se aprende
   // haciendo; cada paso se cumple con la acción misma.
-  const step = guideDone || introOpen ? null : snap.placed === 0 ? 0 : snap.orbits === 0 ? 1 : snap.undos === 0 && !undoTipOver ? 2 : null;
+  const step = guideDone || waiting ? null : snap.placed === 0 ? 0 : snap.orbits === 0 ? 1 : snap.undos === 0 && !undoTipOver ? 2 : null;
   useEffect(() => {
     if (step !== 2) return;
     const id = setTimeout(() => setUndoTipOver(true), 7000);
@@ -138,7 +149,7 @@ export default function Builder(props: BuilderProps) {
     const id = setTimeout(() => setIdleAt(placed), 20000);
     return () => clearTimeout(id);
   }, [snap.placed]);
-  const idleHint = step === null && !introOpen && idleAt === snap.placed && snap.count < 5 && !challenge?.model;
+  const idleHint = step === null && !waiting && !team && idleAt === snap.placed && snap.count < 5 && !challenge?.model;
 
   const takePhoto = () => {
     const url = engine.photo();
@@ -162,7 +173,7 @@ export default function Builder(props: BuilderProps) {
             action={exitAction}
             className={styles.iconBtn}
             title="¿Salir de la actividad?"
-            body={<p style={{ margin: 0 }}>Lo que llevas construido queda guardado. Este dispositivo olvidará tu sesión: para volver, entra con tu mismo nombre y código.</p>}
+            body={<p style={{ margin: 0 }}>{props.exitNote ?? "Lo que llevas construido queda guardado. Este dispositivo olvidará tu sesión: para volver, entra con tu mismo nombre y código."}</p>}
             confirmLabel="Salir"
           >
             <Icon name="back" />
@@ -186,7 +197,7 @@ export default function Builder(props: BuilderProps) {
             {snap.count} {snap.count === 1 ? "pieza" : "piezas"}
           </span>
         )}
-        {!challenge && (
+        {!challenge && !team && (
           <button type="button" className={styles.iconBtn} aria-label="Descargar foto de la obra" onClick={takePhoto}>
             <Icon name="camera" />
           </button>
@@ -209,8 +220,10 @@ export default function Builder(props: BuilderProps) {
           <ChallengeLayer engine={engine} snap={snap} challenge={challenge} session={session} introOpen={introOpen} onIntroClose={() => setIntroOpen(false)} />
         )}
 
+        {team && <TeamLayer engine={engine} snap={snap} view={team} onStatus={setTeamStatus} />}
+
         {step !== null && (
-          <div className={`${styles.coach} ${challenge ? styles.coachLow : ""}`} role="status">
+          <div className={`${styles.coach} ${challenge || team ? styles.coachLow : ""}`} role="status">
             <span className={styles.coachStep}>{step + 1}/3</span>
             {step === 0 && "Arrastra una pieza de la bandeja hasta la base"}
             {step === 1 && "Arrastra en un espacio vacío para girar la vista"}
@@ -233,7 +246,7 @@ export default function Builder(props: BuilderProps) {
         )}
 
         <div className={styles.badges} aria-hidden="true">
-          {snap.ghost && !snap.ghost.ok && <span className={styles.badge}>⊘ {snap.ghost.problem === "ocupado" ? "Ahí ya hay una pieza" : "Necesita apoyarse en algo"}</span>}
+          {snap.ghost && !snap.ghost.ok && <span className={styles.badge}>⊘ {snap.ghost.problem === "ocupado" ? "Ahí ya hay una pieza" : snap.ghost.problem === "parcela" ? "Fuera de tu franja" : "Necesita apoyarse en algo"}</span>}
           {snap.floating > 0 && (
             <span className={styles.badge}>
               <i className={styles.dot} /> {snap.floating} {snap.floating === 1 ? "pieza suelta" : "piezas sueltas"}
@@ -371,12 +384,12 @@ export default function Builder(props: BuilderProps) {
         {snap.announce}
       </p>
 
-      {help && <HelpSheet onClose={() => setHelp(false)} handName={snap.hand ? part(snap.hand.part).name : null} challenge={challenge ?? null} />}
+      {help && <HelpSheet onClose={() => setHelp(false)} handName={snap.hand ? part(snap.hand.part).name : null} brief={team ? { title: team.title, prompt: team.prompt } : challenge ? { title: challenge.texts.title, prompt: challenge.texts.prompt } : null} />}
     </div>
   );
 }
 
-function HelpSheet({ onClose, handName, challenge }: { onClose: () => void; handName: string | null; challenge: PublicBuild | null }) {
+function HelpSheet({ onClose, handName, brief }: { onClose: () => void; handName: string | null; brief: { title: string; prompt: string } | null }) {
   return (
     <div className={styles.helpBackdrop} onClick={onClose} data-builder-ui>
       <div className={styles.help} role="dialog" aria-modal="true" aria-label="Controles" onClick={(e) => e.stopPropagation()}>
@@ -386,10 +399,10 @@ function HelpSheet({ onClose, handName, challenge }: { onClose: () => void; hand
             <Icon name="close" />
           </button>
         </div>
-        {challenge && (
+        {brief && (
           <>
-            <h3>El reto: {challenge.texts.title}</h3>
-            <p className={styles.helpPrompt}>{challenge.texts.prompt}</p>
+            <h3>El reto: {brief.title}</h3>
+            <p className={styles.helpPrompt}>{brief.prompt}</p>
           </>
         )}
         {handName && <p className={styles.helpHand}>En la mano: {handName}</p>}

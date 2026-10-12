@@ -3,6 +3,7 @@ import { currentUser } from "@/lib/auth";
 import { listLibrary } from "@/lib/experience-data";
 import { listBuildLibrary } from "@/lib/build-data";
 import { KIND_LABEL } from "@/lib/bricks/challenges";
+import { TEAM_MODES } from "@/lib/bricks/team";
 import BuildThumb from "@/components/bricks/BuildThumb";
 import { experienceActivities } from "@/lib/experiences/catalog";
 import { listGames } from "@/lib/live-games";
@@ -55,9 +56,9 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
 
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 22 }}>
         {[
-          { label: "Todas", on: filter === null, href: "/admin/biblioteca", count: activities.length + builds.length + games.length },
+          { label: "Todas", on: filter === null, href: "/admin/biblioteca", count: activities.length + builds.length + TEAM_MODES.length + games.length },
           { label: "Escenas interactivas", on: filter === "escenas", href: "/admin/biblioteca?tipo=escenas", count: activities.length },
-          { label: "Construcción 3D", on: filter === "construccion", href: "/admin/biblioteca?tipo=construccion", count: builds.length },
+          { label: "Construcción 3D", on: filter === "construccion", href: "/admin/biblioteca?tipo=construccion", count: builds.length + TEAM_MODES.length },
           { label: "Juegos en vivo", on: filter === "juegos", href: "/admin/biblioteca?tipo=juegos", count: games.length },
         ].map((t) => (
           <Link key={t.label} href={t.href} className={t.on ? "btn-tab-active" : "btn-tab"} style={t.on ? tabButtonActive : tabButton}>
@@ -169,6 +170,34 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                         Asignar
                       </Link>
                     )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+
+        {show("construccion") &&
+          TEAM_MODES.map((mode) => {
+            const href = `/admin/biblioteca/equipos/${mode.key}`;
+            return (
+              <article key={`equipos-${mode.key}`} className="mission-card-link" style={cardShell}>
+                <Link href={href} aria-label={`Abrir ${mode.title}`} style={{ position: "relative", display: "block" }}>
+                  <BuildThumb kind={mode.key === "torre-equipos" ? "presupuesto" : "tema"} label={`Ladrillos de ${mode.title}`} />
+                  <TypeChip type="construccion" />
+                  <ThumbNote>En equipo, en vivo</ThumbNote>
+                </Link>
+                <div style={cardBody}>
+                  <span style={tagChip}>{mode.tag}</span>
+                  <h3 style={{ ...calSans, fontSize: 18, margin: 0, color: colors.ink }}>{mode.title}</h3>
+                  <p style={cardDescription}>{mode.description}</p>
+                  <div style={cardStats}>
+                    <span>Equipos de 3 a 5</span>
+                    <span>Proyector y celulares</span>
+                  </div>
+                  <div style={cardFooter}>
+                    <Link href={href} className="btn-filled" style={{ ...filledButton, height: 36, padding: "0 14px", fontSize: 13, display: "inline-flex", alignItems: "center" }}>
+                      ▸ Jugar en vivo
+                    </Link>
                   </div>
                 </div>
               </article>

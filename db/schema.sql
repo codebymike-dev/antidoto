@@ -364,3 +364,60 @@ CREATE TABLE IF NOT EXISTS brick_works (
   updated_at       TEXT NOT NULL DEFAULT (datetime('now')),
   submitted_at     TEXT
 );
+
+-- --- Construcción por equipos en vivo -------------------------------------------------
+-- Una sesión la lanza un admin desde la biblioteca: PIN, proyector y celulares, como el
+-- quiz en vivo pero con su propia tabla (otro ciclo de vida: no hay preguntas). Los modos
+-- viven en src/lib/bricks/team.ts. Ably solo reparte: el estado de cada equipo vive aquí.
+
+CREATE TABLE IF NOT EXISTS brick_sessions (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  mode          TEXT NOT NULL,
+  host_user_id  INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
+  -- Empresa del host al lanzarla (nula si la lanzó un superadmin); define quién la ve.
+  company_id    INTEGER REFERENCES companies(id) ON DELETE CASCADE,
+  pin           TEXT NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'lobby' CHECK (status IN ('lobby', 'building', 'finished')),
+  team_size     INTEGER NOT NULL CHECK (team_size BETWEEN 2 AND 6),
+  time_limit    INTEGER NOT NULL CHECK (time_limit BETWEEN 30 AND 3600),
+  -- Epoch en ms del servidor; el reloj lo manda el servidor.
+  started_ms    INTEGER,
+  ends_ms       INTEGER,
+  -- Mensajes de Ably entregados (estimado: cada publicación por cada suscriptor del canal).
+  ably_messages INTEGER NOT NULL DEFAULT 0,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  finished_at   TEXT
+);
+
+-- El PIN solo es único entre las sesiones abiertas; se recicla al terminar.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_brick_sessions_open_pin ON brick_sessions(pin) WHERE status <> 'finished';
+CREATE INDEX IF NOT EXISTS idx_brick_sessions_company ON brick_sessions(company_id);
+
+-- La obra del equipo es una foto JSON (con los ids de las piezas, que las operaciones citan) y
+-- un contador `seq` que sube con cada lote aceptado. Se escribe con concurrencia optimista
+-- (WHERE seq = ?): dos lotes a la vez no se pisan, el segundo se reintenta.
+CREATE TABLE IF NOT EXISTS brick_teams (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id INTEGER NOT NULL REFERENCES brick_sessions(id) ON DELETE CASCADE,
+  position   INTEGER NOT NULL,
+  bricks     TEXT NOT NULL DEFAULT '[]',
+  seq        INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (session_id, position)
+);
+
+-- El id es aleatorio, no secuencial: viaja en una cookie y no debe ser adivinable.
+CREATE TABLE IF NOT EXISTS brick_players (
+  id                 TEXT PRIMARY KEY,
+  session_id         INTEGER NOT NULL REFERENCES brick_sessions(id) ON DELETE CASCADE,
+  team_id            INTEGER NOT NULL REFERENCES brick_teams(id) ON DELETE CASCADE,
+  -- Puesto en el equipo (0..team_size-1): en Obra en Equipo define su parcela.
+  slot               INTEGER NOT NULL,
+  nickname           TEXT NOT NULL,
+  -- Piezas que puso: sirve para los créditos de la obra.
+  placed             INTEGER NOT NULL DEFAULT 0,
+  accepted_policy_at TEXT NOT NULL,
+  joined_at          TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (team_id, slot)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_brick_players_nickname ON brick_players(session_id, nickname COLLATE NOCASE);

@@ -6,7 +6,8 @@ import { part } from "./parts.ts";
 import type { Hit } from "./ray.ts";
 import { footprint, type BrickWorld, type Placement, type Rot } from "./world.ts";
 
-export type PlaceProblem = "ocupado" | "sin apoyo";
+/** "parcela" la pone el constructor en equipo: el lugar está libre pero es de otra persona. */
+export type PlaceProblem = "ocupado" | "sin apoyo" | "parcela";
 
 export interface Proposal extends Placement {
   ok: boolean;

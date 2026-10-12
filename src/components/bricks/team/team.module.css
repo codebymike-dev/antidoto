@@ -1,0 +1,128 @@
+/* Detalles del modo equipos sobre el constructor. El resto de ventanas usa challenge.module.css. */
+
+.team {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: rgb(15 24 29 / 0.92);
+  border: 1px solid rgb(128 220 255 / 0.25);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.team i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--team);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--team) 30%, transparent);
+}
+
+.info {
+  position: absolute;
+  top: 58px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: calc(100% - 20px);
+  font-size: 12px;
+  color: rgb(232 244 248 / 0.75);
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+}
+
+.height {
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: #fac80a;
+  color: #0f181d;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.members {
+  max-width: 260px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.offline {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fac80a;
+  color: #0f181d;
+  font-size: 12.5px;
+  font-weight: 600;
+  max-width: calc(100% - 180px);
+}
+
+.roster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roster li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(128 220 255 / 0.1);
+  font-size: 14px;
+}
+
+.roster i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.roster span {
+  color: rgb(232 244 248 / 0.6);
+}
+
+.wait {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: rgb(232 244 248 / 0.8);
+}
+
+.pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3bc8f3;
+  animation: beat 1.2s ease-in-out infinite;
+}
+
+@keyframes beat {
+  50% {
+    transform: scale(1.6);
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}

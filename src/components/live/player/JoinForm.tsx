@@ -7,14 +7,22 @@ import PolicyModal from "@/components/PolicyModal";
 import { LOGO_SRC } from "@/lib/theme";
 import { calSans, game, liveButton } from "../game-theme";
 
-interface Props {
+interface Props<T> {
   initialPin: string;
   policyText: string;
   termsText: string;
-  onJoined: (snapshot: PlayerSnapshot | ChallengeSnapshot) => void;
+  onJoined: (snapshot: T) => void;
+  /** Rutas para entrar y leer el estado; por defecto, las del quiz en vivo. */
+  api?: { join: string; me: string };
 }
 
-export default function JoinForm({ initialPin, policyText, termsText, onJoined }: Props) {
+export default function JoinForm<T = PlayerSnapshot | ChallengeSnapshot>({
+  initialPin,
+  policyText,
+  termsText,
+  onJoined,
+  api = { join: "/api/live/join", me: "/api/live/me" },
+}: Props<T>) {
   const [step, setStep] = useState<"pin" | "nickname">(initialPin.length === 6 ? "nickname" : "pin");
   const [pin, setPin] = useState(initialPin);
   const [nickname, setNickname] = useState("");
@@ -29,7 +37,7 @@ export default function JoinForm({ initialPin, policyText, termsText, onJoined }
     if (!accepted) return setError("Debes aceptar la política de tratamiento de datos.");
     setSending(true);
     try {
-      const res = await fetch("/api/live/join", {
+      const res = await fetch(api.join, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ pin, nickname, acceptedPolicy: accepted }),
@@ -41,8 +49,8 @@ export default function JoinForm({ initialPin, policyText, termsText, onJoined }
         if (res.status === 404) setStep("pin");
         return;
       }
-      const me = await fetch("/api/live/me", { cache: "no-store" });
-      if (me.ok) onJoined(await me.json());
+      const me = await fetch(api.me, { cache: "no-store" });
+      if (me.ok) onJoined((await me.json()) as T);
       else setError("Entraste, pero no pudimos cargar la partida. Recarga la página.");
     } catch {
       setError("Sin conexión. Revisa tu internet.");

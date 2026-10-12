@@ -1,0 +1,425 @@
+/* Pantalla del proyector: la escena 3D ocupa todo y los paneles flotan encima, sólidos (el blur
+   sobre WebGL cuesta). Pensada para leerse desde el fondo de una sala: textos grandes. */
+
+.root {
+  position: fixed;
+  inset: 0;
+  background: #16222a;
+  color: #e8f4f8;
+  font-family: var(--font-poppins), "Poppins", system-ui, sans-serif;
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 22px;
+  background: linear-gradient(#0f181d, rgb(15 24 29 / 0));
+}
+
+.back {
+  color: #80dcff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.titleBox {
+  flex: 1;
+  min-width: 0;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #80dcff;
+}
+
+.title {
+  margin: 0;
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+}
+
+.clock {
+  min-width: 120px;
+  padding: 6px 18px;
+  border-radius: 16px;
+  background: #0f181d;
+  border: 1px solid rgb(128 220 255 / 0.25);
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-size: 44px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.clockWarn {
+  background: #fac80a;
+  border-color: #fac80a;
+  color: #0f181d;
+}
+
+.pinSmall {
+  font-size: 15px;
+  color: rgb(232 244 248 / 0.7);
+}
+
+.pinSmall b {
+  color: #e8f4f8;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+}
+
+.ghostBtn,
+.dangerBtn,
+.startBtn {
+  min-height: 46px;
+  padding: 0 20px;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ghostBtn {
+  border: 1px solid rgb(128 220 255 / 0.35);
+  background: #0f181d;
+  color: inherit;
+}
+
+.dangerBtn {
+  border: 0;
+  background: #ff6d77;
+  color: #0f181d;
+}
+
+.startBtn {
+  border: 0;
+  background: #3bc8f3;
+  color: #0f181d;
+  font-size: 18px;
+  min-height: 58px;
+  box-shadow: 0 10px 30px rgb(59 200 243 / 0.3);
+}
+
+.startBtn:disabled,
+.ghostBtn:disabled,
+.dangerBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none;
+}
+
+.ghostBtn:focus-visible,
+.dangerBtn:focus-visible,
+.startBtn:focus-visible,
+.back:focus-visible {
+  outline: 3px solid #80dcff;
+  outline-offset: 3px;
+}
+
+/* ---- Lobby ---- */
+
+.lobby {
+  position: absolute;
+  inset: 84px 22px 22px;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) 1fr;
+  gap: 22px;
+}
+
+.join,
+.teams {
+  border-radius: 24px;
+  background: rgb(15 24 29 / 0.94);
+  border: 1px solid rgb(128 220 255 / 0.16);
+  padding: 26px;
+  overflow-y: auto;
+}
+
+.join {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.url {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.pinLabel {
+  margin: 8px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  color: rgb(232 244 248 / 0.6);
+}
+
+.pin {
+  margin: 0 0 8px;
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-size: 72px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #fac80a;
+}
+
+.prompt {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgb(232 244 248 / 0.8);
+}
+
+.teams {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.teamsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.teamsHead h2 {
+  margin: 0;
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-weight: 400;
+  font-size: 30px;
+}
+
+.teamsHead span {
+  font-size: 15px;
+  color: rgb(232 244 248 / 0.65);
+}
+
+.teamGrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  align-content: start;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teamGrid > li {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--team) 12%, #16222a);
+  animation: pop 320ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+.teamGrid ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 17px;
+}
+
+.empty {
+  color: rgb(232 244 248 / 0.35);
+  font-style: italic;
+}
+
+.teamName {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.teamName i,
+.spotName i {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--team);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--team) 30%, transparent);
+}
+
+.error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgb(255 109 119 / 0.16);
+  color: #ffb3b8;
+  font-size: 14px;
+}
+
+/* ---- Tablero mientras construyen ---- */
+
+.board {
+  position: absolute;
+  top: 96px;
+  right: 22px;
+  z-index: 1;
+  width: min(340px, 34vw);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.boardPrompt {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgb(15 24 29 / 0.92);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ranking li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgb(15 24 29 / 0.92);
+  transition: transform 300ms ease;
+}
+
+.ranking li[aria-current="true"] {
+  background: color-mix(in srgb, var(--team) 30%, #0f181d);
+  transform: translateX(-8px);
+}
+
+.place {
+  width: 28px;
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-size: 22px;
+  color: #fac80a;
+}
+
+.stat {
+  margin-left: auto;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: rgb(232 244 248 / 0.8);
+}
+
+/* ---- Cierre ---- */
+
+.end {
+  position: absolute;
+  left: 22px;
+  bottom: 22px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: min(640px, 56vw);
+}
+
+.spot {
+  padding: 20px 24px;
+  border-radius: 22px;
+  background: rgb(15 24 29 / 0.94);
+  border: 1px solid rgb(128 220 255 / 0.18);
+}
+
+.spotName {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-family: "Cal Sans", var(--font-poppins), sans-serif;
+  font-size: 40px;
+}
+
+.spotMembers {
+  margin: 6px 0 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: rgb(232 244 248 / 0.8);
+}
+
+.spotStat {
+  margin: 8px 0 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #fac80a;
+}
+
+.endActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.meter {
+  font-size: 13px;
+  color: rgb(232 244 248 / 0.55);
+}
+
+@media (max-width: 900px) {
+  .lobby {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .board {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teamGrid > li {
+    animation: none;
+  }
+}

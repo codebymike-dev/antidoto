@@ -7,11 +7,12 @@
 
 import * as THREE from "three";
 import { encodeBuild } from "@/lib/bricks/codec";
-import { History, type Op } from "@/lib/bricks/ops";
+import { apply, History, type Op } from "@/lib/bricks/ops";
 import { BRICK_COLORS } from "@/lib/bricks/palette";
 import { part } from "@/lib/bricks/parts";
 import { proposePlacement, type PlaceProblem, type Proposal } from "@/lib/bricks/place";
 import { castRay, type Hit } from "@/lib/bricks/ray";
+import { touchesParcel, type Parcel } from "@/lib/bricks/team";
 import { PLATE_H } from "@/lib/bricks/units";
 import { BrickWorld, footprint, type Brick, type Rot } from "@/lib/bricks/world";
 import type { Tier } from "../material";
@@ -59,7 +60,9 @@ const SLOP = 9;
 const LONG_PRESS = 450;
 
 let seq = 0;
-const newId = () => `p${Date.now().toString(36)}${(seq++).toString(36)}`;
+/** En equipo cada celular lleva su prefijo: dos personas no pueden inventar el mismo id. */
+let idPrefix = "p";
+const newId = () => `${idPrefix}${Date.now().toString(36)}${(seq++).toString(36)}`;
 
 function describe(b: { part: number; color: number; x: number; y: number; z: number }) {
   return `${part(b.part).name} ${BRICK_COLORS[b.color].name}, fila ${b.z + 1}, columna ${b.x + 1}, nivel ${Math.floor(b.y / 3) + 1}`;
@@ -108,6 +111,10 @@ export class BuilderEngine {
   private framed = false;
   private limit: number | null = null;
   private version = 0;
+  /** Recibe cada cambio propio ya aplicado, para mandarlo al equipo. */
+  private onLocalOp: ((op: Op) => void) | null = null;
+  private parcel: Parcel | null = null;
+  private parcelMesh: THREE.Group | null = null;
   private cleanup: (() => void)[] = [];
 
   /** Existe antes del lienzo: React lo crea una vez y lo lee con useSyncExternalStore. */
@@ -175,6 +182,8 @@ export class BuilderEngine {
     on(window, "pointermove", this.onTrayMove);
     on(window, "pointerup", this.onTrayUp);
     this.refreshThumbs();
+    this.parcelMesh = null;
+    this.drawParcel();
     this.emit();
   }
 
@@ -295,7 +304,14 @@ export class BuilderEngine {
     const b = this.selectionId ? this.world.bricks.get(this.selectionId) : undefined;
     if (!b) return;
     const turned = { ...b, rot: (((b.rot + dir) % 4) + 4) % 4 as Rot };
-    if (this.history.do({ t: "batch", ops: [{ t: "remove", brick: b }, { t: "add", brick: turned }] })) {
+    const turn: Op = { t: "batch", ops: [{ t: "remove", brick: b }, { t: "add", brick: turned }] };
+    if (this.parcel && !touchesParcel(turned, this.parcel)) {
+      brickSound().play("invalid");
+      this.say("Girada se sale de tu parcela");
+      return;
+    }
+    if (this.history.do(turn)) {
+      this.onLocalOp?.(turn);
       brickSound().play("rotate");
       this.afterChange("Pieza girada");
     } else {
@@ -326,7 +342,7 @@ export class BuilderEngine {
     }
     if (!pr.ok) {
       brickSound().play("invalid");
-      this.say(pr.problem === "ocupado" ? "Ahí ya hay una pieza" : "Ahí no encaja: necesita apoyarse en algo");
+      this.say(pr.problem === "ocupado" ? "Ahí ya hay una pieza" : pr.problem === "parcela" ? "Esa parte es de otra persona: la pieza tiene que tocar tu franja" : "Ahí no encaja: necesita apoyarse en algo");
       return false;
     }
     const prev = this.movingId ? this.world.bricks.get(this.movingId) : undefined;
@@ -336,6 +352,7 @@ export class BuilderEngine {
       brickSound().play("invalid");
       return false;
     }
+    this.onLocalOp?.(op);
     if (prev) {
       this.movingId = null;
       this.view.setHidden([]);
@@ -399,7 +416,9 @@ export class BuilderEngine {
   }
 
   undo() {
-    if (this.history.undo()) {
+    const inverse = this.history.undo();
+    if (inverse) {
+      this.onLocalOp?.(inverse);
       this.counters.undos++;
       brickSound().play("undo");
       this.select(null);
@@ -414,7 +433,8 @@ export class BuilderEngine {
 
   redo() {
     const before = this.world.bricks.size;
-    if (!this.history.redo()) return;
+    const redone = this.history.redo();
+    if (!redone) return;
     // Rehacer no puede saltarse el presupuesto: si suma piezas por encima del límite, se revierte.
     if (this.limit !== null && this.world.bricks.size > Math.max(before, this.limit)) {
       this.history.undo();
@@ -422,6 +442,7 @@ export class BuilderEngine {
       this.say(`Ya usaste tus ${this.limit} piezas`, { visible: true });
       return;
     }
+    this.onLocalOp?.(redone);
     brickSound().play("place");
     this.afterChange("Rehecho");
   }
@@ -514,8 +535,94 @@ export class BuilderEngine {
     return url;
   }
 
+  // ---- Equipo (fase 6) ----
+
+  /** Conecta el constructor a un equipo: prefijo de ids y a quién avisar de cada cambio propio. */
+  connectTeam(opts: { idPrefix: string; onLocalOp: (op: Op) => void; parcel: Parcel | null }) {
+    idPrefix = opts.idPrefix;
+    this.onLocalOp = opts.onLocalOp;
+    this.parcel = opts.parcel;
+    if (this.mounted) this.drawParcel();
+  }
+
+  /** Una pieza fuera de la parcela propia se ve como el fantasma de algo que no cabe. */
+  private guard(pr: Proposal): Proposal {
+    if (pr.ok && this.parcel && !touchesParcel(pr, this.parcel)) return { ...pr, ok: false, problem: "parcela" };
+    return pr;
+  }
+
+  /** Franja iluminada de la persona sobre la base del equipo. */
+  private drawParcel() {
+    if (this.parcelMesh) {
+      this.stage.scene.remove(this.parcelMesh);
+      this.parcelMesh.traverse((o) => {
+        if (o instanceof THREE.Mesh) {
+          o.geometry.dispose();
+          (o.material as THREE.Material).dispose();
+        }
+      });
+      this.parcelMesh = null;
+    }
+    if (!this.parcel) return;
+    const base = this.world.base;
+    const w = this.parcel.x1 - this.parcel.x0;
+    const group = new THREE.Group();
+    const fill = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, base),
+      new THREE.MeshBasicMaterial({ color: "#3BC8F3", transparent: true, opacity: 0.22, depthWrite: false }),
+    );
+    fill.rotation.x = -Math.PI / 2;
+    fill.position.set(this.parcel.x0 + w / 2, 0.003, base / 2);
+    group.add(fill);
+    // Bordes de la franja: ahí es donde la obra tiene que conectarse con la del vecino.
+    for (const x of [this.parcel.x0, this.parcel.x1]) {
+      const edge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, base), new THREE.MeshBasicMaterial({ color: "#80DCFF" }));
+      edge.position.set(x, 0.01, base / 2);
+      group.add(edge);
+    }
+    this.parcelMesh = group;
+    this.stage.scene.add(group);
+    this.stage.request();
+  }
+
+  /**
+   * Operaciones de los compañeros, ya ordenadas por el servidor. Devuelve false si alguna no cabe
+   * en el mundo local (choca con algo propio aún sin confirmar): hay que resincronizar.
+   */
+  applyRemote(ops: Op[]): boolean {
+    for (const op of ops) if (!apply(this.world, op)) return false;
+    this.refreshAfterRemote();
+    if (ops.some((o) => o.t === "add" || (o.t === "batch" && o.ops.some((x) => x.t === "add")))) brickSound().play("place", 0, 1);
+    return true;
+  }
+
+  /** Carga la obra del equipo tal como la tiene el servidor (al entrar o tras un desfase). */
+  replaceWorld(bricks: Brick[]) {
+    for (const id of [...this.world.bricks.keys()]) this.world.remove(id);
+    for (const b of bricks) if (!this.world.collides(b)) this.world.add(b);
+    if (this.movingId && !this.world.bricks.has(this.movingId)) this.cancelMove();
+    this.refreshAfterRemote();
+  }
+
+  /** Aviso visible que no viene de una acción propia (rebote, tiempo, red). */
+  notify(text: string) {
+    this.say(text, { visible: true });
+  }
+
+  private refreshAfterRemote() {
+    this.floating = this.world.floating();
+    if (this.mounted) this.view.sync(this.floating);
+    if (this.selectionId && !this.world.bricks.has(this.selectionId)) this.select(null);
+    // El fantasma se recalcula: alguien pudo ocupar el lugar donde estaba.
+    if (this.mounted) this.refreshGhostAtLast();
+    this.emit();
+  }
+
   private run(op: Op, message: string, undo = false) {
-    if (this.history.do(op)) this.afterChange(message, undo);
+    if (this.history.do(op)) {
+      this.onLocalOp?.(op);
+      this.afterChange(message, undo);
+    }
   }
 
   private afterChange(message: string, undo = false, visible = false) {
@@ -577,7 +684,7 @@ export class BuilderEngine {
       this.ghost.hide();
     } else {
       const hit = this.rayFrom(pt.x, pt.y);
-      this.proposal = hit ? proposePlacement(this.world, hit, this.hand.part, this.hand.rot, this.anchor(), this.movingId ?? undefined) : null;
+      this.proposal = hit ? this.guard(proposePlacement(this.world, hit, this.hand.part, this.hand.rot, this.anchor(), this.movingId ?? undefined)) : null;
       this.redrawGhost();
     }
     this.stage.request();
@@ -610,7 +717,7 @@ export class BuilderEngine {
   private updateGhostAtColumn(x: number, z: number) {
     if (!this.hand || !this.mounted) return;
     const hit = castRay(this.world, [x + 0.5, 400, z + 0.5], [0, -1, 0]) ?? { cell: [x, -1, z] as [number, number, number], normal: [0, 1, 0] as [number, number, number], t: 0 };
-    this.proposal = proposePlacement(this.world, hit, this.hand.part, this.hand.rot, this.anchor(), this.movingId ?? undefined);
+    this.proposal = this.guard(proposePlacement(this.world, hit, this.hand.part, this.hand.rot, this.anchor(), this.movingId ?? undefined));
     this.redrawGhost();
     this.emit();
   }
