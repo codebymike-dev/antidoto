@@ -2,7 +2,6 @@
 
 import { useActionState } from "react";
 import { launchTeamSession, type LaunchState } from "@/lib/brick-actions";
-import { TEAM_SIZES } from "@/lib/bricks/team";
 import { colors } from "@/lib/theme";
 import { fieldLabel, filledButton } from "@/lib/styles";
 
@@ -11,24 +10,29 @@ function minutes(seconds: number) {
 }
 
 /** Tamaño de equipo y duración, y a la pantalla del proyector. */
-export default function TeamLaunchForm({ mode, times }: { mode: string; times: number[] }) {
+export default function TeamLaunchForm({ mode, times, sizes }: { mode: string; times: number[]; sizes: number[] }) {
   const [state, action, pending] = useActionState<LaunchState, FormData>(launchTeamSession, null);
 
   return (
     <form action={action} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <input type="hidden" name="mode" value={mode} />
-      <fieldset style={fieldset}>
-        <legend style={fieldLabel}>Personas por equipo</legend>
-        <div style={row}>
-          {TEAM_SIZES.map((n) => (
-            <label key={n} style={choice}>
-              <input type="radio" name="teamSize" value={n} defaultChecked={n === 4} required />
-              {n}
-            </label>
-          ))}
-        </div>
-        <span style={hint}>Los equipos se arman solos a medida que la gente entra, siempre parejos.</span>
-      </fieldset>
+      {sizes.length === 1 ? (
+        // Un solo tamaño posible (Teléfono Roto se juega en parejas): no hay nada que elegir.
+        <input type="hidden" name="teamSize" value={sizes[0]} />
+      ) : (
+        <fieldset style={fieldset}>
+          <legend style={fieldLabel}>Personas por equipo</legend>
+          <div style={row}>
+            {[...sizes].sort((a, b) => a - b).map((n) => (
+              <label key={n} style={choice}>
+                <input type="radio" name="teamSize" value={n} defaultChecked={n === sizes[0]} required />
+                {n}
+              </label>
+            ))}
+          </div>
+          <span style={hint}>Los equipos se arman solos a medida que la gente entra, siempre parejos.</span>
+        </fieldset>
+      )}
       <fieldset style={fieldset}>
         <legend style={fieldLabel}>Tiempo para construir</legend>
         <div style={row}>

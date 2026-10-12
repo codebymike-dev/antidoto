@@ -314,6 +314,13 @@
   line-height: 1.5;
 }
 
+.twist {
+  background: #d3359d;
+  color: #fff;
+  font-weight: 600;
+  font-size: 17px;
+}
+
 .ranking {
   display: flex;
   flex-direction: column;

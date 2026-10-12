@@ -3,7 +3,7 @@ import { currentUser } from "@/lib/auth";
 import { listLibrary } from "@/lib/experience-data";
 import { listBuildLibrary } from "@/lib/build-data";
 import { KIND_LABEL } from "@/lib/bricks/challenges";
-import { TEAM_MODES } from "@/lib/bricks/team";
+import { TEAM_MODES, TEAM_THUMB } from "@/lib/bricks/team";
 import BuildThumb from "@/components/bricks/BuildThumb";
 import { experienceActivities } from "@/lib/experiences/catalog";
 import { listGames } from "@/lib/live-games";
@@ -182,7 +182,7 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
             return (
               <article key={`equipos-${mode.key}`} className="mission-card-link" style={cardShell}>
                 <Link href={href} aria-label={`Abrir ${mode.title}`} style={{ position: "relative", display: "block" }}>
-                  <BuildThumb kind={mode.key === "torre-equipos" ? "presupuesto" : "tema"} label={`Ladrillos de ${mode.title}`} />
+                  <BuildThumb kind={TEAM_THUMB[mode.play]} label={`Ladrillos de ${mode.title}`} />
                   <TypeChip type="construccion" />
                   <ThumbNote>En equipo, en vivo</ThumbNote>
                 </Link>
@@ -191,7 +191,7 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
                   <h3 style={{ ...calSans, fontSize: 18, margin: 0, color: colors.ink }}>{mode.title}</h3>
                   <p style={cardDescription}>{mode.description}</p>
                   <div style={cardStats}>
-                    <span>Equipos de 3 a 5</span>
+                    <span>{mode.sizes.length === 1 ? "En parejas" : `Equipos de ${Math.min(...mode.sizes)} a ${Math.max(...mode.sizes)}`}</span>
                     <span>Proyector y celulares</span>
                   </div>
                   <div style={cardFooter}>

@@ -301,7 +301,7 @@ export default function Builder(props: BuilderProps) {
             <button type="button" className={styles.action} onClick={() => engine.rotate()} disabled={!snap.hand} aria-label="Girar la pieza">
               <Icon name="rotate" />
             </button>
-            <button type="button" className={styles.place} onClick={() => engine.place()} disabled={!snap.hand} aria-disabled={!snap.ghost?.ok}>
+            <button type="button" className={styles.place} onClick={() => engine.place()} disabled={!snap.hand} aria-disabled={!snap.ghost?.ok || !!snap.readOnly}>
               {snap.moving ? "Soltar aquí" : "Colocar"}
             </button>
             <button type="button" className={styles.action} onClick={() => engine.redo()} disabled={!snap.canRedo} aria-label="Rehacer">

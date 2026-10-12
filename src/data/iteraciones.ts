@@ -1025,6 +1025,37 @@ export const ITERACIONES: Iteracion[] = [
     ],
   },
   {
+    id: "it-ladrillos-equipos",
+    fase: "Fase 6 · Construcción con ladrillos 3D",
+    nombre: "Construcción por equipos en vivo (primera parte)",
+    rango: "9 a 12 oct 2026",
+    ghSince: "2026-10-09",
+    ghUntil: "2026-10-13",
+    resumen:
+      "Salas en vivo con PIN, proyector y celulares para construir por equipos: La Torre en equipo (piezas compartidas y ranking de alturas) y Obra en Equipo (una franja por persona). El servidor es la autoridad de cada obra y reparte los cambios por un canal por equipo. Relevo y Teléfono Roto quedan para la segunda parte.",
+    historias: [
+      {
+        id: "AN-46",
+        titulo: "Como facilitador, quiero abrir una sala de construcción en equipo y proyectar las obras creciendo en vivo para que el grupo construya junto y se vea en la pantalla",
+        tipo: "historia",
+        valor: "alto",
+        col: "aceptacion",
+        par: "IA",
+        fecha: "2026-10-12",
+        tags: ["ladrillos", "en vivo", "proyector"],
+        requisitos: ["RF-956", "RF-957", "RF-958", "RF-959", "RF-960"],
+        dod: [
+          ok("Reglas puras con pruebas: reparto, parcelas, presupuesto, operaciones de la red, altura y orden de lotes."),
+          ok("Tablas brick_sessions, brick_teams y brick_players en db/schema.sql."),
+          ok("Verificado en Chromium con un proyector y hasta 4 celulares: lobby, sincronización, franjas, presupuesto, cierre y recorrido."),
+          pend("Migrar la base de producción antes de desplegar (tablas nuevas)."),
+          pend("Prueba con celulares reales y un proyector de verdad, midiendo los mensajes de Ably de una sesión completa."),
+          pend("Segunda parte de la fase: Relevo y Teléfono Roto."),
+        ],
+      },
+    ],
+  },
+  {
     id: "it-backlog",
     fase: "Backlog",
     nombre: "Pendientes del portal y las misiones",

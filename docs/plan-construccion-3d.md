@@ -219,6 +219,23 @@ en cualquier código sin puntajes); pide mostrarla vacía en vez de 0.
 - Medición real de mensajes Ably por sesión, sumada al consumo del módulo en vivo.
 - Tablas nuevas para sesiones, equipos y operaciones: migrar producción antes de desplegar.
 
+**Estado (2026-10-12)**: primera parte hecha en local y verificada en Chromium con un proyector y
+hasta 4 celulares contra la base local: La Torre en equipo y Obra en Equipo. Relevo y Teléfono
+Roto quedan para la segunda parte (cada uno es un juego distinto: turnos y parejas con roles).
+
+- Reglas puras en `src/lib/bricks/team.ts` (modos, reparto, parcelas, validación de lo que llega
+  por la red, altura de la torre) y orden de lotes en `src/lib/bricks/sync.ts`, con pruebas.
+- Servidor en `src/lib/brick-session.ts` y `/api/bricks/*`: la obra de cada equipo es una foto
+  JSON con `seq` y concurrencia optimista. No hay tabla de operaciones: al reconectar se pide la
+  foto completa, que pesa poco. Lo que puso cada persona se cuenta en `brick_players.placed`.
+- Canales de Ably: uno de la sala (estado y reloj), uno por equipo (piezas y gente) y uno del
+  proyector (avisos de gente nueva). El proyector escucha todo con un permiso con comodín.
+- Celular: `TeamSync` (lotes cada 200 ms, eco propio por marca pública del jugador, foto
+  completa ante cualquier desfase) y `TeamLayer` (lobby, reloj, franja, altura, cierre).
+- Proyector: `HostScreen` y `CityView` (todas las obras en una escena, calidad media porque gira
+  todo el tiempo), ranking de alturas, +1 min, terminar y recorrido de cámara con créditos.
+- Medición: `brick_sessions.ably_messages`. Una sala de prueba de 3 personas gastó 32 mensajes.
+
 ### Fase 7: galería, votación y reportes
 
 - Galería de Cierre: mural, votación por categorías con obra anónima hasta votar, podio por

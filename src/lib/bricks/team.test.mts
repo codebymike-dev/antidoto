@@ -1,7 +1,31 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { partByKey } from "./parts.ts";
-import { applyTeamOp, freeSlot, getTeamMode, parcelFor, parseOp, pickTeam, teamBase, teamIdentity, TEAM_MODES, towerHeight } from "./team.ts";
+import {
+  applyTeamOp,
+  canBuildPhone,
+  freeSlot,
+  getTeamMode,
+  parcelFor,
+  parseOp,
+  phoneArea,
+  phoneBuilder,
+  PHONE_MODEL_COUNT,
+  PHONE_W,
+  phoneModel,
+  phoneRound,
+  phoneScores,
+  pickTeam,
+  relayTurn,
+  RELAY_TURN_MS,
+  teamBase,
+  teamIdentity,
+  TEAM_MODES,
+  touchesParcel,
+  towerHeight,
+  twistDue,
+} from "./team.ts";
+import { apply } from "./ops.ts";
 import { BrickWorld, type Brick } from "./world.ts";
 
 const P = (key: string) => partByKey(key).id;
@@ -73,4 +97,65 @@ test("la altura de la torre cuenta solo lo conectado a la base", () => {
   assert.equal(towerHeight(tower, 12), 7);
   assert.equal(towerHeight([...tower, brick("ladrillo-1x1", 8, 30, 8)], 12), 7);
   assert.equal(towerHeight([], 12), 0);
+});
+
+test("cada modo tiene tamaños válidos y la primera duración es la sugerida", () => {
+  for (const m of TEAM_MODES) {
+    assert.ok(m.sizes.length > 0 && m.sizes.every((n) => n >= 2 && n <= 6), m.key);
+    assert.ok(m.times.every((t) => t >= 30 && t <= 3600), m.key);
+  }
+  assert.deepEqual(getTeamMode("telefono-roto")!.sizes, [2]);
+  assert.ok(getTeamMode("relevo")!.twist);
+});
+
+test("en el Relevo el turno rota por puesto cada 45 segundos, con los que estén", () => {
+  const t0 = 1_000_000;
+  assert.equal(relayTurn([2, 0, 1], t0, t0).slot, 0);
+  assert.equal(relayTurn([2, 0, 1], t0, t0 + RELAY_TURN_MS).slot, 1);
+  assert.equal(relayTurn([2, 0, 1], t0, t0 + 3 * RELAY_TURN_MS + 10).slot, 0);
+  assert.equal(relayTurn([0, 3], t0, t0 + RELAY_TURN_MS).slot, 3, "si falta alguien, sigue con el siguiente");
+  assert.equal(relayTurn([], t0, t0).slot, null);
+  assert.equal(relayTurn([0, 1], t0, t0 + 10).endsMs, t0 + RELAY_TURN_MS);
+});
+
+test("la sorpresa y el cambio de rol llegan a mitad del tiempo pactado", () => {
+  const t0 = 5000;
+  assert.ok(!twistDue(t0, 360, t0 + 179_000));
+  assert.ok(twistDue(t0, 360, t0 + 180_000));
+  assert.equal(phoneRound(t0, 360, t0 + 10), 0);
+  assert.equal(phoneRound(t0, 360, t0 + 200_000), 1);
+});
+
+test("en Teléfono Roto construye uno por ronda, salvo que su pareja no esté", () => {
+  assert.equal(phoneBuilder(0), 1);
+  assert.equal(phoneBuilder(1), 0);
+  assert.ok(canBuildPhone(1, 0, [0, 1]));
+  assert.ok(!canBuildPhone(0, 0, [0, 1]), "quien describe no construye");
+  assert.ok(canBuildPhone(0, 0, [0]), "solo en la pareja: puede hacer las dos cosas");
+  const area = phoneArea(1);
+  assert.ok(touchesParcel(brick("ladrillo-2x2", PHONE_W, 0, 0), area));
+  assert.ok(!touchesParcel(brick("ladrillo-2x2", PHONE_W - 1, 0, 0), area), "la zona es estricta: entera adentro");
+});
+
+test("los modelos secretos se pueden armar en la mitad de la base y cambian entre rondas", () => {
+  for (let i = 0; i < PHONE_MODEL_COUNT; i++) {
+    const m = phoneModel(i, 0);
+    const world = new BrickWorld(PHONE_W);
+    for (const b of m.bricks) {
+      assert.ok(apply(world, { t: "add", brick: b }), `${m.name}: ${b.id} no encaja`);
+      assert.ok(b.x >= 0 && b.z >= 0 && b.x < PHONE_W && b.z < PHONE_W, `${m.name} se sale`);
+    }
+    assert.equal(world.floating().size, 0, m.name);
+  }
+  assert.notEqual(phoneModel(0, 0).name, phoneModel(0, 1).name);
+  assert.notEqual(phoneModel(0, 0).name, phoneModel(1, 0).name);
+});
+
+test("la comparación de Teléfono Roto mira cada ronda en su mitad", () => {
+  const r0 = phoneModel(3, 0).bricks;
+  const r1 = phoneModel(3, 1).bricks.map((b) => ({ ...b, id: `r1${b.id}`, x: b.x + PHONE_W }));
+  assert.deepEqual(phoneScores(3, [...r0, ...r1]), [1, 1]);
+  const [a, b] = phoneScores(3, r0);
+  assert.equal(a, 1);
+  assert.equal(b, 0);
 });

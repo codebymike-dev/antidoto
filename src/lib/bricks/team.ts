@@ -2,12 +2,19 @@
 // los jugadores, las parcelas de Obra en Equipo y la validación de lo que llega por la red. Lógica
 // pura, sin base de datos: la usan el servidor (autoridad) y el navegador (para avisar antes).
 
+import { matchScore, type BuildKind } from "./challenges.ts";
 import { apply, invert, type Op } from "./ops.ts";
-import { BRICK_COLORS } from "./palette.ts";
-import { PARTS, part } from "./parts.ts";
+import { BRICK_COLORS, colorIndex } from "./palette.ts";
+import { PARTS, part, partByKey } from "./parts.ts";
 import { BrickWorld, footprint, inGrid, type Brick, type Placement, type Rot } from "./world.ts";
 
-export type TeamModeKey = "torre-equipos" | "obra-equipo";
+export type TeamModeKey = "torre-equipos" | "obra-equipo" | "relevo" | "telefono-roto";
+
+/**
+ * Cómo se reparte el trabajo dentro del equipo: todos a la vez, cada uno en su franja, por turnos
+ * o en parejas con roles (uno describe, el otro arma).
+ */
+export type TeamPlay = "juntos" | "parcelas" | "relevo" | "telefono";
 
 export interface TeamMode {
   key: TeamModeKey;
@@ -20,8 +27,11 @@ export interface TeamMode {
   times: number[];
   /** Piezas por equipo; null = sin límite. */
   maxPieces: number | null;
-  /** La base se divide en una franja por persona (Obra en Equipo). */
-  parcels: boolean;
+  play: TeamPlay;
+  /** Personas por equipo que el anfitrión puede elegir; la primera es la sugerida. */
+  sizes: number[];
+  /** Consigna sorpresa que aparece a mitad del tiempo (Relevo). */
+  twist?: string;
 }
 
 export const TEAM_MODES: TeamMode[] = [
@@ -33,7 +43,8 @@ export const TEAM_MODES: TeamMode[] = [
     prompt: "Entre todos, levanten la torre más alta que puedan con 30 piezas. Pónganse de acuerdo: las piezas son del equipo, no de cada uno.",
     times: [180, 120, 300],
     maxPieces: 30,
-    parcels: false,
+    play: "juntos",
+    sizes: [4, 3, 5],
   },
   {
     key: "obra-equipo",
@@ -43,23 +54,201 @@ export const TEAM_MODES: TeamMode[] = [
     prompt: "Construyan juntos un lugar donde les gustaría trabajar. Cada uno construye en su franja (la iluminada), pero la obra tiene que quedar conectada con las de sus vecinos.",
     times: [480, 360, 600],
     maxPieces: null,
-    parcels: true,
+    play: "parcelas",
+    sizes: [4, 3, 5],
+  },
+  {
+    key: "relevo",
+    title: "Relevo de Constructores",
+    tag: "TRABAJO EN EQUIPO",
+    description: "Una sola obra por equipo, construida por turnos de 45 segundos. A mitad del tiempo llega una consigna sorpresa y al final se ve qué agregó cada persona.",
+    prompt: "Construyan entre todos una plaza para su barrio, pero por turnos: solo pone piezas quien tiene el turno. Los demás miran, opinan y preparan su idea.",
+    times: [360, 240, 480],
+    maxPieces: null,
+    play: "relevo",
+    sizes: [4, 3, 5],
+    twist: "¡Sorpresa! Su obra ahora tiene que tener un puente. Úsenlo para unir dos partes.",
+  },
+  {
+    key: "telefono-roto",
+    title: "Teléfono Roto",
+    tag: "COMUNICACIÓN",
+    description: "En parejas: uno ve un modelo secreto y lo describe en voz alta, el otro lo arma sin verlo. A mitad del tiempo cambian de rol. Al final se ve qué tanto se parecen, solo como curiosidad.",
+    prompt: "Uno describe y el otro construye. Quien describe ve un modelo secreto y lo cuenta con palabras, sin mostrar la pantalla. Quien construye solo escucha y arma. A mitad del tiempo cambian.",
+    times: [480, 360, 600],
+    maxPieces: null,
+    play: "telefono",
+    sizes: [2],
   },
 ];
+
+/** Qué portada isométrica usa cada modo en la biblioteca (las mismas composiciones de los retos). */
+export const TEAM_THUMB = { juntos: "presupuesto", parcelas: "tema", relevo: "libre", telefono: "replicar" } as const satisfies Record<TeamPlay, BuildKind>;
 
 export function getTeamMode(key: string): TeamMode | null {
   return TEAM_MODES.find((m) => m.key === key) ?? null;
 }
 
-export const TEAM_SIZES = [3, 4, 5] as const;
 /** Ancho de la franja de cada persona en Obra en Equipo, en studs. */
 export const PARCEL_W = 8;
 /** Lado de la base de La Torre: chica, para que la gracia sea subir. */
 const TOWER_BASE = 12;
+/** Base del Relevo: una sola obra para todo el equipo. */
+const RELAY_BASE = 20;
+/** En Teléfono Roto cada ronda se arma en su mitad de la base, así quedan las dos a la vista. */
+export const PHONE_W = 12;
 
 /** Lado de la base de cada equipo según el modo y el tamaño de equipo. */
 export function teamBase(mode: TeamMode, teamSize: number): number {
-  return mode.parcels ? PARCEL_W * teamSize : TOWER_BASE;
+  switch (mode.play) {
+    case "parcelas":
+      return PARCEL_W * teamSize;
+    case "relevo":
+      return RELAY_BASE;
+    case "telefono":
+      return PHONE_W * 2;
+    default:
+      return TOWER_BASE;
+  }
+}
+
+// --- Relevo -------------------------------------------------------------------------------
+
+export const RELAY_TURN_MS = 45_000;
+
+/**
+ * De quién es el turno: los puestos del equipo en orden, uno cada RELAY_TURN_MS desde que empezó.
+ * Si alguien entra o sale, la rueda sigue con los que estén.
+ */
+export function relayTurn(slots: number[], startedMs: number, now: number): { slot: number | null; turn: number; endsMs: number } {
+  const turn = Math.max(0, Math.floor((now - startedMs) / RELAY_TURN_MS));
+  const order = [...slots].sort((a, b) => a - b);
+  return { slot: order.length ? order[turn % order.length] : null, turn, endsMs: startedMs + (turn + 1) * RELAY_TURN_MS };
+}
+
+/** La consigna sorpresa aparece a mitad del tiempo pactado (sumar minutos no la mueve). */
+export function twistDue(startedMs: number, timeLimit: number, now: number): boolean {
+  return now >= startedMs + (timeLimit * 1000) / 2;
+}
+
+// --- Teléfono Roto ------------------------------------------------------------------------
+
+/** Ronda 0 o 1: se cambia de rol a mitad del tiempo pactado (sumar minutos alarga la segunda). */
+export function phoneRound(startedMs: number, timeLimit: number, now: number): 0 | 1 {
+  return twistDue(startedMs, timeLimit, now) ? 1 : 0;
+}
+
+/** Quién construye en cada ronda: en la primera el segundo de la pareja, en la segunda el primero. */
+export function phoneBuilder(round: 0 | 1): number {
+  return round === 0 ? 1 : 0;
+}
+
+/** Puede construir quien tiene el rol, o cualquiera si su pareja no está (alguien quedó solo). */
+export function canBuildPhone(slot: number, round: 0 | 1, slots: number[]): boolean {
+  const builder = phoneBuilder(round);
+  return slot === builder || !slots.includes(builder);
+}
+
+/** Zona de la base donde se arma cada ronda. */
+export function phoneArea(round: 0 | 1): Parcel {
+  return { x0: round * PHONE_W, x1: (round + 1) * PHONE_W, strict: true };
+}
+
+interface ModelPiece {
+  part: string;
+  color: string;
+  x: number;
+  y: number;
+  z: number;
+  rot?: Rot;
+}
+
+/** Modelos secretos: chicos (4 a 7 piezas) para que se puedan describir en un par de minutos. */
+const PHONE_MODELS: { name: string; pieces: ModelPiece[] }[] = [
+  {
+    name: "Semáforo",
+    pieces: [
+      { part: "ladrillo-2x2", color: "Gris Asfalto", x: 4, y: 0, z: 4 },
+      { part: "ladrillo-2x2", color: "Gris Asfalto", x: 4, y: 3, z: 4 },
+      { part: "ladrillo-1x1", color: "Verde Cafetal", x: 4, y: 6, z: 4 },
+      { part: "ladrillo-1x1", color: "Girasol", x: 4, y: 9, z: 4 },
+      { part: "ladrillo-1x1", color: "Rojo Volcán", x: 4, y: 12, z: 4 },
+      { part: "placa-2x2", color: "Noche", x: 4, y: 15, z: 4 },
+    ],
+  },
+  {
+    name: "Árbol",
+    pieces: [
+      { part: "ladrillo-redondo-2x2", color: "Café Tinto", x: 5, y: 0, z: 5 },
+      { part: "ladrillo-redondo-2x2", color: "Café Tinto", x: 5, y: 3, z: 5 },
+      { part: "placa-4x4", color: "Verde Cafetal", x: 4, y: 6, z: 4 },
+      { part: "ladrillo-2x2", color: "Verde Cafetal", x: 5, y: 7, z: 5 },
+      { part: "ladrillo-1x1", color: "Mandarina", x: 7, y: 7, z: 4 },
+      { part: "ladrillo-1x1", color: "Limoncillo", x: 5, y: 10, z: 5 },
+    ],
+  },
+  {
+    name: "Banca",
+    pieces: [
+      { part: "ladrillo-1x1", color: "Café Tinto", x: 3, y: 0, z: 5 },
+      { part: "ladrillo-1x1", color: "Café Tinto", x: 8, y: 0, z: 5 },
+      { part: "placa-2x6", color: "Panela", x: 3, y: 3, z: 5 },
+      { part: "ladrillo-1x6", color: "Arena Caribe", x: 3, y: 4, z: 6 },
+      { part: "ladrillo-1x6", color: "Arena Caribe", x: 3, y: 7, z: 6 },
+    ],
+  },
+  {
+    name: "Torre de colores",
+    pieces: [
+      { part: "ladrillo-2x4", color: "Celeste Antídoto", x: 4, y: 0, z: 5 },
+      { part: "placa-2x4", color: "Orquídea", x: 4, y: 3, z: 5 },
+      { part: "ladrillo-2x2", color: "Girasol", x: 5, y: 4, z: 5 },
+      { part: "ladrillo-1x2", color: "Rojo Volcán", x: 5, y: 7, z: 5 },
+      { part: "ladrillo-1x1", color: "Blanco Nube", x: 5, y: 10, z: 5 },
+    ],
+  },
+  {
+    name: "Casita",
+    pieces: [
+      { part: "ladrillo-2x4", color: "Blanco Nube", x: 4, y: 0, z: 4 },
+      { part: "ladrillo-2x4", color: "Blanco Nube", x: 4, y: 0, z: 6 },
+      { part: "inclinada-4x2", color: "Rojo Volcán", x: 4, y: 3, z: 4, rot: 2 },
+      { part: "inclinada-4x2", color: "Rojo Volcán", x: 4, y: 3, z: 6 },
+      { part: "ladrillo-1x1", color: "Girasol", x: 3, y: 0, z: 5 },
+    ],
+  },
+  {
+    name: "Puente",
+    pieces: [
+      { part: "ladrillo-2x2", color: "Gris Neblina", x: 2, y: 0, z: 5 },
+      { part: "ladrillo-2x2", color: "Gris Neblina", x: 2, y: 3, z: 5 },
+      { part: "ladrillo-2x2", color: "Gris Neblina", x: 8, y: 0, z: 5 },
+      { part: "ladrillo-2x2", color: "Gris Neblina", x: 8, y: 3, z: 5 },
+      { part: "placa-2x8", color: "Girasol", x: 2, y: 6, z: 5 },
+      { part: "ladrillo-1x1", color: "Rojo Volcán", x: 5, y: 7, z: 5 },
+    ],
+  },
+];
+
+export const PHONE_MODEL_COUNT = PHONE_MODELS.length;
+
+/** El modelo secreto de una pareja en una ronda: distinto en cada ronda y entre parejas vecinas. */
+export function phoneModel(position: number, round: 0 | 1): { name: string; bricks: Brick[] } {
+  const m = PHONE_MODELS[(position * 2 + round) % PHONE_MODELS.length];
+  return {
+    name: m.name,
+    bricks: m.pieces.map((p, n) => ({ id: `s${n + 1}`, part: partByKey(p.part).id, color: colorIndex(p.color), x: p.x, y: p.y, z: p.z, rot: p.rot ?? 0 })),
+  };
+}
+
+/** Qué tanto se parece lo armado en cada ronda a su modelo, de 0 a 1 (una curiosidad, no un puntaje). */
+export function phoneScores(position: number, bricks: Brick[]): [number, number] {
+  const score = (round: 0 | 1) => {
+    const area = phoneArea(round);
+    const mine = bricks.filter((b) => b.x >= area.x0 && b.x < area.x1).map((b) => ({ ...b, x: b.x - area.x0 }));
+    return matchScore(phoneModel(position, round).bricks, mine);
+  };
+  return [score(0), score(1)];
 }
 
 /** Colores de los equipos, en orden de creación: los de la paleta que más se distinguen entre sí. */
@@ -93,6 +282,8 @@ export interface Parcel {
   x0: number;
   /** Exclusivo. */
   x1: number;
+  /** La pieza tiene que quedar entera adentro (Teléfono Roto), no solo tocarla. */
+  strict?: boolean;
 }
 
 export function parcelFor(slot: number): Parcel {
@@ -102,6 +293,7 @@ export function parcelFor(slot: number): Parcel {
 /** La pieza toca la parcela: basta una columna adentro, así se puede conectar con el vecino. */
 export function touchesParcel(pl: Placement, parcel: Parcel): boolean {
   const { w } = footprint(part(pl.part), pl.rot);
+  if (parcel.strict) return pl.x >= parcel.x0 && pl.x + w <= parcel.x1;
   return pl.x < parcel.x1 && pl.x + w > parcel.x0;
 }
 
@@ -153,7 +345,7 @@ export interface TeamRules {
 }
 
 /** Por qué no se acepta una operación; null = se aceptó y ya quedó aplicada al mundo. */
-export type OpRejection = "choque" | "parcela" | "presupuesto" | "fuera";
+export type OpRejection = "choque" | "parcela" | "presupuesto" | "fuera" | "turno" | "rol";
 
 function opsTouch(world: BrickWorld, op: Op, parcel: Parcel): boolean {
   switch (op.t) {

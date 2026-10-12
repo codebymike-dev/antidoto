@@ -18,6 +18,8 @@ export type TeamStatus = "lobby" | "building" | "finished";
 
 export interface TeamClock {
   status: TeamStatus;
+  /** Desde aquí corren los turnos del Relevo y las rondas de Teléfono Roto. */
+  startedMs: number | null;
   endsMs: number | null;
   /** Diferencia entre el reloj del servidor y el del celular. */
   offset: number;
@@ -30,7 +32,7 @@ export interface TeamMember {
 }
 
 export interface TeamSnapshot {
-  session: { id: number; status: TeamStatus; endsMs: number | null; serverNow: number };
+  session: { id: number; status: TeamStatus; startedMs: number | null; endsMs: number | null; serverNow: number };
   team: { id: number; seq: number; bricks: Brick[]; members: TeamMember[] };
   me: { tag: string };
 }
@@ -45,6 +47,8 @@ interface Callbacks {
 
 const REJECTION: Record<string, string> = {
   choque: "Alguien de tu equipo puso una pieza ahí primero",
+  turno: "Se acabó tu turno: esa pieza no alcanzó a entrar",
+  rol: "En esta ronda te toca describir: construye tu pareja",
   parcela: "Esa parte es de otra persona: la pieza tiene que tocar tu franja",
   presupuesto: "Tu equipo ya usó todas sus piezas",
   fuera: "Esa pieza queda fuera de la base",
@@ -98,8 +102,8 @@ export class TeamSync {
       await team.attach();
       if (this.closed) return;
       await session.subscribe("status", (msg) => {
-        const d = msg.data as { status: TeamStatus; endsMs: number | null; serverNow: number };
-        this.cb.onClock({ status: d.status, endsMs: d.endsMs, offset: d.serverNow - Date.now() });
+        const d = msg.data as { status: TeamStatus; startedMs: number | null; endsMs: number | null; serverNow: number };
+        this.cb.onClock({ status: d.status, startedMs: d.startedMs, endsMs: d.endsMs, offset: d.serverNow - Date.now() });
         // Al cerrar se trae la foto final: piezas y créditos de cada uno, ya sin nada en vuelo.
         if (d.status === "finished") this.requestResync();
       });
@@ -195,7 +199,12 @@ export class TeamSync {
       const held = this.held.splice(0);
       for (const b of held) this.receive(b);
       this.cb.onMembers(snap.team.members);
-      this.cb.onClock({ status: snap.session.status, endsMs: snap.session.endsMs, offset: snap.session.serverNow - Date.now() });
+      this.cb.onClock({
+        status: snap.session.status,
+        startedMs: snap.session.startedMs,
+        endsMs: snap.session.endsMs,
+        offset: snap.session.serverNow - Date.now(),
+      });
     } catch {
       this.needResync = true;
     } finally {

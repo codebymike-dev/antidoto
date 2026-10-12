@@ -51,6 +51,8 @@ export interface BuilderSnapshot {
   limit: number | null;
   /** Sube con cada cambio de la obra: el guardado automático lo vigila. */
   version: number;
+  /** Por qué ahora solo se puede mirar (turno de otro, rol de quien describe); null = se construye. */
+  readOnly: string | null;
 }
 
 /** El fantasma va por encima de la yema para que el dedo no lo tape (investigación, 3.2). */
@@ -114,6 +116,8 @@ export class BuilderEngine {
   /** Recibe cada cambio propio ya aplicado, para mandarlo al equipo. */
   private onLocalOp: ((op: Op) => void) | null = null;
   private parcel: Parcel | null = null;
+  /** Mientras no es su turno (Relevo) o le toca describir (Teléfono Roto): mira, pero no cambia nada. */
+  private readOnly: string | null = null;
   private parcelMesh: THREE.Group | null = null;
   private cleanup: (() => void)[] = [];
 
@@ -229,6 +233,7 @@ export class BuilderEngine {
       color: this.thumbColor,
       limit: this.limit,
       version: this.version,
+      readOnly: this.readOnly,
     };
   }
 
@@ -302,7 +307,7 @@ export class BuilderEngine {
       return;
     }
     const b = this.selectionId ? this.world.bricks.get(this.selectionId) : undefined;
-    if (!b) return;
+    if (!b || this.blocked()) return;
     const turned = { ...b, rot: (((b.rot + dir) % 4) + 4) % 4 as Rot };
     const turn: Op = { t: "batch", ops: [{ t: "remove", brick: b }, { t: "add", brick: turned }] };
     if (this.parcel && !touchesParcel(turned, this.parcel)) {
@@ -335,6 +340,7 @@ export class BuilderEngine {
     const pr = this.proposal;
     const h = this.hand;
     if (!pr || !h) return false;
+    if (this.blocked()) return false;
     if (!this.movingId && this.atLimit()) {
       brickSound().play("invalid");
       this.say(`Ya usaste tus ${this.limit} piezas. Mueve o quita alguna para cambiar tu obra.`, { visible: true });
@@ -392,7 +398,7 @@ export class BuilderEngine {
   /** Levanta la pieza seleccionada para moverla. Sigue en el mundo hasta soltarla. */
   moveSelection() {
     const b = this.selectionId ? this.world.bricks.get(this.selectionId) : undefined;
-    if (!b) return;
+    if (!b || this.blocked()) return;
     this.select(null);
     this.movingId = b.id;
     this.hand = { part: b.part, color: b.color, rot: b.rot };
@@ -416,6 +422,7 @@ export class BuilderEngine {
   }
 
   undo() {
+    if (this.blocked()) return;
     const inverse = this.history.undo();
     if (inverse) {
       this.onLocalOp?.(inverse);
@@ -432,6 +439,7 @@ export class BuilderEngine {
   }
 
   redo() {
+    if (this.blocked()) return;
     const before = this.world.bricks.size;
     const redone = this.history.redo();
     if (!redone) return;
@@ -509,7 +517,7 @@ export class BuilderEngine {
    * Foto del modelo a replicar, dibujada con el mismo escenario (sin abrir otro contexto WebGL):
    * se monta un mundo aparte en lugar de la obra, se encuadra, se captura y se desmonta.
    */
-  modelPhoto(bricks: Brick[], base: number): string | null {
+  modelPhoto(bricks: Brick[], base: number, angle = 0): string | null {
     if (!this.mounted) return null;
     const world = new BrickWorld(base);
     for (const b of bricks) world.add(b);
@@ -521,7 +529,8 @@ export class BuilderEngine {
     let maxY = 0;
     for (const b of bricks) maxY = Math.max(maxY, (b.y + part(b.part).h) * PLATE_H);
     const center = new THREE.Vector3(base / 2, maxY / 3, base / 2);
-    this.stage.camera.position.copy(center).add(new THREE.Vector3(0.6, 0.62, 0.72));
+    // `angle` gira la vista alrededor del modelo: verlo por los cuatro lados ayuda a describirlo.
+    this.stage.camera.position.copy(center).add(new THREE.Vector3(0.6, 0.62, 0.72).applyAxisAngle(new THREE.Vector3(0, 1, 0), angle));
     this.stage.frame(center, base + 1);
     // Las sombras guardadas son de la obra: se recalculan para el modelo y otra vez al volver.
     this.stage.invalidateShadows();
@@ -538,6 +547,30 @@ export class BuilderEngine {
   // ---- Equipo (fase 6) ----
 
   /** Conecta el constructor a un equipo: prefijo de ids y a quién avisar de cada cambio propio. */
+  /** Solo mirar: cada intento de cambiar algo explica por qué no se puede ahora. */
+  setReadOnly(message: string | null) {
+    if (message === this.readOnly) return;
+    this.readOnly = message;
+    if (message && this.movingId) this.cancelMove();
+    this.emit();
+  }
+
+  private blocked(): boolean {
+    if (!this.readOnly) return false;
+    brickSound().play("invalid");
+    this.say(this.readOnly, { visible: true });
+    return true;
+  }
+
+  /** Cambia la zona donde se puede construir (Teléfono Roto cambia de mitad en cada ronda). */
+  setParcel(parcel: Parcel | null) {
+    this.parcel = parcel;
+    if (this.mounted) {
+      this.drawParcel();
+      this.refreshGhostAtLast();
+    }
+  }
+
   connectTeam(opts: { idPrefix: string; onLocalOp: (op: Op) => void; parcel: Parcel | null }) {
     idPrefix = opts.idPrefix;
     this.onLocalOp = opts.onLocalOp;
@@ -619,6 +652,7 @@ export class BuilderEngine {
   }
 
   private run(op: Op, message: string, undo = false) {
+    if (this.blocked()) return;
     if (this.history.do(op)) {
       this.onLocalOp?.(op);
       this.afterChange(message, undo);

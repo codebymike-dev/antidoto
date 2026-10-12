@@ -1016,6 +1016,66 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         notas: "Cambiar el título también renombra la misión, para que listados y reportes digan lo mismo que ve el participante.",
         relacionados: ["RF-905", "RF-950"],
       },
+      {
+        id: "RF-956",
+        titulo: "Sala de construcción en equipo con PIN y proyector",
+        descripcion:
+          "Desde la biblioteca, cualquier admin abre una sala de La Torre en equipo u Obra en Equipo eligiendo personas por equipo (3 a 5) y duración. El proyector muestra el PIN, el QR y los equipos formándose; cada persona entra en /construir con el PIN y un apodo y el sistema la reparte en el equipo con menos gente.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen:
+          "TEAM_MODES y pickTeam en src/lib/bricks/team.ts; launchSession y joinSession en src/lib/brick-session.ts; /admin/biblioteca/equipos/[mode], /admin/equipos/[id] y /construir; tablas brick_sessions, brick_teams y brick_players",
+        verificacion: "team.test.mts (reparto parejo, puestos libres, nombres de equipo) y prueba en Chromium con un proyector y 4 celulares.",
+        notas: "Tabla propia y no live_matches: otro ciclo de vida, sin preguntas. El PIN es único solo entre salas abiertas y se libera a las 12 horas.",
+        relacionados: ["RF-501", "RF-957", "RF-958"],
+      },
+      {
+        id: "RF-957",
+        titulo: "Construcción compartida en tiempo real con el servidor como autoridad",
+        descripcion:
+          "Lo que pone cada persona se ve al instante en su celular y en el de sus compañeros. Los cambios viajan en lotes cada 200 ms; el servidor los valida contra la obra del equipo y los reparte por el canal del equipo. Si dos ponen una pieza en el mismo lugar gana la primera y el otro celular la devuelve con un aviso.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "applyOps en brick-session.ts; parseOp y applyTeamOp en team.ts; SeqQueue en src/lib/bricks/sync.ts; TeamSync en src/components/bricks/team/team-sync.ts; /api/bricks/ops",
+        verificacion: "sync.test.mts (orden, duplicados, huecos) y team.test.mts (operaciones de la red); en Chromium, tres celulares ven las mismas piezas y el mismo contador.",
+        notas:
+          "La obra del equipo se guarda como foto JSON con contador seq y concurrencia optimista (UPDATE ... WHERE seq = ?). Ante un rechazo, un choque o un lote perdido, el celular pide la foto completa y vuelve a poner encima lo propio que aún no salió.",
+        relacionados: ["RF-956", "RNF-08"],
+      },
+      {
+        id: "RF-958",
+        titulo: "Reglas de cada modo: presupuesto compartido y parcelas",
+        descripcion:
+          "En La Torre en equipo las 30 piezas son del equipo y el proyector ordena los equipos por la altura de su torre (solo cuenta lo conectado a la base). En Obra en Equipo cada persona tiene una franja iluminada de la base: cada pieza tiene que tocar la propia, así se puede unir con la del vecino pero no construir ni borrar en la ajena.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "applyTeamOp, touchesParcel, towerHeight en team.ts; parcela y guardia del fantasma en src/components/bricks/builder/engine.ts",
+        verificacion: "team.test.mts y revisión en Chromium (aviso \"Fuera de tu franja\").",
+        relacionados: ["RF-956", "RF-957"],
+      },
+      {
+        id: "RF-959",
+        titulo: "Proyector: obras en vivo, reloj y recorrido final",
+        descripcion:
+          "Mientras construyen, el proyector muestra todas las obras en una sola escena 3D (cada base con un marco del color de su equipo), el reloj, la consigna y la lista de equipos con piezas o altura. Puede sumar un minuto o terminar. Al acabar el tiempo la sala se cierra sola y el anfitrión puede recorrer las obras una por una, con los créditos de cada persona.",
+        prioridad: "alta",
+        estado: "implementado",
+        origen: "HostScreen.tsx y CityView en src/components/bricks/team/city.ts; hostCommand en brick-session.ts",
+        verificacion: "Revisión en Chromium: lobby, construcción, cierre y recorrido.",
+        notas: "Un solo contexto WebGL para todas las obras, en calidad media: la escena gira todo el tiempo. Si el proyector se cierra, el servidor termina la sala cuando vence el reloj.",
+        relacionados: ["RF-956", "RF-960"],
+      },
+      {
+        id: "RF-960",
+        titulo: "Medición de mensajes de tiempo real por sala",
+        descripcion: "Cada sala lleva la cuenta estimada de mensajes de Ably que entregó (cada publicación por cada pantalla que la recibe) y el proyector la muestra al final.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "brick_sessions.ably_messages; countMessages en brick-session.ts",
+        verificacion: "Revisión manual: una sala de prueba con 3 celulares gastó 32 mensajes.",
+        notas: "La cuota gratuita (6 millones al mes) es compartida con el quiz en vivo. Canales por equipo para que los mensajes no se multipliquen por toda la sala (investigación, 7.8).",
+        relacionados: ["RF-959"],
+      },
     ],
   },
 ];

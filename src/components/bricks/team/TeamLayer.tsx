@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import type * as Ably from "ably";
 import type { PlayerView } from "@/lib/brick-session";
-import { heightLabel, towerHeight } from "@/lib/bricks/team";
+import { canBuildPhone, heightLabel, phoneArea, phoneModel, phoneRound, phoneScores, PHONE_W, relayTurn, towerHeight, twistDue } from "@/lib/bricks/team";
 import { brickSound } from "../sound";
 import type { BuilderEngine, BuilderSnapshot } from "../builder/engine";
 import { TeamSync, type TeamClock, type TeamMember } from "./team-sync";
@@ -29,7 +29,14 @@ function formatClock(ms: number): string {
 export default function TeamLayer({ engine, snap, view, onStatus }: Props) {
   const { team, session } = view;
   const identity = { name: team.name, color: team.color };
-  const [clock, setClock] = useState<TeamClock>(() => ({ status: session.status, endsMs: session.endsMs, offset: session.serverNow - Date.now() }));
+  const [clock, setClock] = useState<TeamClock>(() => ({
+    status: session.status,
+    startedMs: session.startedMs,
+    endsMs: session.endsMs,
+    offset: session.serverNow - Date.now(),
+  }));
+  /** Foto del modelo secreto (Teléfono Roto), de la ronda y el ángulo en que se pidió. */
+  const [model, setModel] = useState<{ round: 0 | 1; angle: number; url: string | null; open: boolean } | null>(null);
   const [members, setMembers] = useState<TeamMember[]>(team.members);
   const [connection, setConnection] = useState<Ably.ConnectionState>("initialized");
   const [lost, setLost] = useState<string | null>(null);
@@ -68,6 +75,49 @@ export default function TeamLayer({ engine, snap, view, onStatus }: Props) {
     if (clock.status === "finished") brickSound().play("remove");
   }, [clock.status]);
 
+  // Turnos (Relevo) y rondas (Teléfono Roto) se calculan igual que en el servidor, con su reloj.
+  const serverNow = now + clock.offset;
+  const building = clock.status === "building" && clock.startedMs !== null;
+  const slots = members.map((m) => m.slot);
+  const turn = session.play === "relevo" && building ? relayTurn(slots, clock.startedMs!, serverNow) : null;
+  const turnOwner = turn ? members.find((m) => m.slot === turn.slot) : undefined;
+  const myTurn = turn ? turn.slot === view.me.slot : null;
+  const round = session.play === "telefono" && clock.startedMs !== null ? phoneRound(clock.startedMs, session.timeLimit, serverNow) : null;
+  const iBuild = round === null ? true : canBuildPhone(view.me.slot, round, slots);
+  const partner = members.find((m) => m.slot !== view.me.slot);
+  const twist = session.twist && building && twistDue(clock.startedMs!, session.timeLimit, serverNow) ? session.twist : null;
+
+  const readOnly = !building
+    ? null
+    : myTurn === false
+      ? `Ahora le toca a ${turnOwner?.nickname ?? "otra persona"}. Mira y prepara tu idea`
+      : !iBuild
+        ? `En esta ronda describes: ${partner?.nickname ?? "tu pareja"} construye`
+        : null;
+  useEffect(() => {
+    engine.setReadOnly(readOnly);
+  }, [engine, readOnly]);
+  useEffect(() => {
+    if (round !== null) engine.setParcel(phoneArea(round));
+  }, [engine, round]);
+  useEffect(() => {
+    if (myTurn) {
+      brickSound().play("pick");
+      engine.notify("¡Te toca! Tienes 45 segundos");
+    }
+  }, [engine, myTurn]);
+  useEffect(() => {
+    if (round === 1 && building) engine.notify("¡Cambio de rol! Ahora con otro modelo");
+  }, [engine, round, building]);
+  useEffect(() => {
+    if (twist) engine.notify(twist);
+  }, [engine, twist]);
+
+  const showModel = (angle: number) => {
+    if (round === null) return;
+    setModel({ round, angle, url: engine.modelPhoto(phoneModel(team.position, round).bricks, PHONE_W, angle), open: true });
+  };
+
   // La altura se lee del mundo en cada render: son pocas piezas y cambia con cada lote.
   const height = view.session.mode === "torre-equipos" ? towerHeight([...engine.world.bricks.values()], session.base) : null;
   const myPlaced = members.find((m) => m.nickname === view.me.nickname)?.placed ?? 0;
@@ -104,8 +154,51 @@ export default function TeamLayer({ engine, snap, view, onStatus }: Props) {
         )}
       </div>
 
+      {building && turn && (
+        <p className={`${own.turn} ${myTurn ? own.turnMine : ""}`} data-builder-ui role="status">
+          {myTurn ? "¡Te toca!" : `Turno de ${turnOwner?.nickname ?? "otra persona"}`} · {formatClock(turn.endsMs - serverNow)}
+        </p>
+      )}
+
+      {building && round !== null && (
+        <div className={own.turn} data-builder-ui role="status">
+          Ronda {round + 1} de 2 · {iBuild ? (partner ? `Construyes: escucha a ${partner.nickname}` : "Construyes") : "Describes el modelo"}
+          {!iBuild && (
+            <button type="button" className={own.modelBtn} onClick={() => showModel(model?.round === round ? model.angle : 0)}>
+              Ver el modelo secreto
+            </button>
+          )}
+        </div>
+      )}
+
+      {model?.open && model.round === round && !iBuild && (
+        <div className={styles.backdrop} onClick={() => setModel({ ...model, open: false })} data-builder-ui>
+          <div className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="tm-model" onClick={(e) => e.stopPropagation()}>
+            <p className={styles.kicker}>Secreto: no muestres la pantalla</p>
+            <h2 id="tm-model" className={styles.title}>
+              {phoneModel(team.position, model.round).name}
+            </h2>
+            {/* Data URL dibujada en el navegador: next/image no aporta nada aquí. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {model.url && <img className={styles.photo} src={model.url} alt="El modelo que tienes que describir" />}
+            <p className={styles.muted}>
+              Cuéntale a {partner?.nickname ?? "tu pareja"} qué piezas usar, de qué color y dónde va cada una. Solo con palabras.
+            </p>
+            <div className={styles.row}>
+              <button type="button" className={styles.secondary} onClick={() => showModel(model.angle + Math.PI / 2)}>
+                Verlo por otro lado
+              </button>
+              <button type="button" className={styles.primary} onClick={() => setModel({ ...model, open: false })} autoFocus>
+                Listo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {clock.status === "building" && (
         <div className={own.info} data-builder-ui aria-live="polite">
+          {twist && <span className={own.twist}>{twist}</span>}
           {height !== null && <span className={own.height}>Torre: {heightLabel(height)}</span>}
           {view.parcel && <span>Tu franja es la iluminada</span>}
           <span className={own.members}>{members.map((m) => (m.nickname === view.me.nickname ? "Tú" : m.nickname)).join(" · ")}</span>
@@ -167,6 +260,24 @@ export default function TeamLayer({ engine, snap, view, onStatus }: Props) {
                 </li>
               )}
             </ul>
+            {session.play === "telefono" && (
+              <ul className={own.credits}>
+                {phoneScores(team.position, [...engine.world.bricks.values()]).map((score, r) => (
+                  <li key={r}>
+                    Ronda {r + 1} ({phoneModel(team.position, r as 0 | 1).name}): <b>{Math.round(score * 100)} % parecido</b>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {session.play === "relevo" && (
+              <ul className={own.credits} aria-label="Lo que puso cada persona">
+                {members.map((m) => (
+                  <li key={m.slot}>
+                    {m.nickname}: <b>{m.placed === 1 ? "1 pieza" : `${m.placed} piezas`}</b>
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className={styles.muted}>La obra de tu equipo quedó guardada. El anfitrión la va a mostrar junto a las demás.</p>
           </div>
         </div>

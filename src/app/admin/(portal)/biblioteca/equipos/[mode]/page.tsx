@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { getTeamMode } from "@/lib/bricks/team";
+import { getTeamMode, TEAM_THUMB } from "@/lib/bricks/team";
 import { recentSessions } from "@/lib/brick-session";
 import { colors, calSans } from "@/lib/theme";
 import { card } from "@/lib/styles";
@@ -33,15 +33,18 @@ export default async function ModoEquipoPage({ params }: { params: Promise<{ mod
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 18, alignItems: "start" }}>
         <section style={{ ...card, padding: 0, overflow: "hidden" }} aria-label="Cómo se juega">
-          <BuildThumb kind={mode.key === "torre-equipos" ? "presupuesto" : "tema"} label={`Ladrillos de ${mode.title}`} />
+          <BuildThumb kind={TEAM_THUMB[mode.play]} label={`Ladrillos de ${mode.title}`} />
           <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 10, fontSize: 14, lineHeight: 1.55, color: colors.inkSoft }}>
             <p style={{ margin: 0 }}>
               <b style={{ color: colors.ink }}>Lo que lee cada equipo:</b> {mode.prompt}
             </p>
             <p style={{ margin: 0 }}>
               El proyector muestra el PIN y el QR; cada persona entra desde su celular en <b>/construir</b>. Mientras construyen, el
-              proyector muestra todas las obras creciendo en vivo{mode.key === "torre-equipos" ? " y quién va más alto" : ""}; al final, un
+              proyector muestra todas las obras creciendo en vivo{mode.play === "juntos" ? " y quién va más alto" : ""}; al final, un
               recorrido por cada una.
+              {mode.play === "relevo" && " Los turnos son de 45 segundos y a mitad del tiempo aparece la consigna sorpresa."}
+              {mode.play === "telefono" &&
+                " Se juega en parejas: cada celular sabe su rol en cada ronda y a mitad del tiempo se cambian, con otro modelo secreto."}
             </p>
           </div>
         </section>
@@ -50,7 +53,7 @@ export default async function ModoEquipoPage({ params }: { params: Promise<{ mod
           <h2 id="abrir-sala" style={{ ...calSans, fontSize: 19, margin: "0 0 16px", color: colors.ink }}>
             Abrir una sala
           </h2>
-          <TeamLaunchForm mode={mode.key} times={mode.times} />
+          <TeamLaunchForm mode={mode.key} times={mode.times} sizes={mode.sizes} />
         </section>
       </div>
 

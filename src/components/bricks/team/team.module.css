@@ -37,6 +37,67 @@
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
 }
 
+.turn {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: calc(100% - 200px);
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgb(15 24 29 / 0.92);
+  border: 1px solid rgb(128 220 255 / 0.25);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.turnMine {
+  background: #fac80a;
+  border-color: #fac80a;
+  color: #0f181d;
+  animation: beat 1.2s ease-in-out 3;
+}
+
+.modelBtn {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #3bc8f3;
+  color: #0f181d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.twist {
+  max-width: 260px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #d3359d;
+  color: #fff;
+  font-weight: 600;
+  text-align: right;
+  text-shadow: none;
+}
+
+.credits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
 .height {
   padding: 4px 10px;
   border-radius: 10px;
@@ -121,7 +182,15 @@
   }
 }
 
+@media (max-width: 420px) {
+  .turn {
+    top: 58px;
+    max-width: calc(100% - 20px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .turnMine,
   .pulse {
     animation: none;
   }

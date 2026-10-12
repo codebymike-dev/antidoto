@@ -6,7 +6,24 @@ import type { AdminUser } from "./auth";
 import { audit } from "./admin-guard";
 import { generatePin, normalizeNickname } from "./live-engine";
 import { publishBestEffort, publishReliable } from "./realtime";
-import { applyTeamOp, freeSlot, getTeamMode, parcelFor, parseOp, pickTeam, teamBase, teamIdentity, TEAM_SIZES, type OpRejection, type Parcel, type TeamMode } from "./bricks/team";
+import {
+  applyTeamOp,
+  canBuildPhone,
+  freeSlot,
+  getTeamMode,
+  parcelFor,
+  parseOp,
+  phoneArea,
+  phoneRound,
+  pickTeam,
+  relayTurn,
+  teamBase,
+  teamIdentity,
+  type OpRejection,
+  type Parcel,
+  type TeamMode,
+  type TeamPlay,
+} from "./bricks/team";
 import type { Op } from "./bricks/ops";
 import { BrickWorld, type Brick } from "./bricks/world";
 import { hostChannel, hostChannels, sessionChannel, teamChannel } from "./bricks/channels";
@@ -85,7 +102,7 @@ function modeOf(s: SessionRow): TeamMode {
 export async function launchSession(user: AdminUser, input: { mode: string; teamSize: number; timeLimit: number }): Promise<Result<{ id: number }>> {
   const mode = getTeamMode(input.mode);
   if (!mode) return err("Ese modo no existe.");
-  if (!(TEAM_SIZES as readonly number[]).includes(input.teamSize)) return err("Elige equipos de 3, 4 o 5 personas.");
+  if (!mode.sizes.includes(input.teamSize)) return err("Elige uno de los tamaños de equipo propuestos.");
   if (!mode.times.includes(input.timeLimit)) return err("Elige una de las duraciones propuestas.");
   const companyId = user.role === "empresa" ? user.company_id : null;
   for (let attempt = 0; attempt < 8; attempt++) {
@@ -141,7 +158,9 @@ export interface SessionView {
   timeLimit: number;
   base: number;
   maxPieces: number | null;
-  parcels: boolean;
+  play: TeamPlay;
+  /** Consigna sorpresa de mitad de tiempo (Relevo). */
+  twist: string | null;
   startedMs: number | null;
   endsMs: number | null;
   serverNow: number;
@@ -158,7 +177,8 @@ function sessionView(s: SessionRow): SessionView {
     timeLimit: s.time_limit,
     base: teamBase(mode, s.team_size),
     maxPieces: mode.maxPieces,
-    parcels: mode.parcels,
+    play: mode.play,
+    twist: mode.twist ?? null,
     startedMs: s.started_ms,
     endsMs: s.ends_ms,
     serverNow: Date.now(),
@@ -241,7 +261,7 @@ export async function playerSnapshot(playerId: string): Promise<Result<{ view: P
       session: sessionView(s),
       team,
       me: { nickname: p.nickname, slot: p.slot, tag: playerTag(p.id) },
-      parcel: mode.parcels ? parcelFor(p.slot) : null,
+      parcel: mode.play === "parcelas" ? parcelFor(p.slot) : null,
       prompt: mode.prompt,
       title: mode.title,
     },
@@ -374,8 +394,23 @@ export async function applyOps(playerId: string, raw: unknown): Promise<Result<O
   if (s.status === "finished" || (s.ends_ms !== null && Date.now() > s.ends_ms + GRACE_MS)) return err("Se acabó el tiempo.", 409);
 
   const mode = modeOf(s);
-  const rules = { base: teamBase(mode, s.team_size), maxPieces: mode.maxPieces, parcel: mode.parcels ? parcelFor(p.slot) : null };
+  const rules = { base: teamBase(mode, s.team_size), maxPieces: mode.maxPieces, parcel: mode.play === "parcelas" ? parcelFor(p.slot) : null };
   const ops = raw.map((o) => parseOp(o));
+
+  // Relevo y Teléfono Roto: no todos pueden construir todo el tiempo.
+  if ((mode.play === "relevo" || mode.play === "telefono") && s.started_ms !== null) {
+    const slots = (await all<{ slot: number }>("SELECT slot FROM brick_players WHERE team_id = ?", [p.team_id])).map((r) => Number(r.slot));
+    const now = Date.now();
+    if (mode.play === "relevo") {
+      // Lo que llega justo al cambiar de turno (latencia del celular) todavía cuenta.
+      const mine = relayTurn(slots, s.started_ms, now).slot === p.slot || relayTurn(slots, s.started_ms, now - GRACE_MS).slot === p.slot;
+      if (!mine) return { ok: true, results: ops.map(() => "turno" as const), seq: null };
+    } else {
+      const round = phoneRound(s.started_ms, s.time_limit, now);
+      if (!canBuildPhone(p.slot, round, slots)) return { ok: true, results: ops.map(() => "rol" as const), seq: null };
+      rules.parcel = phoneArea(round);
+    }
+  }
 
   // Concurrencia optimista: se lee la obra, se aplica y se guarda solo si nadie la cambió entre medio.
   for (let attempt = 0; attempt < 6; attempt++) {

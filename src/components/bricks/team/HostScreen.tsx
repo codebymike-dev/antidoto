@@ -10,8 +10,9 @@ import * as Ably from "ably";
 import type { SessionView, TeamView } from "@/lib/brick-session";
 import { hostChannel, sessionChannel, teamChannel } from "@/lib/bricks/channels";
 import type { Op } from "@/lib/bricks/ops";
+import type { Brick } from "@/lib/bricks/world";
 import { SeqQueue } from "@/lib/bricks/sync";
-import { getTeamMode, heightLabel, towerHeight } from "@/lib/bricks/team";
+import { getTeamMode, heightLabel, phoneRound, phoneScores, relayTurn, towerHeight, twistDue } from "@/lib/bricks/team";
 import QrCode from "@/components/live/QrCode";
 import { CityView } from "./city";
 import styles from "./host.module.css";
@@ -45,9 +46,9 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Piezas y altura por equipo, recalculadas con cada lote. */
-  const [live, setLive] = useState(
-    () => new Map(initial.teams.map((t) => [t.id, { count: t.bricks.length, height: towerHeight(t.bricks, initial.session.base) }])),
-  );
+  /** Lo que se muestra de cada obra, recalculado con cada lote (la escena 3D no se lee al dibujar). */
+  const [live, setLive] = useState(() => new Map(initial.teams.map((t) => [t.id, stats(t.position, t.bricks, initial.session.base)])));
+  const positions = useRef(new Map(initial.teams.map((t) => [t.id, t.position])));
   const [tour, setTour] = useState<{ on: boolean; index: number }>({ on: false, index: 0 });
   const { session } = snap;
   const mode = getTeamMode(session.mode)!;
@@ -57,7 +58,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
     const city = cityRef.current;
     if (!city) return;
     const bricks = city.bricksOf(teamId);
-    setLive((m) => new Map(m).set(teamId, { count: bricks.length, height: towerHeight(bricks, session.base) }));
+    setLive((m) => new Map(m).set(teamId, stats(positions.current.get(teamId) ?? 0, bricks, session.base)));
   }, [session.base]);
 
   /** Foto completa del servidor: al conectar, cuando entra gente y cuando falta un lote. */
@@ -68,6 +69,7 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
     setSnap(next);
     setOffset(next.session.serverNow - Date.now());
     for (const t of next.teams) {
+      positions.current.set(t.id, t.position);
       cityRef.current?.setTeam(t.id, t.color, t.bricks);
       queues.current.set(t.id, new SeqQueue(t.seq));
       measure(t.id);
@@ -77,7 +79,9 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
   // Escena 3D: una sola para todas las obras.
   useEffect(() => {
     const canvas = canvasRef.current!;
-    const city = new CityView(canvas, "alto", initial.session.base);
+    // Calidad media: la escena gira todo el tiempo (la oclusión ambiental solo se ve quieta) y un
+    // proyector a 1080p no gana nada con dibujar al doble de resolución.
+    const city = new CityView(canvas, "medio", initial.session.base);
     cityRef.current = city;
     for (const t of initial.teams) {
       city.setTeam(t.id, t.color, t.bricks);
@@ -212,9 +216,30 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
   };
 
   const ranked = [...snap.teams].sort((a, b) =>
-    mode.key === "torre-equipos" ? (live.get(b.id)?.height ?? 0) - (live.get(a.id)?.height ?? 0) : a.position - b.position,
+    mode.play === "juntos" ? (live.get(b.id)?.height ?? 0) - (live.get(a.id)?.height ?? 0) : a.position - b.position,
   );
   const touring = tour.on ? snap.teams[tour.index % Math.max(1, teamCount)] : null;
+
+  // Relevo y Teléfono Roto: turno, ronda y sorpresa con el mismo reloj que los celulares.
+  const serverNow = now + offset;
+  const started = session.status === "building" && session.startedMs !== null ? session.startedMs : null;
+  const twist = mode.twist && started !== null && twistDue(started, session.timeLimit, serverNow) ? mode.twist : null;
+  const round = mode.play === "telefono" && started !== null ? phoneRound(started, session.timeLimit, serverNow) : null;
+  /** Qué se ve al lado de cada equipo en el tablero. */
+  const statOf = (t: TeamView): string => {
+    const stats = live.get(t.id);
+    const count = stats?.count ?? t.bricks.length;
+    if (mode.play === "juntos") return heightLabel(stats?.height ?? 0);
+    if (mode.play === "relevo" && started !== null) {
+      const turn = relayTurn(t.members.map((m) => m.slot), started, serverNow);
+      return `Turno: ${t.members.find((m) => m.slot === turn.slot)?.nickname ?? "nadie"}`;
+    }
+    if (mode.play === "telefono" && session.status === "finished") {
+      const [a, b] = stats?.scores ?? [0, 0];
+      return `${Math.round(a * 100)} % y ${Math.round(b * 100)} %`;
+    }
+    return `${count} ${count === 1 ? "pieza" : "piezas"}`;
+  };
 
   return (
     <div className={styles.root}>
@@ -306,18 +331,23 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
       {session.status !== "lobby" && (
         <aside className={styles.board} aria-label="Equipos">
           {session.status === "building" && <p className={styles.boardPrompt}>{mode.prompt}</p>}
+          {round !== null && (
+            <p className={styles.boardPrompt}>
+              <b>Ronda {round + 1} de 2.</b> {round === 0 ? "A mitad del tiempo cambian de rol, con otro modelo." : "Cambiaron de rol: ahora describe quien antes construía."}
+            </p>
+          )}
+          {twist && <p className={`${styles.boardPrompt} ${styles.twist}`}>{twist}</p>}
           <ol className={styles.ranking}>
             {ranked.map((t, n) => {
-              const stats = live.get(t.id);
               return (
                 <li key={t.id} style={{ "--team": t.color } as React.CSSProperties} aria-current={touring?.id === t.id || undefined}>
-                  {mode.key === "torre-equipos" && <span className={styles.place}>{n + 1}</span>}
+                  {mode.play === "juntos" && <span className={styles.place}>{n + 1}</span>}
                   <span className={styles.teamName}>
                     <i aria-hidden="true" />
                     {t.name}
                   </span>
                   <span className={styles.stat}>
-                    {mode.key === "torre-equipos" ? heightLabel(stats?.height ?? 0) : `${stats?.count ?? t.bricks.length} piezas`}
+                    {statOf(t)}
                   </span>
                 </li>
               );
@@ -338,7 +368,14 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
               <p className={styles.spotMembers}>
                 {touring.members.map((m) => `${m.nickname} (${m.placed})`).join(" · ")}
               </p>
-              {mode.key === "torre-equipos" && <p className={styles.spotStat}>{heightLabel(live.get(touring.id)?.height ?? 0)} de alto</p>}
+              {mode.play === "juntos" && <p className={styles.spotStat}>{heightLabel(live.get(touring.id)?.height ?? 0)} de alto</p>}
+              {mode.play === "telefono" && (
+                <p className={styles.spotStat}>
+                  {(live.get(touring.id)?.scores ?? [0, 0])
+                    .map((sc, r) => `Ronda ${r + 1}: ${Math.round(sc * 100)} % parecido`)
+                    .join(" · ")}
+                </p>
+              )}
             </div>
           ) : (
             <div className={styles.spot}>
@@ -364,4 +401,8 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
       )}
     </div>
   );
+}
+
+function stats(position: number, bricks: Brick[], base: number) {
+  return { count: bricks.length, height: towerHeight(bricks, base), scores: phoneScores(position, bricks) };
 }
