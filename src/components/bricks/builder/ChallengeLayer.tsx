@@ -250,6 +250,7 @@ export default function ChallengeLayer({ engine, snap, challenge, session, intro
             fd.set("image", delivery.photo!.blob, "obra.jpg");
             fd.set("title", story.title);
             fd.set("phrase", story.phrase);
+            fd.set("share", story.share ? "1" : "0");
             try {
               const out = await withTimeout(submitWork(fd), 30000);
               // "Ya la entregaste": otra pestaña se adelantó; se va al cierre igual.
@@ -440,10 +441,11 @@ function Delivery({
   canGoBack: boolean;
   onBack: () => void;
   /** Devuelve el error para mostrar, o null si salió bien. */
-  onSubmit: (story: { title: string; phrase: string }) => Promise<string | null>;
+  onSubmit: (story: { title: string; phrase: string; share: boolean }) => Promise<string | null>;
 }) {
   const [title, setTitle] = useState("");
   const [phrase, setPhrase] = useState("");
+  const [share, setShare] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -484,7 +486,7 @@ function Delivery({
           if (!photo) return;
           setPending(true);
           setError(null);
-          const err = await onSubmit({ title, phrase });
+          const err = await onSubmit({ title, phrase, share });
           setPending(false);
           if (err) setError(err);
         }}
@@ -513,6 +515,10 @@ function Delivery({
             </label>
           </>
         )}
+        <label className={styles.check}>
+          <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} />
+          <span>Mostrar mi obra en el mural de la actividad</span>
+        </label>
         {!challenge.story && <p className={styles.muted}>Después de entregar ya no se puede cambiar.</p>}
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.row}>

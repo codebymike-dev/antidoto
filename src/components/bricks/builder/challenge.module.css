@@ -386,3 +386,20 @@
     animation: none;
   }
 }
+
+/* Casilla simple dentro de una hoja (por ejemplo, mostrar o no la obra en el mural). */
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  color: rgb(232 244 248 / 0.85);
+  cursor: pointer;
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: #3bc8f3;
+}

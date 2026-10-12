@@ -137,6 +137,8 @@ export interface GalleryWork {
   phrase: string | null;
   brickCount: number;
   submittedAt: string;
+  /** Su autor prefirió no mostrarla en el mural. */
+  hidden: boolean;
 }
 
 /** Obras entregadas de una actividad, con el mismo alcance por empresa que los reportes. */
@@ -150,8 +152,10 @@ export async function listWorks(missionId: string, user: AdminUser): Promise<Gal
     phrase: string | null;
     brick_count: number;
     submitted_at: string;
+    hidden: number;
   }>(
-    `SELECT w.participation_id, p.participant_name, c.name AS empresa, w.title, w.phrase, w.brick_count, w.submitted_at
+    `SELECT w.participation_id, p.participant_name, c.name AS empresa, w.title, w.phrase, w.brick_count, w.submitted_at,
+            EXISTS (SELECT 1 FROM brick_work_hidden h WHERE h.participation_id = w.participation_id) AS hidden
      FROM brick_works w
      JOIN participations p ON p.id = w.participation_id
      JOIN activity_codes ac ON ac.id = p.activity_code_id
@@ -168,6 +172,7 @@ export async function listWorks(missionId: string, user: AdminUser): Promise<Gal
     phrase: r.phrase,
     brickCount: Number(r.brick_count),
     submittedAt: r.submitted_at,
+    hidden: Number(r.hidden) === 1,
   }));
 }
 

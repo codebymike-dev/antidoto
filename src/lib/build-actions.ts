@@ -106,6 +106,9 @@ export async function submitWork(formData: FormData): Promise<{ ok: true } | Blo
        image = excluded.image, image_mime = excluded.image_mime, updated_at = excluded.updated_at, submitted_at = excluded.submitted_at`,
     [ctx.participationId, data!, work.bricks.length, story.value.title, story.value.phrase, image, mime, Date.now()],
   );
+  // Quien no quiere mostrar su obra queda fuera del mural; el admin la sigue viendo en los resultados.
+  if (formData.get("share") === "0") await run("INSERT OR IGNORE INTO brick_work_hidden (participation_id) VALUES (?)", [ctx.participationId]);
+  else await run("DELETE FROM brick_work_hidden WHERE participation_id = ?", [ctx.participationId]);
   await run(
     "UPDATE participations SET completed_at = datetime('now'), avance = 100, puntaje = ? WHERE id = ? AND completed_at IS NULL",
     [puntaje, ctx.participationId],
