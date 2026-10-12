@@ -421,3 +421,48 @@ CREATE TABLE IF NOT EXISTS brick_players (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_brick_players_nickname ON brick_players(session_id, nickname COLLATE NOCASE);
+
+-- --- Galería de Cierre (fase 7) ---------------------------------------------------------
+-- En tablas aparte y no como columnas nuevas: el esquema solo crea lo que falta y no altera.
+
+-- Foto de la obra de cada equipo. La saca el proyector al terminar (tiene todas las obras en
+-- su escena) y sirve para votar en el celular, para el reporte y para el mural.
+CREATE TABLE IF NOT EXISTS brick_team_photos (
+  team_id    INTEGER PRIMARY KEY REFERENCES brick_teams(id) ON DELETE CASCADE,
+  image      BLOB NOT NULL,
+  image_mime TEXT NOT NULL CHECK (image_mime IN ('image/jpeg', 'image/webp')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Equipos que no quieren mostrar su obra en la galería ni en el mural: basta que lo pida una
+-- persona del equipo (investigación, 6.3).
+CREATE TABLE IF NOT EXISTS brick_team_hidden (
+  team_id    INTEGER PRIMARY KEY REFERENCES brick_teams(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Una galería por sesión, después de construir. Sin fila = no se abrió (votar es opcional).
+CREATE TABLE IF NOT EXISTS brick_galleries (
+  session_id  INTEGER PRIMARY KEY REFERENCES brick_sessions(id) ON DELETE CASCADE,
+  status      TEXT NOT NULL DEFAULT 'voting' CHECK (status IN ('voting', 'results')),
+  opened_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  revealed_at TEXT
+);
+
+-- Un voto por persona y categoría; se puede cambiar mientras la votación siga abierta.
+CREATE TABLE IF NOT EXISTS brick_votes (
+  session_id INTEGER NOT NULL REFERENCES brick_sessions(id) ON DELETE CASCADE,
+  player_id  TEXT NOT NULL REFERENCES brick_players(id) ON DELETE CASCADE,
+  category   TEXT NOT NULL,
+  team_id    INTEGER NOT NULL REFERENCES brick_teams(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (player_id, category)
+);
+
+CREATE INDEX IF NOT EXISTS idx_brick_votes_session ON brick_votes(session_id);
+
+-- Obras individuales que su autor no quiere mostrar en el mural de la empresa.
+CREATE TABLE IF NOT EXISTS brick_work_hidden (
+  participation_id TEXT PRIMARY KEY REFERENCES brick_works(participation_id) ON DELETE CASCADE,
+  created_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
