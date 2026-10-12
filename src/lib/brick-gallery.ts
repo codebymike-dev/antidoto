@@ -6,7 +6,8 @@ import { publishBestEffort, publishReliable } from "./realtime";
 import { imageMime, MAX_IMAGE_BYTES } from "./bricks/challenges";
 import { GALLERY_CATEGORIES, galleryOrder, MIN_GALLERY_WORKS, tally, voteRejection, type CategoryResult, type GalleryStatus } from "./bricks/gallery";
 import { teamIdentity } from "./bricks/team";
-import { countMessages, getPlayer, getSession, getSessionForHost, hostChannel, sessionChannel, teamChannel, teamsOf, type Result, type TeamView } from "./brick-session";
+import { hostChannel, sessionChannel, teamChannel } from "./bricks/channels";
+import { countMessages, getPlayer, getSession, getSessionForHost, teamsOf, type Result, type TeamView } from "./brick-session";
 
 // Galería de Cierre de la construcción en equipo (fase 7 de docs/plan-construccion-3d.md). Después
 // de construir, el anfitrión puede abrir una votación por categorías: las obras van numeradas y sin
