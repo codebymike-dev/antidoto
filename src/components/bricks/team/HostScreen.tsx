@@ -115,6 +115,11 @@ export default function HostScreen({ initial, joinHost, joinUrl }: Props) {
         setSnap((s) => ({ ...s, session: { ...s.session, status: d.status, startedMs: d.startedMs, endsMs: d.endsMs } }));
       });
       await host.subscribe("roster", later);
+      // Lo que pasó mientras la pantalla se conectaba (o durante un corte) no llegó: se trae la foto.
+      host.on("attached", (change) => {
+        if (!change.resumed) later();
+      });
+      later();
       for (const id of teamIds.split(",").filter(Boolean).map(Number)) {
         const ch = realtime.channels.get(teamChannel(session.id, id));
         ch.on("attached", (change) => {
