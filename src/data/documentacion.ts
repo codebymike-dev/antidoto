@@ -1100,6 +1100,18 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
         notas: "Cada ronda se arma en una mitad de la base, así las dos quedan a la vista en el recorrido. Si alguien queda sin pareja, puede ver el modelo y construir a la vez.",
         relacionados: ["RF-956", "RF-952"],
       },
+      {
+        id: "RF-963",
+        titulo: "Galería de cierre: votación por categorías, mural y reporte",
+        descripcion:
+          "Al terminar una sesión en equipo, el proyector toma la foto de cada obra. El anfitrión puede abrir una votación opcional: cada persona vota desde el celular en cuatro categorías, con las obras numeradas y sin nombre, sin poder votar por la suya. Al mostrar resultados solo se ve quién ganó cada categoría. Cualquier persona del equipo puede pedir que su obra no se muestre. Hay mural descargable (equipos y retos individuales) y reporte imprimible de la sesión.",
+        prioridad: "media",
+        estado: "implementado",
+        origen: "gallery.ts, brick-gallery.ts, GalleryStage, TeamClosing, mural.ts, MuralButton y /admin/reporte/equipos/[id]",
+        verificacion: "gallery.test.mts (orden, conteo con empates, votos rechazados). Falta terminar la prueba en Chromium.",
+        notas: "Tablas nuevas: brick_team_photos, brick_team_hidden, brick_galleries, brick_votes y brick_work_hidden.",
+        relacionados: ["RF-956", "RF-955"],
+      },
     ],
   },
 ];

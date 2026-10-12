@@ -249,6 +249,17 @@ sala (cada uno es una tarjeta de la biblioteca); jugar solo con código, de la f
 - Imagen de cada obra para el participante y mural descargable como entregable para la empresa.
 - Reporte en el admin.
 
+**Estado (2026-10-12)**: hecha en local. Al terminar, el proyector toma la foto de cada obra
+(`CityView.photo`) y la guarda (`brick_team_photos`). El anfitrión puede abrir una votación
+opcional (`brick_galleries`, `brick_votes`) en cuatro categorías (`src/lib/bricks/gallery.ts`):
+obras numeradas y sin nombre, en un orden barajado por sesión, sin votar por la propia; al
+revelar solo se muestran los ganadores. Cualquier persona del equipo puede retirar la obra antes
+de abrir la galería (`brick_team_hidden`); en los retos individuales hay una casilla al entregar
+(`brick_work_hidden`). Mural PNG dibujado en el navegador (`mural.ts`) desde el proyector, el
+reporte y los resultados de la actividad; reporte imprimible en `/admin/reporte/equipos/[id]`.
+Con esto se resuelve la decisión abierta 3: la votación ya es opcional.
+**Tablas nuevas**: migrar producción antes de desplegar.
+
 ### Fase 8: pulido
 
 - Niveles de calidad automáticos, modo foto Ultra, recorrido de la guía de §5 completo.
@@ -266,4 +277,5 @@ sala (cada uno es una tarjeta de la biblioteca); jugar solo con código, de la f
 2. **Retos de fábrica**: la fase 5 dejó una propuesta de cinco (uno por tipo, ver arriba). Falta
    el visto bueno del usuario y decidir si alguno es para un cliente concreto como la Ruta del
    café.
-3. **Votación**: si el anfitrión puede saltarla en eventos cortos.
+3. ~~**Votación**: si el anfitrión puede saltarla en eventos cortos.~~ Resuelta en la fase 7: es
+   opcional, el anfitrión decide al final si la abre.
