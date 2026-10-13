@@ -4,6 +4,8 @@ import type { AdminUser } from "./auth";
 import type { Estado } from "./types";
 import { companyFilter, LIVE_CODE } from "./scope";
 import { isExpired } from "./expiry";
+import { cleanCode, shortCode } from "./codes";
+import { BRICKS_VISIBLE } from "./bricks/visible";
 
 export interface GroupRow {
   id: number;
@@ -68,7 +70,7 @@ export async function listMissions(user: AdminUser, search = ""): Promise<Missio
      LEFT JOIN participations p ON p.activity_code_id = ac.id
      WHERE m.archived_at IS NULL
        AND (EXISTS (SELECT 1 FROM mission_experiences me WHERE me.mission_id = m.id)
-         OR EXISTS (SELECT 1 FROM mission_builds mb WHERE mb.mission_id = m.id))
+         OR (${BRICKS_VISIBLE ? 1 : 0} = 1 AND EXISTS (SELECT 1 FROM mission_builds mb WHERE mb.mission_id = m.id)))
        AND (? = '' OR LOWER(m.title) LIKE '%' || LOWER(?) || '%')
      GROUP BY m.id
      ORDER BY m.created_at`,
@@ -180,8 +182,13 @@ export interface CodeMatch {
   description: string;
 }
 
-/** Usado por la landing: valida el código que teclea el participante. */
+/**
+ * Usado por la landing: valida el código que teclea el participante. Acepta la forma corta
+ * (SJAN3E) y la larga de los códigos de antes (MI-JUAN-SJAN3E), con o sin guiones.
+ */
 export async function findByCode(code: string): Promise<CodeMatch | null> {
+  const full = cleanCode(code);
+  const short = shortCode(code);
   const row = await one<Omit<CodeMatch, "estado" | "archivado"> & { estado: string; vigente: number }>(
     `SELECT ac.id AS activity_code_id, ac.code AS codigo, ac.estado, ac.expires_at AS expira,
             (${LIVE_CODE}) AS vigente,
@@ -192,9 +199,11 @@ export async function findByCode(code: string): Promise<CodeMatch | null> {
      JOIN companies c ON c.id = ac.company_id
      JOIN missions m ON m.id = ac.mission_id
      LEFT JOIN participations p ON p.activity_code_id = ac.id
-     WHERE UPPER(ac.code) = UPPER(?)
-     GROUP BY ac.id`,
-    [code.trim()]
+     WHERE UPPER(ac.code) IN (?, ?) OR (SUBSTR(ac.code, -7, 1) = '-' AND UPPER(SUBSTR(ac.code, -6)) = ?)
+     GROUP BY ac.id
+     ORDER BY UPPER(ac.code) IN (?, ?) DESC
+     LIMIT 1`,
+    [full, short, short, full, short]
   );
   if (!row) return null;
 

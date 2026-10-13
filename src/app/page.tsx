@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getLegalTexts } from "@/lib/queries";
 import { currentParticipation } from "@/lib/participation";
 import LandingScreen from "@/components/LandingScreen";
+import { shortCode } from "@/lib/codes";
 import PassBackdrop from "@/components/motion/PassBackdrop";
 
 // Los textos legales se editan desde el portal, así que la landing no se prerenderiza.
@@ -63,13 +64,14 @@ async function codigoGuardado() {
 /** El código que trae el enlace para compartir (`/?codigo=...`), si tiene forma de código. */
 function codigoDelEnlace(raw: string | string[] | undefined) {
   const value = (Array.isArray(raw) ? raw[0] : raw)?.trim().toUpperCase() ?? "";
-  return /^[A-Z0-9-]{4,32}$/.test(value) ? value : "";
+  // Los enlaces viejos traen el código largo (MI-JUAN-SJAN3E): se muestra el corto.
+  return /^[A-Z0-9-]{4,32}$/.test(value) ? shortCode(value) : "";
 }
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ codigo?: string | string[] }> }) {
   const codigo = codigoDelEnlace((await searchParams).codigo);
   const guardado = await codigoGuardado();
-  if (guardado && (!codigo || codigo === guardado.toUpperCase())) redirect("/mision");
+  if (guardado && (!codigo || codigo === shortCode(guardado))) redirect("/mision");
   const legal = await legalTextsConRespaldo();
   return (
     <>

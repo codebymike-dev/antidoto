@@ -11,12 +11,13 @@ import { findByCode } from "./queries";
 import { ensureExperienceMission } from "./experience-data";
 import { getExperience, seriesEntry } from "./experiences/catalog";
 import { buildTexts, getBuild } from "./bricks/challenges";
-import { ensureBuildMission, loadBuildOverride } from "./build-data";
+import { ensureBuildMission, loadBuildOverride, missionBuild } from "./build-data";
 import { BRICKS_VISIBLE } from "./bricks/visible";
 import { PARTICIPATION_COOKIE } from "./participation";
 import { clientIp, isLimited, rateLimit, recordHit } from "./rate-limit";
 import { formatExpiryDate, isDateOnly } from "./expiry";
 import { parseCargos } from "./profile";
+import { CODE_LENGTH } from "./codes";
 
 // --- Participante ---------------------------------------------------------
 
@@ -55,6 +56,9 @@ export async function joinActivity(_prev: JoinState, formData: FormData): Promis
   }
   if (match.archivado) {
     return { error: "Esta actividad ya no está disponible. Contacta a tu administrador." };
+  }
+  if (!BRICKS_VISIBLE && (await missionBuild(match.mission_id))) {
+    return { error: "Esta actividad no está disponible por ahora. Contacta a tu administrador." };
   }
   if (match.estado === "vencido") {
     const fecha = match.expira ? formatExpiryDate(match.expira) : "";
@@ -144,13 +148,17 @@ function formId(formData: FormData, key: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-async function uniqueCode(missionTitle: string, companyName: string): Promise<string | null> {
-  const prefix = missionTitle.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase();
-  const slug = companyName.split(/\s+/)[0].normalize("NFD").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 6);
-  // code es UNIQUE: si el sufijo aleatorio choca, se reintenta.
+/**
+ * Código corto de 6 caracteres. No choca con otro código ni con el último tramo de un
+ * código largo de antes (MI-JUAN-SJAN3E), que también se acepta escrito corto.
+ */
+async function uniqueCode(): Promise<string | null> {
   for (let attempt = 0; attempt < 10; attempt++) {
-    const candidate = `${prefix}-${slug || "EMP"}-${randomCodeSuffix()}`;
-    const taken = await one("SELECT 1 FROM activity_codes WHERE code = ?", [candidate]);
+    const candidate = randomCodeSuffix(CODE_LENGTH);
+    const taken = await one("SELECT 1 FROM activity_codes WHERE code = ? OR (SUBSTR(code, -7, 1) = '-' AND SUBSTR(code, -6) = ?)", [
+      candidate,
+      candidate,
+    ]);
     if (!taken) return candidate;
   }
   return null;
@@ -203,7 +211,7 @@ export async function assignActivity(_prev: AssignState, formData: FormData): Pr
     missionId = await ensureBuildMission(build!, buildTexts(build!, await loadBuildOverride(build!.key)).title);
   }
   const missionTitle = (await one<{ title: string }>("SELECT title FROM missions WHERE id = ?", [missionId]))!.title;
-  const code = await uniqueCode(def ? seriesEntry(def).series : missionTitle, company.name);
+  const code = await uniqueCode();
   if (!code) return { error: "No pudimos generar el código. Inténtalo de nuevo." };
 
   await run(

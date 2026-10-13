@@ -15,6 +15,7 @@ import { participantProfile, profileConfigFor } from "@/lib/participant-profile"
 import { loadBuildOverride, loadDraft, missionBuild } from "@/lib/build-data";
 import { buildTexts, publicBuild } from "@/lib/bricks/challenges";
 import BuilderShell from "@/components/bricks/builder/BuilderShell";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,22 @@ export default async function MisionPage() {
 
   // Los retos de construcción abren el constructor 3D, con la obra guardada si ya había empezado.
   const build = await missionBuild(p.mission_id);
+  // Juegos de ladrillos apagados: quien ya tenía la sesión abierta solo ve el aviso y la salida.
+  if (build && !BRICKS_VISIBLE) {
+    const pal = brandPalette(brand);
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20, background: pal.pageGradient }}>
+        <div style={{ ...card, maxWidth: 420, padding: 28, textAlign: "center" }}>
+          <p style={{ margin: "0 0 16px", fontSize: 15, color: colors.ink, lineHeight: 1.5 }}>Esta actividad no está disponible por ahora.</p>
+          <form action={leaveActivity}>
+            <button type="submit" style={{ border: 0, borderRadius: 10, padding: "10px 18px", background: pal.strong, color: "#fff", font: "inherit", fontWeight: 700, cursor: "pointer" }}>
+              Salir
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
   if (build) {
     const [override, draft, profile, profileConfig] = await Promise.all([
       loadBuildOverride(build.key),

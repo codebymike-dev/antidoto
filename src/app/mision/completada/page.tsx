@@ -15,6 +15,7 @@ import { RecapReview, RecapSummary } from "@/components/experience/RouteRecap";
 import { loadBuildOverride, loadWork, missionBuild } from "@/lib/build-data";
 import { buildTexts, matchScore, modelBricks } from "@/lib/bricks/challenges";
 import WorkRecap from "@/components/bricks/recap/WorkRecap";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function MisionCompletadaPage() {
   const loaded = await participationRecap(p.id, p.mission_id).catch(() => null);
   const recap = loaded && loaded.stations.some((st) => st.risks.length > 0) ? loaded : null;
   // Los retos de construcción cierran con la obra entregada.
-  const build = recap ? null : await missionBuild(p.mission_id);
+  const build = recap || !BRICKS_VISIBLE ? null : await missionBuild(p.mission_id);
   const [work, buildOverride] = build ? await Promise.all([loadWork(p.id), loadBuildOverride(build.key)]) : [null, null];
   const wide = !!recap || !!work;
 

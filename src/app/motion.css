@@ -428,15 +428,15 @@
 /* --- Campo de código split-flap -------------------------------------------- */
 .code-field {
   --pad: 12px;
-  --gap: 0.5ch;
+  --gap: 0.7ch;
   position: relative;
-  height: 54px;
+  height: 60px;
   border: 1.5px solid #cfeffb;
   border-radius: 12px;
   background: #fff;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-weight: 600;
-  font-size: 17px;
+  font-size: 24px;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;

@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, type InputHTMLAttributes } from "react";
 import { changedCells } from "@/lib/split-flap";
 import { flapTimeline, reducedMotion } from "./gsap";
+import { CODE_LENGTH, shortCode } from "@/lib/codes";
 
-/** Celdas dibujadas: el código más largo que genera el portal es de 16 caracteres. */
-export const CODE_CELLS = 16;
+/** Celdas dibujadas: una por carácter del código corto. */
+export const CODE_CELLS = CODE_LENGTH;
 
 /**
  * Campo del código de actividad como tablero split-flap. El <input> es real y está encima
@@ -36,7 +37,11 @@ export default function CodeField(props: InputHTMLAttributes<HTMLInputElement>) 
   }, []);
 
   function onInput(e: React.FormEvent<HTMLInputElement>) {
-    const next = e.currentTarget.value.toUpperCase();
+    // Quien pega un código largo de antes (MI-JUAN-SJAN3E) ve solo el corto, que es el
+    // mismo código.
+    const input = e.currentTarget;
+    if (/[-\s]/.test(input.value)) input.value = shortCode(input.value);
+    const next = input.value.toUpperCase();
     const before = previous.current;
     previous.current = next;
     setLength(Array.from(next).length);

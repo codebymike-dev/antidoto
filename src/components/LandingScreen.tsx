@@ -123,7 +123,7 @@ export default function LandingScreen({
                 <label htmlFor="code" style={fieldLabel}>
                   Código de actividad
                 </label>
-                <CodeField id="code" name="code" placeholder="RP-ACME-7KX9QM" defaultValue={draft.code} required />
+                <CodeField id="code" name="code" placeholder="7KX9QM" defaultValue={draft.code} required />
               </div>
               {state?.error && !pending && (
                 <span role="alert" style={{ fontSize: 12.5, color: colors.danger, fontWeight: 600 }}>
