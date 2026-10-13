@@ -1068,7 +1068,7 @@ export const ITERACIONES: Iteracion[] = [
           ok("Reglas puras con pruebas: orden barajado, conteo con empates y votos rechazados."),
           ok("Votación opcional en cuatro categorías, anónima hasta los resultados y sin votar por la propia obra."),
           ok("Retirar la obra propia (equipo e individual), foto descargable, mural y reporte imprimible."),
-          pend("Migrar la base de producción: brick_team_photos, brick_team_hidden, brick_galleries, brick_votes y brick_work_hidden."),
+          ok("Migrar la base de producción: brick_team_photos, brick_team_hidden, brick_galleries, brick_votes y brick_work_hidden."),
           pend("Prueba con celulares reales y un proyector de verdad."),
         ],
       },

@@ -49,25 +49,27 @@ const MISSIONS = [
 
 const POLICY = `AVISO DE PRIVACIDAD Y POLÍTICA DE TRATAMIENTO DE DATOS PERSONALES
 
-Responsable/Encargado: Antídoto Colombia actúa como encargado del tratamiento en nombre de la empresa u organización que contrató la actividad (responsable del tratamiento).
+Encargado del tratamiento: ANTIDOTO S.A.S., NIT 901.777.384-6, con domicilio en la Av. Calle 116 # 71 A - 25, Bogotá D.C. Correo: antidoto.colombia@outlook.com. Antídoto trata los datos en nombre de la empresa u organización que contrató la actividad, que es la responsable del tratamiento.
 
-Finalidad: los datos (nombre y respuestas del ejercicio) se usan únicamente para gestionar tu participación y mostrar el avance agregado de tu equipo. No se comparten con terceros ajenos a la actividad.
+Datos que se tratan: tu nombre o apodo, tus respuestas, tu avance y tu puntaje en el ejercicio. Si tu organización lo pide, también tu cargo y el municipio donde trabajas, elegidos de una lista. En las actividades en equipo se guarda además una foto de la obra del equipo, no de las personas.
 
-Derechos del titular (Ley 1581 de 2012): tienes derecho a conocer, actualizar, rectificar y suprimir tus datos, así como a revocar esta autorización, escribiendo a privacidad@antidotocolombia.com.
+Finalidad: gestionar tu participación y mostrarle a tu organización el avance y los resultados de la actividad. No se venden ni se comparten con terceros ajenos a la actividad. Para funcionar, la plataforma usa proveedores de alojamiento, base de datos y tiempo real (Vercel, Turso y Ably), que guardan los datos solo para prestar ese servicio.
 
-Vigencia: los datos se conservan mientras dure la actividad y hasta 12 meses después para fines de reporte, salvo solicitud de eliminación anticipada.
+Derechos del titular (Ley 1581 de 2012): tienes derecho a conocer, actualizar, rectificar y suprimir tus datos, y a revocar esta autorización, escribiendo a antidoto.colombia@outlook.com.
 
-Este es un texto de ejemplo, debe ser revisado y ajustado por el equipo legal antes de producción.`;
+Vigencia: los datos se conservan mientras dure la actividad y hasta 12 meses después para fines de reporte, salvo que pidas eliminarlos antes.`;
 
 const TERMS = `TÉRMINOS Y CONDICIONES DE USO
 
+Esta plataforma es de ANTIDOTO S.A.S., NIT 901.777.384-6.
+
 Al ingresar tu nombre y código de actividad aceptas participar de forma voluntaria en el ejercicio propuesto por tu organización a través de Antídoto.
 
-La actividad tiene fines de bienestar y no constituye una evaluación de desempeño laboral.
+La actividad tiene fines de bienestar y formación, y no constituye una evaluación de desempeño laboral.
 
-Antídoto no se hace responsable por el uso que la empresa contratante haga de los resultados agregados compartidos con ella.
+Antídoto no se hace responsable por el uso que la empresa contratante haga de los resultados compartidos con ella.
 
-Este es un texto de ejemplo, debe ser revisado y ajustado por el equipo legal antes de producción.`;
+Dudas o solicitudes: antidoto.colombia@outlook.com.`;
 
 for (const m of MISSIONS) {
   await client.execute({

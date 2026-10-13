@@ -9,6 +9,7 @@ import { ArrowRightIcon } from "@/components/icons";
 import BuildThumb from "@/components/bricks/BuildThumb";
 import BuildTextsEditor from "@/components/admin/BuildTextsEditor";
 import { cardStats, statLink, tagChip } from "@/components/admin/LibraryCard";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ function formatTime(seconds: number | null): string {
 
 /** Un reto de construcción: cómo funciona, sus textos (editables por el superadmin) y su uso. */
 export default async function RetoPage({ params }: { params: Promise<{ key: string }> }) {
+  if (!BRICKS_VISIBLE) notFound();
   const user = (await currentUser())!;
   const isSuper = user.role === "super";
   const { key } = await params;

@@ -3,6 +3,8 @@ import { getLegalTexts } from "@/lib/queries";
 import { playerSnapshot } from "@/lib/brick-session";
 import { brickPlayerId } from "@/lib/brick-http";
 import TeamPlayerApp from "@/components/bricks/team/TeamPlayerApp";
+import { notFound } from "next/navigation";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,7 @@ const LEGAL_NO_DISPONIBLE =
   "No pudimos cargar este texto en este momento. Escríbenos a antidotocolombia.com si necesitas consultarlo.";
 
 export default async function ConstruirPage({ searchParams }: { searchParams: Promise<{ pin?: string }> }) {
+  if (!BRICKS_VISIBLE) notFound();
   const { pin = "" } = await searchParams;
   // Si ya está en una sesión abierta (recargó o volvió de otra app), sigue con su equipo.
   const playerId = await brickPlayerId();

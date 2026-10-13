@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { buildTexts, getBuild, publicBuild } from "@/lib/bricks/challenges";
 import { loadBuildOverride } from "@/lib/build-data";
 import BuilderShell from "@/components/bricks/builder/BuilderShell";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 // el participante. Con ?reto= se prueba un reto de la biblioteca con sus textos vigentes; nada
 // de lo que se construye aquí se guarda.
 export default async function ConstruirPreviewPage({ searchParams }: { searchParams: Promise<{ reto?: string }> }) {
+  if (!BRICKS_VISIBLE) notFound();
   const user = await currentUser();
   if (!user) redirect("/admin/login");
   const { reto } = await searchParams;

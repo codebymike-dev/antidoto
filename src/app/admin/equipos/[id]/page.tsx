@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { hostSnapshot } from "@/lib/brick-session";
 import { hostGallery } from "@/lib/brick-gallery";
 import HostShell from "@/components/bricks/team/HostShell";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 
 // Fuera del layout del portal a propósito: es la pantalla del proyector, sin menú lateral.
 export default async function EquiposPage({ params }: { params: Promise<{ id: string }> }) {
+  if (!BRICKS_VISIBLE) notFound();
   const user = await currentUser();
   if (!user) redirect("/admin/login");
   const res = await hostSnapshot(Number((await params).id), user);

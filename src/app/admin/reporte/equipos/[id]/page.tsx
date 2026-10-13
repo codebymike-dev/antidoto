@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/live-report-format";
 import { colors, calSans } from "@/lib/theme";
 import ReportFrame, { ReportSection, ReportStats } from "@/components/report/ReportFrame";
 import MuralButton from "@/components/bricks/MuralButton";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ const STATUS: Record<string, string> = { lobby: "Esperando gente", building: "Co
 
 // Fuera del layout del portal a propósito: es una hoja para imprimir, sin menú lateral.
 export default async function ReporteEquiposPage({ params }: { params: Promise<{ id: string }> }) {
+  if (!BRICKS_VISIBLE) notFound();
   const user = await currentUser();
   if (!user) redirect("/admin/login");
   const report = await sessionReport(Number((await params).id), user);

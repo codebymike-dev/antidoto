@@ -8,6 +8,7 @@ import { card } from "@/lib/styles";
 import BuildThumb from "@/components/bricks/BuildThumb";
 import TeamLaunchForm from "@/components/admin/TeamLaunchForm";
 import { tagChip } from "@/components/admin/LibraryCard";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ const STATUS = { lobby: "Esperando gente", building: "Construyendo", finished: "
 
 /** Un modo de construcción en equipo: cómo funciona, abrir una sala y las últimas sesiones. */
 export default async function ModoEquipoPage({ params }: { params: Promise<{ mode: string }> }) {
+  if (!BRICKS_VISIBLE) notFound();
   const user = (await currentUser())!;
   const mode = getTeamMode((await params).mode);
   if (!mode) notFound();
