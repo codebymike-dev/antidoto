@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 const BrickLab = dynamic(() => import("./BrickLab"), {
   ssr: false,
   loading: () => (
-    <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center", background: "#16222A", color: "#80DCFF" }}>
+    <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center", background: "#E9EEF1", color: "#0C5C7D" }}>
       Cargando el motor 3D…
     </div>
   ),

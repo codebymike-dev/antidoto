@@ -73,16 +73,16 @@ export function imageMime(bytes: Uint8Array): "image/jpeg" | "image/webp" | null
 }
 
 const CASA: ModelPiece[] = [
-  { part: "ladrillo-2x4", color: "Rojo Volcán", x: 3, y: 0, z: 3 },
-  { part: "ladrillo-2x4", color: "Rojo Volcán", x: 3, y: 0, z: 5 },
-  { part: "ladrillo-2x4", color: "Blanco Nube", x: 3, y: 3, z: 3 },
-  { part: "ladrillo-2x4", color: "Blanco Nube", x: 3, y: 3, z: 5 },
+  { part: "ladrillo-2x4", color: "Rojo brillante", x: 3, y: 0, z: 3 },
+  { part: "ladrillo-2x4", color: "Rojo brillante", x: 3, y: 0, z: 5 },
+  { part: "ladrillo-2x4", color: "Blanco", x: 3, y: 3, z: 3 },
+  { part: "ladrillo-2x4", color: "Blanco", x: 3, y: 3, z: 5 },
   // Dos inclinadas espalda con espalda forman el techo a dos aguas.
-  { part: "inclinada-4x2", color: "Abismo Antídoto", x: 3, y: 6, z: 3, rot: 2 },
-  { part: "inclinada-4x2", color: "Abismo Antídoto", x: 3, y: 6, z: 5 },
-  { part: "ladrillo-1x1", color: "Noche", x: 6, y: 9, z: 5 },
-  { part: "ladrillo-redondo-2x2", color: "Café Tinto", x: 8, y: 0, z: 7 },
-  { part: "ladrillo-2x2", color: "Verde Cafetal", x: 8, y: 3, z: 7 },
+  { part: "inclinada-4x2", color: "Azul oscuro", x: 3, y: 6, z: 3, rot: 2 },
+  { part: "inclinada-4x2", color: "Azul oscuro", x: 3, y: 6, z: 5 },
+  { part: "ladrillo-1x1", color: "Negro", x: 6, y: 9, z: 5 },
+  { part: "ladrillo-redondo-2x2", color: "Marrón rojizo", x: 8, y: 0, z: 7 },
+  { part: "ladrillo-2x2", color: "Verde", x: 8, y: 3, z: 7 },
 ];
 
 export const BUILDS: BuildDef[] = [

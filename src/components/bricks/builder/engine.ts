@@ -96,8 +96,8 @@ export class BuilderEngine {
   private noticeSeq = 0;
   private trayParts: number[] = [];
   private thumbsCache = new Map<number, Map<number, string>>();
-  /** Color activo; arranca en Girasol, que contrasta con la pieza inicial y con la base. */
-  private thumbColor = BRICK_COLORS.findIndex((c) => c.name === "Girasol");
+  /** Color activo; arranca en amarillo, que contrasta con la pieza inicial y con la base. */
+  private thumbColor = BRICK_COLORS.findIndex((c) => c.name === "Amarillo brillante");
   private hand: Hand | null = null;
   private movingId: string | null = null;
   private selectionId: string | null = null;

@@ -18,7 +18,8 @@ export const TIER_DETAIL: Record<Tier, { bevelSegments: number; studSegments: nu
   ultra: { bevelSegments: 2, studSegments: 20, studArc: 3 },
 };
 
-const BASE_COLOR = "#9AA3A8";
+// La placa base verde de LEGO (color Verde de la paleta).
+const BASE_COLOR = "#237841";
 
 export interface BuiltModel {
   group: THREE.Group;
@@ -129,6 +130,7 @@ export function buildModel(model: LabModel, tier: Tier): BuiltModel {
   const baseGeo = bodyGeometry(model.base, model.base, 1, 1);
   const baseMat = absMaterial(tier === "bajo" ? "bajo" : "medio");
   (baseMat as THREE.MeshStandardMaterial).color.set(BASE_COLOR);
+  (baseMat as THREE.MeshStandardMaterial).roughness = 0.55;
   const base = new THREE.Mesh(baseGeo, baseMat);
   base.position.y = -PLATE_H;
   base.receiveShadow = true;

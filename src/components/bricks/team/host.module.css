@@ -4,7 +4,7 @@
 .root {
   position: fixed;
   inset: 0;
-  background: #16222a;
+  background: #e9eef1;
   color: #e8f4f8;
   font-family: var(--font-poppins), "Poppins", system-ui, sans-serif;
   overflow: hidden;
@@ -33,7 +33,8 @@
   align-items: center;
   gap: 14px;
   padding: 14px 22px;
-  background: linear-gradient(#0f181d, rgb(15 24 29 / 0));
+  background: #0f181d;
+  border-bottom: 1px solid rgb(128 220 255 / 0.12);
 }
 
 .back {

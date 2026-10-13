@@ -168,64 +168,64 @@ const PHONE_MODELS: { name: string; pieces: ModelPiece[] }[] = [
   {
     name: "Semáforo",
     pieces: [
-      { part: "ladrillo-2x2", color: "Gris Asfalto", x: 4, y: 0, z: 4 },
-      { part: "ladrillo-2x2", color: "Gris Asfalto", x: 4, y: 3, z: 4 },
-      { part: "ladrillo-1x1", color: "Verde Cafetal", x: 4, y: 6, z: 4 },
-      { part: "ladrillo-1x1", color: "Girasol", x: 4, y: 9, z: 4 },
-      { part: "ladrillo-1x1", color: "Rojo Volcán", x: 4, y: 12, z: 4 },
-      { part: "placa-2x2", color: "Noche", x: 4, y: 15, z: 4 },
+      { part: "ladrillo-2x2", color: "Gris piedra oscuro", x: 4, y: 0, z: 4 },
+      { part: "ladrillo-2x2", color: "Gris piedra oscuro", x: 4, y: 3, z: 4 },
+      { part: "ladrillo-1x1", color: "Verde", x: 4, y: 6, z: 4 },
+      { part: "ladrillo-1x1", color: "Amarillo brillante", x: 4, y: 9, z: 4 },
+      { part: "ladrillo-1x1", color: "Rojo brillante", x: 4, y: 12, z: 4 },
+      { part: "placa-2x2", color: "Negro", x: 4, y: 15, z: 4 },
     ],
   },
   {
     name: "Árbol",
     pieces: [
-      { part: "ladrillo-redondo-2x2", color: "Café Tinto", x: 5, y: 0, z: 5 },
-      { part: "ladrillo-redondo-2x2", color: "Café Tinto", x: 5, y: 3, z: 5 },
-      { part: "placa-4x4", color: "Verde Cafetal", x: 4, y: 6, z: 4 },
-      { part: "ladrillo-2x2", color: "Verde Cafetal", x: 5, y: 7, z: 5 },
-      { part: "ladrillo-1x1", color: "Mandarina", x: 7, y: 7, z: 4 },
-      { part: "ladrillo-1x1", color: "Limoncillo", x: 5, y: 10, z: 5 },
+      { part: "ladrillo-redondo-2x2", color: "Marrón rojizo", x: 5, y: 0, z: 5 },
+      { part: "ladrillo-redondo-2x2", color: "Marrón rojizo", x: 5, y: 3, z: 5 },
+      { part: "placa-4x4", color: "Verde", x: 4, y: 6, z: 4 },
+      { part: "ladrillo-2x2", color: "Verde", x: 5, y: 7, z: 5 },
+      { part: "ladrillo-1x1", color: "Naranja brillante", x: 7, y: 7, z: 4 },
+      { part: "ladrillo-1x1", color: "Verde lima", x: 5, y: 10, z: 5 },
     ],
   },
   {
     name: "Banca",
     pieces: [
-      { part: "ladrillo-1x1", color: "Café Tinto", x: 3, y: 0, z: 5 },
-      { part: "ladrillo-1x1", color: "Café Tinto", x: 8, y: 0, z: 5 },
-      { part: "placa-2x6", color: "Panela", x: 3, y: 3, z: 5 },
-      { part: "ladrillo-1x6", color: "Arena Caribe", x: 3, y: 4, z: 6 },
-      { part: "ladrillo-1x6", color: "Arena Caribe", x: 3, y: 7, z: 6 },
+      { part: "ladrillo-1x1", color: "Marrón rojizo", x: 3, y: 0, z: 5 },
+      { part: "ladrillo-1x1", color: "Marrón rojizo", x: 8, y: 0, z: 5 },
+      { part: "placa-2x6", color: "Turrón medio", x: 3, y: 3, z: 5 },
+      { part: "ladrillo-1x6", color: "Beige", x: 3, y: 4, z: 6 },
+      { part: "ladrillo-1x6", color: "Beige", x: 3, y: 7, z: 6 },
     ],
   },
   {
     name: "Torre de colores",
     pieces: [
-      { part: "ladrillo-2x4", color: "Celeste Antídoto", x: 4, y: 0, z: 5 },
-      { part: "placa-2x4", color: "Orquídea", x: 4, y: 3, z: 5 },
-      { part: "ladrillo-2x2", color: "Girasol", x: 5, y: 4, z: 5 },
-      { part: "ladrillo-1x2", color: "Rojo Volcán", x: 5, y: 7, z: 5 },
-      { part: "ladrillo-1x1", color: "Blanco Nube", x: 5, y: 10, z: 5 },
+      { part: "ladrillo-2x4", color: "Azul celeste oscuro", x: 4, y: 0, z: 5 },
+      { part: "placa-2x4", color: "Lavanda media", x: 4, y: 3, z: 5 },
+      { part: "ladrillo-2x2", color: "Amarillo brillante", x: 5, y: 4, z: 5 },
+      { part: "ladrillo-1x2", color: "Rojo brillante", x: 5, y: 7, z: 5 },
+      { part: "ladrillo-1x1", color: "Blanco", x: 5, y: 10, z: 5 },
     ],
   },
   {
     name: "Casita",
     pieces: [
-      { part: "ladrillo-2x4", color: "Blanco Nube", x: 4, y: 0, z: 4 },
-      { part: "ladrillo-2x4", color: "Blanco Nube", x: 4, y: 0, z: 6 },
-      { part: "inclinada-4x2", color: "Rojo Volcán", x: 4, y: 3, z: 4, rot: 2 },
-      { part: "inclinada-4x2", color: "Rojo Volcán", x: 4, y: 3, z: 6 },
-      { part: "ladrillo-1x1", color: "Girasol", x: 3, y: 0, z: 5 },
+      { part: "ladrillo-2x4", color: "Blanco", x: 4, y: 0, z: 4 },
+      { part: "ladrillo-2x4", color: "Blanco", x: 4, y: 0, z: 6 },
+      { part: "inclinada-4x2", color: "Rojo brillante", x: 4, y: 3, z: 4, rot: 2 },
+      { part: "inclinada-4x2", color: "Rojo brillante", x: 4, y: 3, z: 6 },
+      { part: "ladrillo-1x1", color: "Amarillo brillante", x: 3, y: 0, z: 5 },
     ],
   },
   {
     name: "Puente",
     pieces: [
-      { part: "ladrillo-2x2", color: "Gris Neblina", x: 2, y: 0, z: 5 },
-      { part: "ladrillo-2x2", color: "Gris Neblina", x: 2, y: 3, z: 5 },
-      { part: "ladrillo-2x2", color: "Gris Neblina", x: 8, y: 0, z: 5 },
-      { part: "ladrillo-2x2", color: "Gris Neblina", x: 8, y: 3, z: 5 },
-      { part: "placa-2x8", color: "Girasol", x: 2, y: 6, z: 5 },
-      { part: "ladrillo-1x1", color: "Rojo Volcán", x: 5, y: 7, z: 5 },
+      { part: "ladrillo-2x2", color: "Gris piedra claro", x: 2, y: 0, z: 5 },
+      { part: "ladrillo-2x2", color: "Gris piedra claro", x: 2, y: 3, z: 5 },
+      { part: "ladrillo-2x2", color: "Gris piedra claro", x: 8, y: 0, z: 5 },
+      { part: "ladrillo-2x2", color: "Gris piedra claro", x: 8, y: 3, z: 5 },
+      { part: "placa-2x8", color: "Amarillo brillante", x: 2, y: 6, z: 5 },
+      { part: "ladrillo-1x1", color: "Rojo brillante", x: 5, y: 7, z: 5 },
     ],
   },
 ];
@@ -252,14 +252,27 @@ export function phoneScores(position: number, bricks: Brick[]): [number, number]
 }
 
 /** Colores de los equipos, en orden de creación: los de la paleta que más se distinguen entre sí. */
-const TEAM_COLORS = ["Celeste Antídoto", "Girasol", "Guayaba", "Verde Cafetal", "Orquídea", "Mandarina", "Abismo Antídoto", "Rojo Volcán", "Limoncillo", "Pitaya", "Panela", "Gris Asfalto"];
+const TEAM_COLORS: [color: string, label: string][] = [
+  ["Azul brillante", "Azul"],
+  ["Amarillo brillante", "Amarillo"],
+  ["Rojo brillante", "Rojo"],
+  ["Verde", "Verde"],
+  ["Naranja brillante", "Naranja"],
+  ["Lavanda media", "Lavanda"],
+  ["Azul celeste medio", "Celeste"],
+  ["Coral", "Coral"],
+  ["Verde lima", "Lima"],
+  ["Magenta", "Magenta"],
+  ["Marrón rojizo", "Marrón"],
+  ["Gris piedra oscuro", "Gris"],
+];
 
 export function teamIdentity(position: number): { name: string; color: string } {
-  const name = TEAM_COLORS[position % TEAM_COLORS.length];
+  const [name, label] = TEAM_COLORS[position % TEAM_COLORS.length];
   const color = BRICK_COLORS.find((c) => c.name === name)!.hex;
   // Después de 12 equipos los colores se repiten: el número los distingue.
   const suffix = position >= TEAM_COLORS.length ? ` ${Math.floor(position / TEAM_COLORS.length) + 1}` : "";
-  return { name: `Equipo ${name.split(" ")[0]}${suffix}`, color };
+  return { name: `Equipo ${label}${suffix}`, color };
 }
 
 /**

@@ -1,7 +1,7 @@
 .root {
   position: fixed;
   inset: 0;
-  background: #16222a;
+  background: #e9eef1;
   color: #e8f4f8;
   font-family: var(--font-poppins), system-ui, sans-serif;
 }

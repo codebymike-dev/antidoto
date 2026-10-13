@@ -24,9 +24,9 @@ export interface LabModel {
   base: number;
 }
 
-const WALLS = ["Blanco Nube", "Arena Caribe", "Gris Neblina", "Celeste Antídoto", "Girasol", "Guayaba", "Musgo Andino", "Rojo Volcán", "Azul Antídoto", "Mandarina"].map(colorIndex);
-const ROOFS = ["Noche", "Abismo Antídoto", "Café Tinto", "Gris Asfalto", "Verde Cafetal", "Oro Muisca"].map(colorIndex);
-const GLASS = [colorIndex("Cristal"), colorIndex("Cristal Celeste")];
+const WALLS = ["Blanco", "Beige", "Gris piedra claro", "Azul celeste oscuro", "Amarillo brillante", "Coral", "Verde arena", "Rojo brillante", "Azul brillante", "Naranja brillante"].map(colorIndex);
+const ROOFS = ["Negro", "Azul oscuro", "Marrón rojizo", "Gris piedra oscuro", "Verde", "Oro perlado"].map(colorIndex);
+const GLASS = [colorIndex("Transparente"), colorIndex("Azul claro transparente")];
 
 const SLOT_W = 10;
 const SLOT_D = 9;

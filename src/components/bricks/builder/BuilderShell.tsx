@@ -7,7 +7,7 @@ import type { BuilderProps } from "./Builder";
 const Builder = dynamic(() => import("./Builder"), {
   ssr: false,
   loading: () => (
-    <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center", background: "#16222A", color: "#80DCFF", fontFamily: "var(--font-poppins), sans-serif" }}>
+    <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center", background: "#E9EEF1", color: "#0C5C7D", fontFamily: "var(--font-poppins), sans-serif" }}>
       Preparando las piezas…
     </div>
   ),

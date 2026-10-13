@@ -21,13 +21,14 @@ const DETAIL: Record<Tier, { bevel: number; studSegments: number; studArc: numbe
   ultra: { bevel: 3, studSegments: 24, studArc: 4 },
 };
 
-const BASE_COLOR = "#9AA3A8";
+// La placa base verde de LEGO (color Verde de la paleta).
+const BASE_COLOR = "#237841";
 const MAX_BRICKS = 4000;
 const REDUCED = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const finishOf = (color: number): BrickFinish => BRICK_COLORS[color].finish;
 /** El vidrio de ventanas y puertas va siempre en cristal, sea cual sea el color del marco. */
-const GLASS_COLOR = BRICK_COLORS.findIndex((c) => c.name === "Cristal Celeste");
+const GLASS_COLOR = BRICK_COLORS.findIndex((c) => c.name === "Azul claro transparente");
 
 export function detailFor(tier: Tier): GeometryDetail {
   return { bevel: DETAIL[tier].bevel, radial: DETAIL[tier].studSegments };
@@ -107,6 +108,8 @@ export class WorldView {
     const baseGeo = bodyGeometry(world.base, world.base, 1, 1);
     const baseMat = absMaterial(tier === "bajo" ? "bajo" : "medio") as THREE.MeshStandardMaterial;
     baseMat.color.set(BASE_COLOR);
+    // Las placas base son más mates que las fichas: si brillan igual, reflejan el cielo y se lavan.
+    baseMat.roughness = 0.55;
     const base = new THREE.Mesh(baseGeo, baseMat);
     base.position.y = -PLATE_H;
     base.receiveShadow = true;

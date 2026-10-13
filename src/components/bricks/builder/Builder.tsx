@@ -30,7 +30,7 @@ const CATEGORIES: { name: string; parts: string[] }[] = [
   { name: "Ventanas", parts: ["ventana-1x2x3", "ventana-1x4x3", "puerta-1x4x6"] },
 ];
 const TRAY_IDS = CATEGORIES.flatMap((c) => c.parts.map((k) => partByKey(k).id));
-const FAMILIES: BrickFamily[] = ["Neutros", "Antídoto", "Cálidos", "Rosas", "Verdes", "Tierras", "Especiales"];
+const FAMILIES: BrickFamily[] = ["Neutros", "Azules", "Cálidos", "Rosas", "Verdes", "Tierras", "Especiales"];
 const FREE_BASE = 24;
 const GUIDE_KEY = "antidoto-ladrillos-guia";
 
@@ -52,7 +52,7 @@ function shortName(name: string): string {
 
 function starter(base: number): Brick[] {
   // La base no arranca vacía: una pieza puesta invita a poner la siguiente encima.
-  return [{ id: "inicio", part: partByKey("ladrillo-2x4").id, color: BRICK_COLORS.findIndex((c) => c.name === "Celeste Antídoto"), x: base / 2 - 2, y: 0, z: base / 2 - 1, rot: 0 }];
+  return [{ id: "inicio", part: partByKey("ladrillo-2x4").id, color: BRICK_COLORS.findIndex((c) => c.name === "Rojo brillante"), x: base / 2 - 2, y: 0, z: base / 2 - 1, rot: 0 }];
 }
 
 export interface BuilderProps {

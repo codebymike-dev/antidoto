@@ -31,7 +31,7 @@ export function renderThumbs(renderer: THREE.WebGLRenderer, env: THREE.Texture |
   const ctx = canvas.getContext("2d")!;
   const stud = studGeometry(16, 2);
   const glassMat = transMaterial("medio") as THREE.MeshPhysicalMaterial;
-  glassMat.color.set(BRICK_COLORS.find((c) => c.name === "Cristal Celeste")!.hex);
+  glassMat.color.set(BRICK_COLORS.find((c) => c.name === "Azul claro transparente")!.hex);
   const prevTarget = renderer.getRenderTarget();
 
   for (const id of partIds) {

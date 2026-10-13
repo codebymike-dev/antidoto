@@ -62,12 +62,12 @@ const NOISE_SCALE = new THREE.Vector2(0.05, 0.05);
 
 /** Plástico ABS. El clearcoat (segunda capa especular) solo en los niveles altos. */
 export function absMaterial(tier: Tier): THREE.Material {
-  const common = { color: 0xffffff, roughness: 0.3, metalness: 0, normalMap: plasticNoise(), normalScale: NOISE_SCALE };
+  const common = { color: 0xffffff, roughness: 0.22, metalness: 0, normalMap: plasticNoise(), normalScale: NOISE_SCALE };
   if (tier === "bajo" || tier === "medio") return new THREE.MeshStandardMaterial(common);
-  return new THREE.MeshPhysicalMaterial({ ...common, roughness: 0.32, ior: 1.5, clearcoat: 0.4, clearcoatRoughness: 0.1 });
+  return new THREE.MeshPhysicalMaterial({ ...common, roughness: 0.25, ior: 1.5, clearcoat: 0.5, clearcoatRoughness: 0.08 });
 }
 
-/** Acabado metálico perlado (Oro Muisca). */
+/** Acabado metálico perlado (oro de LEGO). */
 export function metalMaterial(tier: Tier): THREE.Material {
   const common = { color: 0xffffff, roughness: 0.35, metalness: 0.85, normalMap: plasticNoise(), normalScale: NOISE_SCALE };
   if (tier === "bajo" || tier === "medio") return new THREE.MeshStandardMaterial(common);

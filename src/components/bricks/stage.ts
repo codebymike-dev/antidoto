@@ -46,8 +46,8 @@ function gradientBackground(): THREE.CanvasTexture {
   c.width = c.height = 512;
   const g = c.getContext("2d")!;
   const grad = g.createRadialGradient(256, 220, 20, 256, 256, 380);
-  grad.addColorStop(0, "#2A3B46");
-  grad.addColorStop(1, "#16222A");
+  grad.addColorStop(0, "#FFFFFF");
+  grad.addColorStop(1, "#D3DBE0");
   g.fillStyle = grad;
   g.fillRect(0, 0, 512, 512);
   const tex = new THREE.CanvasTexture(c);
@@ -64,8 +64,8 @@ export class Stage {
   readonly tier: Tier;
   /** La cámara se está moviendo por el usuario (la oclusión ambiental se apaga mientras tanto). */
   moving = false;
-  private key = new THREE.DirectionalLight(0xffffff, 2.2);
-  private rim = new THREE.DirectionalLight("#3BC8F3", 0.45);
+  private key = new THREE.DirectionalLight("#FFF8EE", 2.4);
+  private rim = new THREE.DirectionalLight(0xffffff, 0.35);
   private composer: EffectComposer | null = null;
   private ao: N8AOPostPass | null = null;
   private hooks = new Set<FrameHook>();
@@ -89,14 +89,14 @@ export class Stage {
     this.stats.gpu = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : "desconocida";
     this.stats.dpr = this.renderer.getPixelRatio();
 
-    // Entorno de estudio procedural (pesa 0 KB) y fondo en degradado de valor medio: ni negro ni
-    // blanco, para que no desaparezcan Noche ni Blanco Nube.
+    // Entorno de estudio procedural (pesa 0 KB) y fondo claro de estudio, como las fotos de
+    // producto de LEGO: ahí los colores se ven vivos. El borde gris evita que el blanco se pierda.
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     pmrem.dispose();
     const bg = gradientBackground();
     this.scene.environment = env;
-    this.scene.environmentIntensity = 0.9;
+    this.scene.environmentIntensity = 0.45;
     this.scene.background = bg;
     this.disposables.push(env, bg);
 
