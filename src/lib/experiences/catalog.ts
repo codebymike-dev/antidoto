@@ -669,6 +669,24 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
       },
     },
     {
+      id: "extintor",
+      category: "Tecnológico",
+      clue: "Busca el extintor en la pared del fondo.",
+      defaults: {
+        title: "Extintor tapado con cajas",
+        prompt: "Mira el extintor de la pared. ¿Qué está mal?",
+        options: [
+          "Es de color rojo",
+          "Está colgado en la pared, lejos de la puerta",
+          "Tiene cajas del pedido apiladas delante y no se puede sacar rápido",
+        ],
+        correct: 2,
+        explanation:
+          "En un conato de incendio cada segundo cuenta: si hay que quitar cajas para llegar al extintor, el fuego crece. La norma colombiana de extintores portátiles (NTC 2885) y OSHA piden que estén a la vista, señalizados y sin nada que impida tomarlos.",
+        practice: "Deja siempre libre el frente del extintor y su señal. El pedido se guarda en la bodega o en el mueble, nunca delante de un equipo de emergencia.",
+      },
+    },
+    {
       id: "vapor",
       category: "Físico",
       clue: "Fíjate en la mano de Sara cuando purga el vapor.",
@@ -720,6 +738,24 @@ export const RUTA_CAFE_TIENDA: ExperienceDef = {
         explanation:
           "Un butaco o una silla se voltea, se desliza o se quiebra: no está hecho para subirse. Con prisa y las manos llenas, la caída es casi segura. La Resolución 2400 de 1979 pide escaleras portátiles en buen estado y con bases antirresbaladizas (arts. 642 y 643).",
         practice: "Usa una escalera de tijera en buen estado, abierta del todo y con alguien que la sostenga. Mejor aún: lo que se usa mucho, abajo y a la mano.",
+      },
+    },
+    {
+      id: "cajas",
+      category: "Locativo",
+      clue: "Mira el piso a la entrada de la barra, al lado del butaco.",
+      defaults: {
+        title: "Cajas en el paso",
+        prompt: "Mira el piso a la entrada de la barra. ¿Qué riesgo ves?",
+        options: [
+          "Hay cajas y bolsas de leche en el piso, justo por donde se camina",
+          "Las bolsas de leche son de plástico",
+          "Las cajas son de cartón",
+        ],
+        correct: 0,
+        explanation:
+          "Con prisa, cargando bebidas calientes o bajando del butaco, nadie mira el piso: una caja en el paso es un tropezón seguro. OSHA pide mantener los pasillos y zonas de paso limpios y libres de obstáculos, y el orden y aseo es parte de las condiciones locativas que la empresa debe controlar.",
+        practice: "Guarda el pedido apenas llegue y deja libres los pasillos detrás de la barra. Si no hay tiempo, ponlo a un lado donde nadie camine, nunca en la entrada de la barra.",
       },
     },
     {

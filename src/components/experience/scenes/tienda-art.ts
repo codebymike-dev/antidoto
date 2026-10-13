@@ -452,3 +452,56 @@ export function drawAngry(buf: PixelBuffer, x: number, y: number, t: number) {
   buf.px(x - 4, y + 3, C.outline);
 }
 
+
+// --- Cajas del pedido ----------------------------------------------------------------
+
+const CARTON: BoxColors = { top: hex("#d6a86a"), front: hex("#c08a4c"), side: hex("#9a6a36"), line: C.outline };
+
+/** Caja de cartón cerrada, con la cinta encima y una etiqueta en el frente. */
+function drawCarton(buf: PixelBuffer, i: number, j: number, z: number, di: number, dj: number, dz: number) {
+  isoBox(buf, i, j, z, di, dj, dz, CARTON);
+  const a = P(i + di / 2, j, z + dz);
+  const b = P(i + di / 2, j + dj, z + dz);
+  buf.line(a.x, a.y, b.x, b.y, hex("#e8cf9e"));
+  const l = P(i + di * 0.3, j + dj, z + dz * 0.45);
+  buf.rect(l.x - 2, l.y - 3, 5, 4, C.cup);
+  buf.px(l.x, l.y - 2, C.outline);
+}
+
+/** Dónde quedan las cajas que tapan el extintor de la pared. */
+export const EXT_BOXES = { i: 7.45, j: 0.12 };
+/** Dónde quedan las cajas tiradas en el paso detrás de la barra. */
+export const AISLE_BOXES = { i: 6.9, j: 1.75 };
+
+/** El pedido descargado justo delante del extintor: solo le asoma la cabeza. */
+export function drawExtinguisherBoxes(buf: PixelBuffer) {
+  const { i, j } = EXT_BOXES;
+  floorShadow(buf, i, j + 0.5, 0.5, 0.15, 0.25);
+  drawCarton(buf, i, j, 0, 0.5, 0.5, 14);
+  drawCarton(buf, i + 0.04, j + 0.06, 14, 0.42, 0.4, 13);
+}
+
+/** Cajas y bolsas de leche en el piso, a la entrada de la barra, donde se camina. */
+export function drawAisleBoxes(buf: PixelBuffer) {
+  const { i, j } = AISLE_BOXES;
+  floorShadow(buf, i, j + 0.45, 0.55, 0.2, 0.25);
+  drawCarton(buf, i, j, 0, 0.55, 0.45, 12);
+  drawCarton(buf, i + 0.1, j + 0.06, 12, 0.34, 0.3, 8);
+  // Bolsas de leche sueltas, recién sacadas de la caja.
+  for (const [di, dj] of [[0.2, 0.75], [0.5, 0.65]]) {
+    const p = P(i + di, j + dj, 0);
+    buf.shadow(p.x, p.y + 1, 5, 2, C.shadow, 0.3);
+    buf.rect(p.x - 5, p.y - 4, 10, 5, C.outline);
+    buf.rect(p.x - 4, p.y - 3, 8, 3, C.cup);
+    buf.rect(p.x - 4, p.y - 1, 8, 1, C.cupShade);
+    buf.rect(p.x - 1, p.y - 3, 3, 1, hex("#3b7fc4"));
+  }
+}
+
+export function extinguisherBoxesCenter(): Pt {
+  return P(EXT_BOXES.i + 0.25, EXT_BOXES.j + 0.3, 22);
+}
+
+export function aisleBoxesCenter(): Pt {
+  return P(AISLE_BOXES.i + 0.3, AISLE_BOXES.j + 0.4, 8);
+}

@@ -114,7 +114,7 @@ const EXIT: Spot[] = [
 const BUCKET: Spot = { i: 5.9, j: 5.0 };
 
 const WIDE: Framing = { zoom: 1, cx: 200, cy: 125 };
-const CLOSE_BAR: Framing = { zoom: 2, cx: 248, cy: 120 };
+const CLOSE_BAR: Framing = { zoom: 2, cx: 258, cy: 120 };
 
 export class TiendaScene implements PlayScene {
   readonly width = art.W;
@@ -371,6 +371,8 @@ export class TiendaScene implements PlayScene {
       wait(2),
       this.say("Mi compañero enchufa la licuadora con las manos mojadas: así es más rápido."),
       wait(2),
+      this.say("El pedido llegó y lo dejamos ahí, frente al extintor."),
+      wait(2),
     );
     this.pushToBar(true);
     this.timeline.push(
@@ -383,6 +385,8 @@ export class TiendaScene implements PlayScene {
     this.timeline.push(
       this.say("¡Hora pico y yo sola! Se acabaron los vasos: me subo al butaco."),
       wait(2.6),
+      this.say("Las cajas en la entrada de la barra las guardo cuando baje la fila."),
+      wait(2.2),
       act(() => {
         this.startDissolve(() => {
           this.mode = "juego";
@@ -411,19 +415,23 @@ export class TiendaScene implements PlayScene {
         wait(2.2),
         this.say("2. Mi compañero se seca las manos antes de enchufar la licuadora."),
         wait(2),
+        this.say("3. El extintor siempre a la vista, sin nada delante."),
+        wait(2),
       );
       this.pushToBar(true);
       this.timeline.push(
-        this.say("3. Purgo la lanceta hacia la bandeja, con la mano lejos del vapor."),
+        this.say("4. Purgo la lanceta hacia la bandeja, con la mano lejos del vapor."),
         wait(2.2),
-        this.say("4. El cuchillo se lava de una y se guarda en su sitio."),
+        this.say("5. El cuchillo se lava de una y se guarda en su sitio."),
         wait(2),
       );
       this.pushRush(true);
       this.timeline.push(
-        this.say("5. Para lo alto, la escalera de tijera, no el butaco."),
+        this.say("6. Para lo alto, la escalera de tijera, no el butaco."),
         wait(2),
-        this.say("6. En hora pico somos dos, y cada quien toma su pausa."),
+        this.say("7. En hora pico somos dos, y cada quien toma su pausa."),
+        wait(2.2),
+        this.say("8. El pedido se guarda de una: nada en el piso por donde se camina."),
         wait(2.2),
         act(() => {
           this.raised = false;
@@ -501,6 +509,7 @@ export class TiendaScene implements PlayScene {
     if (!this.good || this.moment === 1) art.drawWetFloor(out, this.time);
     art.drawShelf(out, this.queue ? 1 : 4);
     art.drawBackCounter(out, { knife: !this.good, drips: this.plugging && !this.good, t: this.time });
+    if (!this.good) art.drawExtinguisherBoxes(out);
 
     // Detrás de la barra: el butaco o la escalera, Sara y el compañero.
     const behind = this.spotOf(this.sara).j < art.BAR.j0 + 0.2;
@@ -512,6 +521,7 @@ export class TiendaScene implements PlayScene {
     if (this.helper && helperBehind) this.drawHelper(out);
     if (behind) this.drawSara(out);
     art.drawBar(out, { t: this.time, steam: this.steam });
+    if (this.queue && !this.good) art.drawAisleBoxes(out);
 
     // Del lado de los clientes, de atrás hacia adelante.
     type Drawable = { depth: number; draw: () => void };
@@ -658,6 +668,7 @@ export class TiendaScene implements PlayScene {
       at("fila", mid, 14);
       if (this.rigAngry) at("cliente", this.rigAngry.head, 7);
       at("charco", art.wetCenter(), 14);
+      at("cajas", art.aisleBoxesCenter(), 9);
     }
     at("maquina", art.P((art.ESPRESSO.i0 + art.ESPRESSO.i1) / 2, art.ESPRESSO.j1, art.BAR.h + 12), 9);
     at("vitrina", art.P(2.95, art.BAR.j1, art.BAR.h + 8), 9);
@@ -665,7 +676,7 @@ export class TiendaScene implements PlayScene {
     at("tablero", art.P(2.2, 0.03, 61), 10);
     at("estante", art.P((art.SHELF.i0 + art.SHELF.i1) / 2, 0.05, art.SHELF.z + 6), 9);
     at("puerta", art.P(0, 5.1, 30), 14);
-    at("extintor", art.P(7.6, 0.02, 26), 6);
+    at("extintor", art.extinguisherBoxesCenter(), 9);
     at("licuadora", art.P(art.BLENDER.i, art.BLENDER.j, art.BACK.h + 10), 6);
     // Solo lo que queda dentro del encuadre.
     return zones.filter((z) => z.x > 2 && z.x < art.W - 2 && z.y > 2 && z.y < art.H - 2);

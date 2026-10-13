@@ -8,6 +8,7 @@ import AssignForm from "@/components/admin/AssignForm";
 import { lastCargosByCompany } from "@/lib/participant-profile";
 import { listBuildLibrary } from "@/lib/build-data";
 import { getBuild, KIND_LABEL } from "@/lib/bricks/challenges";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = { title: "Asignar actividad" };
 export default async function AsignarPage({ searchParams }: { searchParams: Promise<{ empresa?: string; actividad?: string }> }) {
   const user = await requireSuper();
   const { empresa, actividad } = await searchParams;
-  const [companies, cargosByCompany, builds] = await Promise.all([listCompanies(), lastCargosByCompany(), listBuildLibrary(user)]);
+  const [companies, cargosByCompany, builds] = await Promise.all([listCompanies(), lastCargosByCompany(), BRICKS_VISIBLE ? listBuildLibrary(user) : []]);
 
   // Una serie se asigna completa desde su primera estación: una opción por serie.
   const entries = [...new Map(EXPERIENCES.map((e) => [e.series, seriesEntry(e)])).values()];
@@ -45,7 +46,7 @@ export default async function AsignarPage({ searchParams }: { searchParams: Prom
 
   const preCompany = companies.find((c) => String(c.id) === empresa)?.id ?? null;
   const preScene = actividad ? getExperience(actividad) : null;
-  const preActivity = preScene ? seriesEntry(preScene).key : actividad && getBuild(actividad) ? actividad : null;
+  const preActivity = preScene ? seriesEntry(preScene).key : actividad && BRICKS_VISIBLE && getBuild(actividad) ? actividad : null;
   const backHref = preCompany ? `/admin/empresas/${preCompany}` : "/admin/empresas";
 
   return (

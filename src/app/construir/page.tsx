@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getLegalTexts } from "@/lib/queries";
 import { playerSnapshot } from "@/lib/brick-session";
 import { brickPlayerId } from "@/lib/brick-http";
 import TeamPlayerApp from "@/components/bricks/team/TeamPlayerApp";
-import { notFound } from "next/navigation";
 import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 
 export const dynamic = "force-dynamic";

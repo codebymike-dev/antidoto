@@ -12,6 +12,7 @@ import { ensureExperienceMission } from "./experience-data";
 import { getExperience, seriesEntry } from "./experiences/catalog";
 import { buildTexts, getBuild } from "./bricks/challenges";
 import { ensureBuildMission, loadBuildOverride } from "./build-data";
+import { BRICKS_VISIBLE } from "./bricks/visible";
 import { PARTICIPATION_COOKIE } from "./participation";
 import { clientIp, isLimited, rateLimit, recordHit } from "./rate-limit";
 import { formatExpiryDate, isDateOnly } from "./expiry";
@@ -173,7 +174,7 @@ export async function assignActivity(_prev: AssignState, formData: FormData): Pr
   if (!companyId) return { error: "Elige la empresa." };
   const key = String(formData.get("experience") ?? "");
   const def = getExperience(key);
-  const build = def ? null : getBuild(key);
+  const build = def || !BRICKS_VISIBLE ? null : getBuild(key);
   if (!def && !build) return { error: "Elige la actividad." };
   const expira = String(formData.get("expira") ?? "").trim();
   // Solo lo que envía <input type="date">: un texto libre nunca vencería.

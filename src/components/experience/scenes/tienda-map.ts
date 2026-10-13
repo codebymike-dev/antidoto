@@ -11,9 +11,9 @@ export const TIENDA_MOMENTS: { id: Moment; label: string; hint: string }[] = [
 
 /** Zona de la escena → riesgo, por momento. Una zona sin riesgo cae en TIENDA_OK. */
 export const TIENDA_RISK_ZONES: Record<Moment, Record<string, string>> = {
-  1: { pies: "chanclas", charco: "piso", manos: "enchufe", companero: "enchufe" },
-  2: { mano: "vapor", lanceta: "vapor", lavaplatos: "cuchillo" },
-  3: { silla: "silla", sara: "silla", fila: "estres", cliente: "estres", charco: "piso" },
+  1: { pies: "chanclas", charco: "piso", manos: "enchufe", companero: "enchufe", extintor: "extintor" },
+  2: { mano: "vapor", lanceta: "vapor", lavaplatos: "cuchillo", extintor: "extintor" },
+  3: { silla: "silla", sara: "silla", fila: "estres", cliente: "estres", charco: "piso", cajas: "cajas", extintor: "extintor" },
 };
 
 /** Zonas donde todo está bien. */
@@ -23,7 +23,6 @@ export const TIENDA_OK: Record<string, string> = {
   caja: "La caja registradora, lista para atender.",
   tablero: "El tablero con el menú del día.",
   puerta: "La entrada de la tienda.",
-  extintor: "El extintor, a la vista y sin nada que lo tape. Eso está bien.",
   sara: "Sara, la barista, alista la barra.",
   balde: "El balde con el agua de trapear.",
   estante: "El estante de los vasos y las tazas.",
@@ -48,6 +47,7 @@ export const TIENDA_ZONE_LABELS: Record<string, string> = {
   tablero: "Tablero del menú",
   puerta: "Puerta",
   extintor: "Extintor",
+  cajas: "Cajas del pedido",
   balde: "Balde",
   estante: "Estante",
   licuadora: "Licuadora",

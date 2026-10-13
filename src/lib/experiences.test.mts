@@ -93,10 +93,10 @@ describe("serie", () => {
     const total = stations.reduce((acc, d) => acc + d.risks.length, 0);
     const rows = RUTA_CAFE_FINCA.risks.map((r) => ({ risk_id: r.id, option_index: r.defaults.correct, is_correct: 1 }));
     const s = score(rows, total);
-    // 7 de 35 riesgos resueltos, todos a la primera.
-    assert.equal(total, 35);
-    assert.equal(s.avance, 20);
-    assert.equal(s.puntaje, 2);
+    // 7 de 37 riesgos resueltos, todos a la primera.
+    assert.equal(total, 37);
+    assert.equal(s.avance, 19);
+    assert.equal(s.puntaje, 1.9);
   });
 });
 

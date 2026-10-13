@@ -3,7 +3,8 @@ import { currentUser } from "@/lib/auth";
 import { listLibrary } from "@/lib/experience-data";
 import { listBuildLibrary } from "@/lib/build-data";
 import { KIND_LABEL } from "@/lib/bricks/challenges";
-import { TEAM_MODES, TEAM_THUMB } from "@/lib/bricks/team";
+import { TEAM_MODES as ALL_TEAM_MODES, TEAM_THUMB } from "@/lib/bricks/team";
+import { BRICKS_VISIBLE } from "@/lib/bricks/visible";
 import BuildThumb from "@/components/bricks/BuildThumb";
 import { experienceActivities } from "@/lib/experiences/catalog";
 import { listGames } from "@/lib/live-games";
@@ -35,10 +36,11 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
   const user = (await currentUser())!;
   const isSuper = user.role === "super";
   const { tipo } = await searchParams;
-  const filter: ActivityType | null = tipo === "escenas" || tipo === "juegos" || tipo === "construccion" ? tipo : null;
+  const filter: ActivityType | null = tipo === "escenas" || tipo === "juegos" || (BRICKS_VISIBLE && tipo === "construccion") ? tipo : null;
   const show = (t: ActivityType) => filter === null || filter === t;
 
-  const [items, games, builds] = await Promise.all([listLibrary(user), listGames(user, false), listBuildLibrary(user)]);
+  const [items, games, builds] = await Promise.all([listLibrary(user), listGames(user, false), BRICKS_VISIBLE ? listBuildLibrary(user) : []]);
+  const TEAM_MODES = BRICKS_VISIBLE ? ALL_TEAM_MODES : [];
   // Una tarjeta por actividad: las estaciones de una serie son partes de la misma.
   const activities = experienceActivities().map((a) => ({ ...a, usage: items.find((i) => i.def.key === a.key)! }));
   const empty = filter === "juegos" && games.length === 0;
@@ -49,8 +51,9 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
         <h1 style={{ ...calSans, fontSize: 28, margin: "0 0 4px 0", color: colors.ink }}>Biblioteca</h1>
         <p style={{ fontSize: 14, color: colors.muted, margin: 0, maxWidth: 640 }}>
           Todas las actividades en un solo lugar. Las escenas interactivas se juegan a su ritmo, cada participante encuentra
-          los errores y aprende la forma correcta; en los retos de construcción cada persona arma su obra con ladrillos 3D; los
-          juegos en vivo se proyectan en sala y se responden desde el celular.
+          los errores y aprende la forma correcta;
+          {BRICKS_VISIBLE && " en los retos de construcción cada persona arma su obra con ladrillos 3D;"} los juegos en vivo se
+          proyectan en sala y se responden desde el celular.
         </p>
       </div>
 
@@ -58,7 +61,7 @@ export default async function BibliotecaPage({ searchParams }: { searchParams: P
         {[
           { label: "Todas", on: filter === null, href: "/admin/biblioteca", count: activities.length + builds.length + TEAM_MODES.length + games.length },
           { label: "Escenas interactivas", on: filter === "escenas", href: "/admin/biblioteca?tipo=escenas", count: activities.length },
-          { label: "Construcción 3D", on: filter === "construccion", href: "/admin/biblioteca?tipo=construccion", count: builds.length + TEAM_MODES.length },
+          ...(BRICKS_VISIBLE ? [{ label: "Construcción 3D", on: filter === "construccion", href: "/admin/biblioteca?tipo=construccion", count: builds.length + TEAM_MODES.length }] : []),
           { label: "Juegos en vivo", on: filter === "juegos", href: "/admin/biblioteca?tipo=juegos", count: games.length },
         ].map((t) => (
           <Link key={t.label} href={t.href} className={t.on ? "btn-tab-active" : "btn-tab"} style={t.on ? tabButtonActive : tabButton}>
