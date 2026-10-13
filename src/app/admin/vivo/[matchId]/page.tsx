@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { publicOrigin } from "@/lib/public-origin";
 import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { getMatchForHost, hostSnapshot } from "@/lib/live-match";
@@ -24,15 +24,13 @@ export default async function VivoPage({ params }: { params: Promise<{ matchId: 
   const res = await hostSnapshot(Number(matchId), user);
   if (!res.ok) notFound();
 
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const { host, origin } = await publicOrigin();
 
   return (
     <HostScreen
       initial={res.snapshot}
       joinHost={host}
-      joinUrl={`${proto}://${host}/jugar?pin=${res.snapshot.pin}`}
+      joinUrl={`${origin}/jugar?pin=${res.snapshot.pin}`}
     />
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { headers } from "next/headers";
+import { publicOrigin } from "@/lib/public-origin";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { getMatchReport } from "@/lib/live-reports";
@@ -33,9 +33,7 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
   const minutes = isChallenge ? null : durationMinutes(match.started_at, match.finished_at);
   const challengeOpen = match.challengeOpen;
 
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const { origin } = await publicOrigin();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 980 }}>
@@ -88,7 +86,7 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
         <ChallengeShare
           matchId={match.id}
           pin={match.pin}
-          joinUrl={`${proto}://${host}/jugar?pin=${match.pin}`}
+          joinUrl={`${origin}/jugar?pin=${match.pin}`}
           closesLabel={formatDateTime(match.closes_at)}
           open={challengeOpen}
         />

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { headers } from "next/headers";
+import { publicOrigin } from "@/lib/public-origin";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { getCompany, listCompanyAssignments, listCompanyParticipants, listPortalUsers, type Assignment } from "@/lib/queries";
@@ -65,10 +65,7 @@ export default async function EmpresaPage({
     : await Promise.all(activities.map((codes) => listCompanyParticipants(codes[0].mission_id, companyId)));
   const participantes = live.reduce((s, a) => s + a.participantes, 0);
   const justAssigned = asignada ? live.find((a) => a.codigo === asignada) : undefined;
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  const origin = `${proto}://${host ?? ""}`;
+  const { host, origin } = await publicOrigin();
   const p = brandPalette(brand);
   const logoBrand = brand ?? { name: company.name, primary: colors.accent, secondary: null, logoUrl: null, logoSurface: "claro" as const };
 

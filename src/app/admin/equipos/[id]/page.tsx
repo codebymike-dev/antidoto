@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { publicOrigin } from "@/lib/public-origin";
 import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { hostSnapshot } from "@/lib/brick-session";
@@ -22,14 +22,12 @@ export default async function EquiposPage({ params }: { params: Promise<{ id: st
   const res = await hostSnapshot(Number((await params).id), user);
   if (!res.ok) notFound();
 
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const { host, origin } = await publicOrigin();
   return (
     <HostShell
       initial={{ session: res.session, teams: res.teams, ablyMessages: res.ablyMessages, gallery: await hostGallery(res.session.id, res.teams) }}
       joinHost={host}
-      joinUrl={`${proto}://${host}/construir?pin=${res.session.pin}`}
+      joinUrl={`${origin}/construir?pin=${res.session.pin}`}
     />
   );
 }
