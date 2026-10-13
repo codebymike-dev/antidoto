@@ -479,7 +479,8 @@ export class TiendaScene implements PlayScene {
     if (this.plugging && !this.good && this.rigHelper && this.time > this.nextDrip) {
       this.nextDrip = this.time + 0.22;
       const h = Math.random() < 0.5 ? this.rigHelper.handN : this.rigHelper.handF;
-      this.drips.push({ x: h.x + (Math.random() - 0.5) * 2, y: h.y + 1, vy: 0, floor: this.coworker.y });
+      const x = h.x + (Math.random() - 0.5) * 2;
+      this.drips.push({ x, y: h.y + 1, vy: 0, floor: Math.max(h.y + 3, this.dripFloor(x)) });
     }
     for (const d of this.drips) {
       d.vy += 120 * dt;
@@ -488,6 +489,18 @@ export class TiendaScene implements PlayScene {
     this.drips = this.drips.filter((d) => d.y < d.floor);
     for (const r of this.ripples) r.t += dt / 0.4;
     this.ripples = this.ripples.filter((r) => r.t < 1);
+  }
+
+  /**
+   * Dónde se estrella una gota que cae en la columna x: con los brazos estirados hacia la
+   * toma, las manos quedan encima del mesón de atrás, así que cae en su superficie.
+   */
+  private dripFloor(x: number) {
+    const B = art.BACK;
+    const j = (B.j0 + B.j1) / 2;
+    const i = j + (x - art.P(0, 0).x) / 20;
+    if (i < B.i0 || i > B.i1) return this.coworker.y;
+    return art.P(i, j, B.h).y;
   }
 
   ripple(x: number, y: number) {
@@ -548,10 +561,6 @@ export class TiendaScene implements PlayScene {
     items.sort((a, b) => a.depth - b.depth);
     for (const it of items) it.draw();
 
-    for (const d of this.drips) {
-      out.rect(d.x, d.y - 1, 2, 2, hex("#8fd3f5"));
-      out.px(d.x, d.y - 1, hex("#c9ecfb"));
-    }
     for (const d of this.sweat) {
       out.px(d.x, d.y, hex("#8fd3f5"));
       out.px(d.x, d.y + 1, hex("#c9ecfb"));
@@ -603,6 +612,13 @@ export class TiendaScene implements PlayScene {
           for (const h of [rig.handN, rig.handF]) {
             out.px(h.x - 1, h.y - 1, hex("#c9ecfb"));
             out.px(h.x + 1, h.y, hex("#8fd3f5"));
+          }
+        }
+        if (this.plugging && !this.good) {
+          // Las gotas van con él: la barra y la máquina, que están delante, las tapan.
+          for (const d of this.drips) {
+            out.rect(d.x, d.y - 1, 2, 2, hex("#8fd3f5"));
+            out.px(d.x, d.y - 1, hex("#c9ecfb"));
           }
         }
         if (this.plugging && this.good) {
