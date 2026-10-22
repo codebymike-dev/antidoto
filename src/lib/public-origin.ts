@@ -4,12 +4,12 @@ import { headers } from "next/headers";
 export const SITE_URL = "https://actividades.antidotocolombia.com";
 
 /**
- * Host y origen para armar enlaces de invitación. En producción se usa el dominio propio
- * aunque el admin haya entrado por el *.vercel.app; en local y en previews, el de la petición
- * (así el enlace abre el mismo despliegue que se está probando).
+ * Host y origen para armar enlaces de invitación. Fuera de `next dev` se usa siempre el
+ * dominio propio, aunque el admin haya entrado por el *.vercel.app. En local, el de la
+ * petición, para que el QR abra el mismo servidor que se está probando.
  */
 export async function publicOrigin(): Promise<{ host: string; origin: string }> {
-  if (process.env.VERCEL_ENV === "production") {
+  if (process.env.NODE_ENV === "production") {
     return { host: new URL(SITE_URL).host, origin: SITE_URL };
   }
   const h = await headers();

@@ -218,7 +218,7 @@ function QuestionView({
             maxLength={30}
             value={word}
             onChange={(e) => setWord(e.target.value)}
-            style={{ height: 60, borderRadius: 14, border: "none", padding: "0 16px", fontSize: 22, fontWeight: 600, textAlign: "center", color: game.bg }}
+            style={{ height: 60, borderRadius: 14, border: "none", padding: "0 16px", fontSize: 22, fontWeight: 600, textAlign: "center", background: "#FFFFFF", color: game.bg, caretColor: game.bg, colorScheme: "light" }}
           />
           <button type="submit" disabled={busy || !word.trim()} className="btn-live" style={{ ...liveButton, height: 56, fontSize: 18, opacity: busy || !word.trim() ? 0.6 : 1 }}>
             Enviar
